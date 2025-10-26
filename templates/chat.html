@@ -1,0 +1,80 @@
+{% extends "base.html" %} {% block content %}
+<div class="chat-container">
+  <div class="chat-header">
+    <h2>Anonymous Text Chat</h2>
+    <div class="chat-status" id="chatStatus">Disconnected</div>
+  </div>
+
+  <div class="chat-main">
+    <div class="chat-messages" id="chatMessages">
+      <div class="welcome-message">
+        <i class="fas fa-comments"></i>
+        <h3>Welcome to Text Chat</h3>
+        <p>Click "Start Chat" to connect with a random stranger</p>
+      </div>
+    </div>
+
+    <div class="chat-sidebar">
+      <div class="sidebar-section">
+        <h4>Chat Info</h4>
+        <div class="chat-info">
+          <div class="info-item">
+            <span>Status:</span>
+            <span id="connectionStatus">Not Connected</span>
+          </div>
+          <div class="info-item">
+            <span>Duration:</span>
+            <span id="chatDuration">00:00</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <h4>Quick Actions</h4>
+        <button
+          class="btn-primary btn-full"
+          id="startChatBtn"
+          onclick="startChat()"
+        >
+          Start Chat
+        </button>
+        <button
+          class="btn-secondary btn-full"
+          id="nextChatBtn"
+          onclick="nextChat()"
+          disabled
+        >
+          Next User
+        </button>
+        <button
+          class="btn-danger btn-full"
+          id="endChatBtn"
+          onclick="endChat()"
+          disabled
+        >
+          End Chat
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-input-container">
+    <div class="typing-indicator" id="typingIndicator" style="display: none">
+      <span>Stranger is typing...</span>
+    </div>
+    <div class="input-group">
+      <input
+        type="text"
+        id="messageInput"
+        placeholder="Type your message..."
+        disabled
+      />
+      <button id="sendBtn" onclick="sendMessage()" disabled>
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

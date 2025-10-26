@@ -1,0 +1,66 @@
+{% extends "base.html" %} {% block content %}
+<div class="hero-section">
+  <div class="hero-content">
+    <h1 class="hero-title">Welcome to ShadowTalk</h1>
+    <p class="hero-subtitle">Anonymous 1-on-1 Text and Video Chat</p>
+
+    {% if current_user.is_authenticated %}
+    <div class="chat-options">
+      <div class="option-card" onclick="startChat('text')">
+        <i class="fas fa-comments"></i>
+        <h3>Text Chat</h3>
+        <p>Connect with random people for anonymous text conversations</p>
+        <button class="btn-primary">Start Text Chat</button>
+      </div>
+
+      <div class="option-card" onclick="startChat('video')">
+        <i class="fas fa-video"></i>
+        <h3>Video Chat</h3>
+        <p>Face-to-face anonymous video conversations</p>
+        <button class="btn-primary">Start Video Chat</button>
+      </div>
+    </div>
+    {% else %}
+    <div class="auth-buttons">
+      <a href="{{ url_for('login') }}" class="btn-primary">Login</a>
+      <a href="{{ url_for('register') }}" class="btn-secondary">Register</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="features-section">
+  <div class="features-grid">
+    <div class="feature">
+      <i class="fas fa-user-secret"></i>
+      <h3>100% Anonymous</h3>
+      <p>Chat without revealing your identity</p>
+    </div>
+    <div class="feature">
+      <i class="fas fa-random"></i>
+      <h3>Random Matching</h3>
+      <p>Connect with people from around the world</p>
+    </div>
+    <div class="feature">
+      <i class="fas fa-shield-alt"></i>
+      <h3>Safe & Moderated</h3>
+      <p>AI-powered moderation keeps chats safe</p>
+    </div>
+    <div class="feature">
+      <i class="fas fa-heart"></i>
+      <h3>Interest Based</h3>
+      <p>Match with people who share your interests</p>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  function startChat(type) {
+    if (type === "text") {
+      window.location.href = "{{ url_for('text_chat') }}";
+    } else {
+      window.location.href = "{{ url_for('video_chat') }}";
+    }
+  }
+</script>
+{% endblock %}

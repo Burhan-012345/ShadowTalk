@@ -1,0 +1,165 @@
+{% extends "base.html" %} {% block content %}
+<div class="profile-container">
+  <div class="profile-header">
+    <div class="profile-avatar">
+      <i class="fas fa-user-circle"></i>
+    </div>
+    <div class="profile-info">
+      <h1>{{ current_user.display_name }}</h1>
+      <p>@{{ current_user.username }}</p>
+      <p class="profile-bio">{{ current_user.bio }}</p>
+      <div class="profile-stats">
+        <div class="stat">
+          <span class="stat-number">{{ connections|length }}</span>
+          <span class="stat-label">Connections</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-content">
+    <div class="connections-section">
+      <h2>Your Connections</h2>
+      {% if connections %}
+      <div class="connections-grid">
+        {% for connection in connections %}
+        <div class="connection-card">
+          <div class="connection-avatar">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <div class="connection-info">
+            <h3>{{ connection.user.display_name }}</h3>
+            <p>Chatted {{ connection.chat_count }} time(s)</p>
+            <p class="connection-last">
+              Last: {{ connection.last_chat.strftime('%Y-%m-%d') }}
+            </p>
+          </div>
+          <div class="connection-actions">
+            <button
+              class="btn-primary"
+              onclick="sendConnectionRequest('{{ connection.user.id }}')"
+            >
+              Connect Again
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-users"></i>
+        <h3>No connections yet</h3>
+        <p>Start chatting to build your connection list</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Notifications Panel -->
+<div class="notifications-panel" id="notificationsPanel">
+  <div class="notifications-header">
+    <h3>Notifications</h3>
+    <button class="close-btn" onclick="closeNotifications()">&times;</button>
+  </div>
+  <div class="notifications-list" id="notificationsList">
+    <!-- Notifications will be loaded here -->
+  </div>
+</div>
+
+<!-- Notification Bell -->
+<div class="notification-bell" onclick="toggleNotifications()">
+  <i class="fas fa-bell"></i>
+  <span class="notification-count" id="notificationCount">0</span>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  let socket;
+
+  function initializeSocket() {
+    socket = io();
+
+    socket.on("notification", function (data) {
+      loadNotifications();
+      showNotification(data.title, data.message);
+    });
+  }
+
+  function loadNotifications() {
+    fetch("/api/notifications")
+      .then((response) => response.json())
+      .then((notifications) => {
+        const list = document.getElementById("notificationsList");
+        const count = document.getElementById("notificationCount");
+
+        count.textContent = notifications.length;
+
+        if (notifications.length === 0) {
+          list.innerHTML =
+            '<div class="no-notifications">No new notifications</div>';
+          return;
+        }
+
+        list.innerHTML = notifications
+          .map(
+            (notif) => `
+                <div class="notification-item" data-id="${notif.id}">
+                    <div class="notification-content">
+                        <h4>${notif.title}</h4>
+                        <p>${notif.message}</p>
+                        <small>${new Date(
+                          notif.created_at
+                        ).toLocaleString()}</small>
+                    </div>
+                    <div class="notification-actions">
+                        <button class="btn-small" onclick="markAsRead(${
+                          notif.id
+                        })">Mark Read</button>
+                    </div>
+                </div>
+            `
+          )
+          .join("");
+      });
+  }
+
+  function markAsRead(notificationId) {
+    fetch(`/api/notifications/${notificationId}/read`, { method: "POST" }).then(
+      () => loadNotifications()
+    );
+  }
+
+  function sendConnectionRequest(userId) {
+    fetch(`/api/send-connection-request/${userId}`, { method: "POST" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          toastr.success("Connection request sent!");
+        } else {
+          toastr.error(data.error || "Failed to send request");
+        }
+      });
+  }
+
+  function toggleNotifications() {
+    const panel = document.getElementById("notificationsPanel");
+    panel.classList.toggle("active");
+    if (panel.classList.contains("active")) {
+      loadNotifications();
+    }
+  }
+
+  function closeNotifications() {
+    document.getElementById("notificationsPanel").classList.remove("active");
+  }
+
+  function showNotification(title, message) {
+    toastr.info(message, title);
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    initializeSocket();
+    loadNotifications();
+  });
+</script>
+{% endblock %}

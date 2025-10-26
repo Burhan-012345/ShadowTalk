@@ -1,0 +1,314 @@
+{% extends "base.html" %} {% block content %}
+<div class="video-chat-container">
+  <div class="video-header">
+    <h2>Anonymous Video Chat</h2>
+    <div class="chat-status" id="chatStatus">Disconnected</div>
+  </div>
+
+  <div class="video-main">
+    <!-- Device Check Modal -->
+    <div id="deviceCheckModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <h3>Device Check</h3>
+        <p>Checking your camera and microphone...</p>
+        <div class="device-status">
+          <div class="status-item">
+            <span>Camera:</span>
+            <span id="cameraStatus">Checking...</span>
+          </div>
+          <div class="status-item">
+            <span>Microphone:</span>
+            <span id="microphoneStatus">Checking...</span>
+          </div>
+        </div>
+        <div class="modal-buttons">
+          <button class="btn-primary" onclick="proceedWithMediaAccess()">Continue</button>
+          <button class="btn-secondary" onclick="hideDeviceCheckModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Devices Modal -->
+    <div id="noDevicesModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <h3>No Camera/Microphone Detected</h3>
+        <p>We couldn't find any camera or microphone on your device.</p>
+        <div class="troubleshooting">
+          <h4>Troubleshooting Tips:</h4>
+          <ul>
+            <li>Check if your camera and microphone are properly connected</li>
+            <li>Make sure no other application is using your camera/microphone</li>
+            <li>Check your device permissions in browser settings</li>
+            <li>Try using a different browser (Chrome, Firefox, Edge)</li>
+            <li>Restart your browser or computer</li>
+          </ul>
+        </div>
+        <div class="modal-buttons">
+          <button class="btn-primary" onclick="hideNoDevicesModal()">OK</button>
+          <button class="btn-secondary" onclick="retryDeviceDetection()">Retry Detection</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="video-grid">
+      <div class="video-container">
+        <video id="localVideo" autoplay muted playsinline></video>
+        <div class="video-label">You</div>
+        <div class="video-overlay" id="localVideoOverlay">
+          <i class="fas fa-video-slash"></i>
+          <span>Camera Off</span>
+        </div>
+      </div>
+      <div class="video-container">
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div class="video-label">Stranger</div>
+        <div class="video-overlay" id="waitingOverlay">
+          <i class="fas fa-user-friends"></i>
+          <h3>Waiting for connection...</h3>
+        </div>
+        <div class="video-overlay" id="remoteVideoOverlay" style="display: none;">
+          <i class="fas fa-video-slash"></i>
+          <span>Partner's Camera Off</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="video-controls">
+      <button class="control-btn" id="videoToggle" onclick="toggleVideo()">
+        <i class="fas fa-video"></i>
+      </button>
+      <button class="control-btn" id="audioToggle" onclick="toggleAudio()">
+        <i class="fas fa-microphone"></i>
+      </button>
+      <button
+        class="control-btn btn-danger"
+        id="endCallBtn"
+        onclick="endCall()"
+        disabled
+      >
+        <i class="fas fa-phone-slash"></i>
+      </button>
+      <button
+        class="control-btn btn-primary"
+        id="nextUserBtn"
+        onclick="nextUser()"
+        disabled
+      >
+        <i class="fas fa-forward"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="chat-sidebar">
+    <div class="sidebar-section">
+      <h4>Video Chat</h4>
+      <button
+        class="btn-primary btn-full"
+        id="startVideoChatBtn"
+        onclick="startVideoChat()"
+      >
+        Start Video Chat
+      </button>
+      <button
+        class="btn-secondary btn-full"
+        id="stopVideoChatBtn"
+        onclick="stopVideoChat()"
+        style="display: none;"
+      >
+        Stop Video Chat
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <h4>Connection Info</h4>
+      <div class="connection-info">
+        <div class="info-item">
+          <span>Status:</span>
+          <span id="connectionStatus">Ready</span>
+        </div>
+        <div class="info-item">
+          <span>Duration:</span>
+          <span id="callDuration">00:00</span>
+        </div>
+        <div class="info-item">
+          <span>Users Waiting:</span>
+          <span id="usersWaiting">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h4>Device Status</h4>
+      <div class="device-status-panel">
+        <div class="status-item">
+          <span>Camera:</span>
+          <span id="cameraStatusText" class="status-badge status-unknown">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span>Microphone:</span>
+          <span id="microphoneStatusText" class="status-badge status-unknown">Unknown</span>
+        </div>
+        <button class="btn-secondary btn-full" onclick="checkDevices()">
+          Check Devices
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h4>Troubleshooting</h4>
+      <div class="troubleshooting-tips">
+        <p>If devices aren't detected:</p>
+        <ul>
+          <li>Check physical connections</li>
+          <li>Allow permissions in browser</li>
+          <li>Close other apps using camera</li>
+          <li>Try refreshing the page</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #2c2c2c;
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+  max-width: 500px;
+  width: 90%;
+  border: 1px solid #8b5cf6;
+}
+
+.modal-buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.device-status, .device-status-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background: #3c3c3c;
+  border-radius: 5px;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.status-unknown { background: #666; color: white; }
+.status-available { background: #10b981; color: white; }
+.status-unavailable { background: #ef4444; color: white; }
+
+.troubleshooting, .troubleshooting-tips {
+  text-align: left;
+  margin: 15px 0;
+}
+
+.troubleshooting ul, .troubleshooting-tips ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.troubleshooting li, .troubleshooting-tips li {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+#localVideoOverlay, #remoteVideoOverlay {
+  display: none;
+}
+
+.video-container.video-off #localVideoOverlay,
+.video-container.video-off #remoteVideoOverlay {
+  display: flex;
+}
+
+.advanced-help {
+  margin: 20px 0;
+  padding: 15px;
+  background: #3c3c3c;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.browser-help {
+  margin: 10px 0;
+  padding: 8px;
+  background: #4c4c4c;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.error-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.error-message {
+  background: #3c3c3c;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+  text-align: left;
+}
+
+.permission-steps {
+  text-align: left;
+  margin: 15px 0;
+}
+
+.permission-steps ol {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.permission-steps li {
+  margin: 8px 0;
+  font-size: 14px;
+}
+</style>
+{% endblock %} {% block extra_js %}
+<script src="{{ url_for('static', filename='js/video_chat.js') }}"></script>
+{% endblock %}

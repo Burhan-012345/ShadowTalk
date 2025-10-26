@@ -1,0 +1,679 @@
+{% extends "base.html" %} {% block content %}
+<div class="admin-container">
+  <div class="admin-header">
+    <h1><i class="fas fa-shield-alt"></i> Admin Dashboard</h1>
+    <div class="admin-stats">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-number">{{ stats.total_users }}</span>
+          <span class="stat-label">Total Users</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-comments"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-number">{{ stats.active_chats }}</span>
+          <span class="stat-label">Active Chats</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-flag"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-number">{{ stats.pending_reports }}</span>
+          <span class="stat-label">Pending Reports</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-ban"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-number">{{ stats.banned_users }}</span>
+          <span class="stat-label">Banned Users</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-tabs">
+    <button class="tab-btn active" onclick="openTab('reports')">Reports</button>
+    <button class="tab-btn" onclick="openTab('users')">Users</button>
+    <button class="tab-btn" onclick="openTab('chats')">Chat Sessions</button>
+    <button class="tab-btn" onclick="openTab('analytics')">Analytics</button>
+  </div>
+
+  <div class="tab-content">
+    <!-- Reports Tab -->
+    <div id="reports" class="tab-pane active">
+      <div class="section-header">
+        <h2>Pending Reports</h2>
+        <div class="section-actions">
+          <button class="btn-secondary" onclick="refreshReports()">
+            <i class="fas fa-sync-alt"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      {% if reports %}
+      <div class="table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Reporter</th>
+              <th>Reported User</th>
+              <th>Reason</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for report in reports %}
+            <tr>
+              <td>#{{ report.id }}</td>
+              <td>
+                <div class="user-info">
+                  <i class="fas fa-user"></i>
+                  <span
+                    >{{ report.reporter.display_name if report.reporter else
+                    'Anonymous' }}</span
+                  >
+                </div>
+              </td>
+              <td>
+                <div class="user-info">
+                  <i class="fas fa-user"></i>
+                  <span
+                    >{{ report.reported_user.display_name if
+                    report.reported_user else 'Anonymous' }}</span
+                  >
+                </div>
+              </td>
+              <td class="reason-cell">
+                <span class="reason-text"
+                  >{{ report.reason[:100] }}{% if report.reason|length > 100
+                  %}...{% endif %}</span
+                >
+                {% if report.reason|length > 100 %}
+                <button
+                  class="btn-small"
+                  onclick="showFullReason({{ report.id }})"
+                >
+                  View Full
+                </button>
+                {% endif %}
+              </td>
+              <td>{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>
+                <span class="status-badge status-{{ report.status }}"
+                  >{{ report.status }}</span
+                >
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button
+                    class="btn-success btn-small"
+                    onclick="resolveReport({{ report.id }})"
+                  >
+                    <i class="fas fa-check"></i> Resolve
+                  </button>
+                  <button
+                    class="btn-danger btn-small"
+                    onclick="banUser('{{ report.reported_user.id if report.reported_user else '' }}', {{ report.id }})"
+                  >
+                    <i class="fas fa-ban"></i> Ban
+                  </button>
+                  <button
+                    class="btn-secondary btn-small"
+                    onclick="viewReportDetails({{ report.id }})"
+                  >
+                    <i class="fas fa-eye"></i> Details
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-flag"></i>
+        <h3>No Pending Reports</h3>
+        <p>All reports have been reviewed and resolved.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Users Tab -->
+    <div id="users" class="tab-pane">
+      <div class="section-header">
+        <h2>User Management</h2>
+        <div class="section-actions">
+          <input
+            type="text"
+            id="userSearch"
+            placeholder="Search users..."
+            class="search-input"
+          />
+          <button class="btn-secondary" onclick="searchUsers()">
+            <i class="fas fa-search"></i> Search
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Display Name</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th>Last Login</th>
+              <th>Reports</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            {% for user in users %}
+            <tr>
+              <td>{{ user.id[:8] }}...</td>
+              <td>
+                <div class="user-info">
+                  <i class="fas fa-user"></i>
+                  <span>{{ user.display_name or 'N/A' }}</span>
+                </div>
+              </td>
+              <td>{{ user.email }}</td>
+              <td>
+                {% if user.is_verified %}
+                <span class="status-badge status-verified">Verified</span>
+                {% else %}
+                <span class="status-badge status-pending">Pending</span>
+                {% endif %}
+              </td>
+              <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+              <td>
+                {{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login
+                else 'Never' }}
+              </td>
+              <td>
+                <span class="report-count"
+                  >{{ user_reports_count[user.id] if user.id in
+                  user_reports_count else 0 }}</span
+                >
+              </td>
+              <td>
+                <div class="action-buttons">
+                  {% if user.id != current_user.id %}
+                  <button
+                    class="btn-danger btn-small"
+                    onclick="banUser('{{ user.id }}')"
+                  >
+                    <i class="fas fa-ban"></i> Ban
+                  </button>
+                  {% endif %}
+                  <button
+                    class="btn-secondary btn-small"
+                    onclick="viewUserDetails('{{ user.id }}')"
+                  >
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Chats Tab -->
+    <div id="chats" class="tab-pane">
+      <div class="section-header">
+        <h2>Chat Sessions</h2>
+        <div class="section-actions">
+          <select id="chatTypeFilter" class="filter-select">
+            <option value="all">All Types</option>
+            <option value="text">Text Only</option>
+            <option value="video">Video Only</option>
+          </select>
+          <button class="btn-secondary" onclick="filterChats()">
+            <i class="fas fa-filter"></i> Filter
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Session ID</th>
+              <th>User 1</th>
+              <th>User 2</th>
+              <th>Type</th>
+              <th>Start Time</th>
+              <th>Duration</th>
+              <th>Messages</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for chat in chat_sessions %}
+            <tr>
+              <td>{{ chat.id[:8] }}...</td>
+              <td>
+                <div class="user-info">
+                  <i class="fas fa-user"></i>
+                  <span
+                    >{{ chat.user1.display_name if chat.user1 else 'Unknown'
+                    }}</span
+                  >
+                </div>
+              </td>
+              <td>
+                <div class="user-info">
+                  <i class="fas fa-user"></i>
+                  <span
+                    >{{ chat.user2.display_name if chat.user2 else 'Unknown'
+                    }}</span
+                  >
+                </div>
+              </td>
+              <td>
+                <span class="chat-type-badge type-{{ chat.session_type }}">
+                  {{ chat.session_type|title }}
+                </span>
+              </td>
+              <td>{{ chat.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>
+                {% if chat.duration %} {{ chat.duration }}s {% else %} Ongoing
+                {% endif %}
+              </td>
+              <td>{{ chat.messages|length }}</td>
+              <td>
+                <div class="action-buttons">
+                  <button
+                    class="btn-secondary btn-small"
+                    onclick="viewChatDetails('{{ chat.id }}')"
+                  >
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                  {% if chat.messages %}
+                  <button
+                    class="btn-primary btn-small"
+                    onclick="downloadChatLog('{{ chat.id }}')"
+                  >
+                    <i class="fas fa-download"></i> Log
+                  </button>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div id="analytics" class="tab-pane">
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <h3>Chat Statistics</h3>
+          <div class="chart-placeholder">
+            <i class="fas fa-chart-bar"></i>
+            <p>Chat Type Distribution</p>
+            <div class="chart-stats">
+              <div class="chart-stat">
+                <span class="stat-label">Text Chats</span>
+                <span class="stat-value">{{ stats.text_chats }}</span>
+              </div>
+              <div class="chart-stat">
+                <span class="stat-label">Video Chats</span>
+                <span class="stat-value">{{ stats.video_chats }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <h3>User Activity</h3>
+          <div class="chart-placeholder">
+            <i class="fas fa-chart-line"></i>
+            <p>Daily Active Users</p>
+            <div class="chart-stats">
+              <div class="chart-stat">
+                <span class="stat-label">Today</span>
+                <span class="stat-value">{{ stats.daily_active_users }}</span>
+              </div>
+              <div class="chart-stat">
+                <span class="stat-label">This Week</span>
+                <span class="stat-value">{{ stats.weekly_active_users }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <h3>Platform Health</h3>
+          <div class="health-metrics">
+            <div class="metric">
+              <span class="metric-label">Uptime</span>
+              <span class="metric-value">99.8%</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Avg. Chat Duration</span>
+              <span class="metric-value">{{ stats.avg_chat_duration }}s</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Success Rate</span>
+              <span class="metric-value">98.5%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="recent-activity">
+        <h3>Recent Activity</h3>
+        <div class="activity-list">
+          {% for activity in recent_activity %}
+          <div class="activity-item">
+            <div class="activity-icon">
+              <i class="fas fa-{{ activity.icon }}"></i>
+            </div>
+            <div class="activity-content">
+              <p>{{ activity.message }}</p>
+              <small>{{ activity.timestamp }}</small>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modals -->
+<div id="reportDetailsModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Report Details</h3>
+      <button class="close-btn" onclick="closeModal('reportDetailsModal')">
+        &times;
+      </button>
+    </div>
+    <div class="modal-body" id="reportDetailsContent">
+      <!-- Report details will be loaded here -->
+    </div>
+  </div>
+</div>
+
+<div id="userDetailsModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>User Details</h3>
+      <button class="close-btn" onclick="closeModal('userDetailsModal')">
+        &times;
+      </button>
+    </div>
+    <div class="modal-body" id="userDetailsContent">
+      <!-- User details will be loaded here -->
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  // Tab management
+  function openTab(tabName) {
+    // Hide all tab panes
+    const tabPanes = document.getElementsByClassName("tab-pane");
+    for (let pane of tabPanes) {
+      pane.classList.remove("active");
+    }
+
+    // Remove active class from all tab buttons
+    const tabButtons = document.getElementsByClassName("tab-btn");
+    for (let button of tabButtons) {
+      button.classList.remove("active");
+    }
+
+    // Show the selected tab and activate the button
+    document.getElementById(tabName).classList.add("active");
+    event.currentTarget.classList.add("active");
+  }
+
+  // Modal management
+  function closeModal(modalId) {
+    document.getElementById(modalId).style.display = "none";
+  }
+
+  function showModal(modalId) {
+    document.getElementById(modalId).style.display = "flex";
+  }
+
+  // Report management
+  function resolveReport(reportId) {
+    if (confirm("Are you sure you want to mark this report as resolved?")) {
+      fetch(`/admin/resolve-report/${reportId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            toastr.success("Report resolved successfully");
+            setTimeout(() => location.reload(), 1000);
+          } else {
+            toastr.error("Failed to resolve report");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          toastr.error("An error occurred");
+        });
+    }
+  }
+
+  function banUser(userId, reportId = null) {
+    if (
+      confirm(
+        "Are you sure you want to ban this user? This action cannot be undone."
+      )
+    ) {
+      fetch("/admin/ban-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          report_id: reportId,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            toastr.success("User banned successfully");
+            if (reportId) {
+              resolveReport(reportId);
+            } else {
+              setTimeout(() => location.reload(), 1000);
+            }
+          } else {
+            toastr.error(data.error || "Failed to ban user");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          toastr.error("An error occurred");
+        });
+    }
+  }
+
+  function viewReportDetails(reportId) {
+    fetch(`/admin/report/${reportId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          const content = document.getElementById("reportDetailsContent");
+          content.innerHTML = `
+                    <div class="report-details">
+                        <div class="detail-row">
+                            <label>Report ID:</label>
+                            <span>#${data.report.id}</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Reporter:</label>
+                            <span>${
+                              data.report.reporter_name || "Anonymous"
+                            }</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Reported User:</label>
+                            <span>${
+                              data.report.reported_user_name || "Anonymous"
+                            }</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Reason:</label>
+                            <div class="reason-full">${data.report.reason}</div>
+                        </div>
+                        <div class="detail-row">
+                            <label>Date:</label>
+                            <span>${new Date(
+                              data.report.created_at
+                            ).toLocaleString()}</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Status:</label>
+                            <span class="status-badge status-${
+                              data.report.status
+                            }">${data.report.status}</span>
+                        </div>
+                    </div>
+                `;
+          showModal("reportDetailsModal");
+        } else {
+          toastr.error("Failed to load report details");
+        }
+      });
+  }
+
+  function viewUserDetails(userId) {
+    fetch(`/admin/user/${userId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          const content = document.getElementById("userDetailsContent");
+          content.innerHTML = `
+                    <div class="user-details">
+                        <div class="detail-row">
+                            <label>User ID:</label>
+                            <span>${data.user.id}</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Display Name:</label>
+                            <span>${data.user.display_name || "N/A"}</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Email:</label>
+                            <span>${data.user.email}</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Status:</label>
+                            <span class="status-badge status-${
+                              data.user.is_verified ? "verified" : "pending"
+                            }">
+                                ${
+                                  data.user.is_verified ? "Verified" : "Pending"
+                                }
+                            </span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Joined:</label>
+                            <span>${new Date(
+                              data.user.created_at
+                            ).toLocaleString()}</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Last Login:</label>
+                            <span>${
+                              data.user.last_login
+                                ? new Date(
+                                    data.user.last_login
+                                  ).toLocaleString()
+                                : "Never"
+                            }</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Total Chats:</label>
+                            <span>${data.user.chat_count || 0}</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Reports Against:</label>
+                            <span>${data.user.report_count || 0}</span>
+                        </div>
+                    </div>
+                `;
+          showModal("userDetailsModal");
+        } else {
+          toastr.error("Failed to load user details");
+        }
+      });
+  }
+
+  function viewChatDetails(chatId) {
+    // Implement chat details view
+    toastr.info("Chat details feature coming soon");
+  }
+
+  function downloadChatLog(chatId) {
+    // Implement chat log download
+    toastr.info("Chat log download feature coming soon");
+  }
+
+  function refreshReports() {
+    location.reload();
+  }
+
+  function searchUsers() {
+    const searchTerm = document.getElementById("userSearch").value;
+    // Implement user search
+    toastr.info("User search feature coming soon");
+  }
+
+  function filterChats() {
+    const filterValue = document.getElementById("chatTypeFilter").value;
+    // Implement chat filtering
+    toastr.info("Chat filtering feature coming soon");
+  }
+
+  // Close modal when clicking outside
+  window.onclick = function (event) {
+    const modals = document.getElementsByClassName("modal");
+    for (let modal of modals) {
+      if (event.target === modal) {
+        modal.style.display = "none";
+      }
+    }
+  };
+
+  // Initialize admin features
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("Admin dashboard initialized");
+  });
+</script>
+{% endblock %}
