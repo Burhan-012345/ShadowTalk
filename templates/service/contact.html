@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Us - ShadowTalk</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #8b5cf6;
+        --primary-dark: #7c3aed;
+        --secondary: #1a1a1a;
+        --accent: #10b981;
+        --text: #e2e8f0;
+        --text-secondary: #94a3b8;
+        --background: #0f0f0f;
+        --card-bg: #1e1e1e;
+        --gradient: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: var(--background);
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      .navbar {
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--card-bg);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.5rem;
+        font-weight: bold;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-decoration: none;
+      }
+
+      .logo i {
+        font-size: 2rem;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+      }
+
+      .nav-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.3s ease;
+        font-weight: 500;
+      }
+
+      .nav-links a:hover {
+        color: var(--text);
+      }
+
+      .service-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 3rem 2rem;
+      }
+
+      .service-header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      .service-header h1 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .service-header p {
+        color: var(--text-secondary);
+        font-size: 1.2rem;
+      }
+
+      .contact-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+      }
+
+      .contact-card {
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.3s ease;
+      }
+
+      .contact-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .contact-icon {
+        font-size: 3rem;
+        color: var(--primary);
+        margin-bottom: 1rem;
+      }
+
+      .contact-card h3 {
+        margin-bottom: 1rem;
+        font-size: 1.4rem;
+      }
+
+      .contact-card p {
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+      }
+
+      .contact-link {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .contact-link:hover {
+        text-decoration: underline;
+      }
+
+      .contact-form {
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text);
+        font-weight: 500;
+      }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 1rem;
+        background: #2d2d2d;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: var(--text);
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+
+      .form-group textarea {
+        resize: vertical;
+        min-height: 120px;
+      }
+
+      .submit-btn {
+        background: var(--gradient);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+      }
+
+      .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+      }
+
+      .faq-section {
+        margin-top: 4rem;
+      }
+
+      .faq-item {
+        background: var(--card-bg);
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+      }
+
+      .faq-question {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+      }
+
+      .faq-answer {
+        margin-top: 1rem;
+        color: var(--text-secondary);
+        display: none;
+      }
+
+      .faq-item.active .faq-answer {
+        display: block;
+      }
+
+      .footer {
+        background: var(--card-bg);
+        padding: 3rem 2rem;
+        text-align: center;
+        margin-top: 4rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .footer-links {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+      }
+
+      .footer-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.3s ease;
+      }
+
+      .footer-links a:hover {
+        color: var(--text);
+      }
+
+      .copyright {
+        color: var(--text-secondary);
+        margin-top: 2rem;
+      }
+
+      @media (max-width: 768px) {
+        .service-header h1 {
+          font-size: 2rem;
+        }
+
+        .nav-links {
+          display: none;
+        }
+
+        .contact-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .contact-form {
+          padding: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+      <a href="{{ url_for('intro') }}" class="logo">
+        <i class="fas fa-comments"></i>
+        <span>ShadowTalk</span>
+      </a>
+      <div class="nav-links">
+        <a href="{{ url_for('intro') }}">Home</a>
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('register') }}">Sign Up</a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="service-container">
+      <div class="service-header">
+        <h1>Contact Us</h1>
+        <p>We're here to help! Get in touch with our support team.</p>
+      </div>
+
+      <!-- Contact Methods Grid -->
+      <div class="contact-grid">
+        <div class="contact-card">
+          <div class="contact-icon">
+            <i class="fas fa-envelope"></i>
+          </div>
+          <h3>General Support</h3>
+          <p>For general questions and platform support</p>
+          <a href="mailto:support@shadowtalk.com" class="contact-link"
+            >support@shadowtalk.com</a
+          >
+          <p><small>Response time: 24-48 hours</small></p>
+        </div>
+
+        <div class="contact-card">
+          <div class="contact-icon">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <h3>Safety & Reports</h3>
+          <p>Report safety concerns or abusive behavior</p>
+          <a href="mailto:safety@shadowtalk.com" class="contact-link"
+            >safety@shadowtalk.com</a
+          >
+          <p><small>Response time: 1-2 hours</small></p>
+        </div>
+
+        <div class="contact-card">
+          <div class="contact-icon">
+            <i class="fas fa-gavel"></i>
+          </div>
+          <h3>Legal & Privacy</h3>
+          <p>Privacy concerns and legal inquiries</p>
+          <a href="mailto:legal@shadowtalk.com" class="contact-link"
+            >legal@shadowtalk.com</a
+          >
+          <p><small>Response time: 2-3 business days</small></p>
+        </div>
+      </div>
+
+      <!-- Contact Form -->
+      <div class="contact-form">
+        <h2
+          style="text-align: center; margin-bottom: 2rem; color: var(--primary)"
+        >
+          Send us a Message
+        </h2>
+
+        <form id="contactForm">
+          <div class="form-group">
+            <label for="name">Your Name</label>
+            <input type="text" id="name" name="name" required />
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" required />
+          </div>
+
+          <div class="form-group">
+            <label for="subject">Subject</label>
+            <select id="subject" name="subject" required>
+              <option value="">Select a category</option>
+              <option value="general">General Inquiry</option>
+              <option value="technical">Technical Support</option>
+              <option value="safety">Safety Concern</option>
+              <option value="feature">Feature Request</option>
+              <option value="bug">Bug Report</option>
+              <option value="partnership">Partnership</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="message">Message</label>
+            <textarea
+              id="message"
+              name="message"
+              placeholder="Please describe your issue or question in detail..."
+              required
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="urgency">Urgency</label>
+            <select id="urgency" name="urgency">
+              <option value="low">Low - General question</option>
+              <option value="medium" selected>Medium - Need help soon</option>
+              <option value="high">High - Urgent issue</option>
+              <option value="critical">Critical - Safety emergency</option>
+            </select>
+          </div>
+
+          <button type="submit" class="submit-btn">
+            <i class="fas fa-paper-plane"></i>
+            Send Message
+          </button>
+        </form>
+      </div>
+
+      <!-- FAQ Section -->
+      <div class="faq-section">
+        <h2
+          style="text-align: center; margin-bottom: 2rem; color: var(--primary)"
+        >
+          Frequently Asked Questions
+        </h2>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>How long does it take to get a response?</span>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer">
+            <p>
+              Response times vary by category: Safety concerns (1-2 hours),
+              General support (24-48 hours), Legal inquiries (2-3 business
+              days).
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>What information should I include in a safety report?</span>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer">
+            <p>
+              Include the username, approximate time of incident, description of
+              the behavior, and any relevant screenshots (automatically
+              anonymized).
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Can I request my data to be deleted?</span>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer">
+            <p>
+              Yes, you can request account deletion at any time. Visit your
+              account settings or contact privacy@shadowtalk.com for assistance.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>How do I report a technical issue?</span>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer">
+            <p>
+              Use the technical support category in the form above. Include your
+              browser/device information and steps to reproduce the issue.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="logo">
+          <i class="fas fa-comments"></i>
+          <span>ShadowTalk</span>
+        </div>
+        <div class="footer-links">
+          <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a>
+          <a href="{{ url_for('terms_of_service') }}">Terms of Service</a>
+          <a href="{{ url_for('safety_guidelines') }}">Safety Guidelines</a>
+          <a href="{{ url_for('contact') }}">Contact</a>
+          <a href="{{ url_for('help_center') }}">Help Center</a>
+        </div>
+        <div class="copyright">
+          &copy; 2024 ShadowTalk. All rights reserved. | Anonymous Chat Platform
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // FAQ functionality
+      document.querySelectorAll(".faq-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          item.classList.toggle("active");
+        });
+      });
+
+      // Contact form submission
+      document
+        .getElementById("contactForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          // Get form data
+          const formData = new FormData(this);
+          const data = Object.fromEntries(formData);
+
+          // Show success message (in a real app, this would send to a server)
+          alert("Thank you for your message! We will get back to you soon.");
+          this.reset();
+        });
+
+      // Auto-expand critical urgency
+      document
+        .getElementById("urgency")
+        .addEventListener("change", function () {
+          if (this.value === "critical") {
+            alert(
+              "For critical safety emergencies, please also email safety@shadowtalk.com directly for fastest response."
+            );
+          }
+        });
+    </script>
+  </body>
+</html>

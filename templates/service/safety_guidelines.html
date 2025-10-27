@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Safety Guidelines - ShadowTalk</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      /* Same base styles as previous pages */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #8b5cf6;
+        --primary-dark: #7c3aed;
+        --secondary: #1a1a1a;
+        --accent: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --text: #e2e8f0;
+        --text-secondary: #94a3b8;
+        --background: #0f0f0f;
+        --card-bg: #1e1e1e;
+        --gradient: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: var(--background);
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      .navbar {
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--card-bg);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.5rem;
+        font-weight: bold;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-decoration: none;
+      }
+
+      .logo i {
+        font-size: 2rem;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+      }
+
+      .nav-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.3s ease;
+        font-weight: 500;
+      }
+
+      .nav-links a:hover {
+        color: var(--text);
+      }
+
+      .service-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 3rem 2rem;
+      }
+
+      .service-header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      .service-header h1 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .service-header p {
+        color: var(--text-secondary);
+        font-size: 1.2rem;
+      }
+
+      .safety-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+      }
+
+      .safety-card {
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.3s ease;
+      }
+
+      .safety-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .safety-card.danger {
+        border-left: 4px solid var(--danger);
+      }
+
+      .safety-card.warning {
+        border-left: 4px solid var(--warning);
+      }
+
+      .safety-card.safe {
+        border-left: 4px solid var(--accent);
+      }
+
+      .safety-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .safety-card.danger .safety-icon {
+        color: var(--danger);
+      }
+
+      .safety-card.warning .safety-icon {
+        color: var(--warning);
+      }
+
+      .safety-card.safe .safety-icon {
+        color: var(--accent);
+      }
+
+      .safety-card h3 {
+        margin-bottom: 1rem;
+        font-size: 1.4rem;
+      }
+
+      .safety-card ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      .safety-card li {
+        margin-bottom: 0.5rem;
+        padding-left: 1.5rem;
+        position: relative;
+        color: var(--text-secondary);
+      }
+
+      .safety-card li:before {
+        content: "•";
+        color: var(--primary);
+        position: absolute;
+        left: 0;
+      }
+
+      .emergency-section {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid var(--danger);
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 2rem 0;
+        text-align: center;
+      }
+
+      .emergency-section h2 {
+        color: var(--danger);
+        margin-bottom: 1rem;
+      }
+
+      .emergency-contacts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+
+      .emergency-contact {
+        background: rgba(239, 68, 68, 0.2);
+        padding: 1rem;
+        border-radius: 10px;
+        border: 1px solid var(--danger);
+      }
+
+      .content-section {
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .content-section h2 {
+        color: var(--primary);
+        margin-bottom: 1rem;
+        font-size: 1.8rem;
+      }
+
+      .content-section h3 {
+        color: var(--text);
+        margin: 1.5rem 0 1rem;
+        font-size: 1.3rem;
+      }
+
+      .content-section p {
+        margin-bottom: 1rem;
+        color: var(--text-secondary);
+      }
+
+      .content-section ul {
+        margin: 1rem 0;
+        padding-left: 2rem;
+      }
+
+      .content-section li {
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+      }
+
+      .footer {
+        background: var(--card-bg);
+        padding: 3rem 2rem;
+        text-align: center;
+        margin-top: 4rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .footer-links {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+      }
+
+      .footer-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.3s ease;
+      }
+
+      .footer-links a:hover {
+        color: var(--text);
+      }
+
+      .copyright {
+        color: var(--text-secondary);
+        margin-top: 2rem;
+      }
+
+      @media (max-width: 768px) {
+        .service-header h1 {
+          font-size: 2rem;
+        }
+
+        .nav-links {
+          display: none;
+        }
+
+        .safety-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .content-section {
+          padding: 1.5rem;
+        }
+
+        .footer-links {
+          flex-direction: column;
+          gap: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+      <a href="{{ url_for('intro') }}" class="logo">
+        <i class="fas fa-comments"></i>
+        <span>ShadowTalk</span>
+      </a>
+      <div class="nav-links">
+        <a href="{{ url_for('intro') }}">Home</a>
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('register') }}">Sign Up</a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="service-container">
+      <div class="service-header">
+        <h1>Safety Guidelines</h1>
+        <p>
+          Your safety is our top priority. Follow these guidelines for a secure
+          chatting experience.
+        </p>
+      </div>
+
+      <!-- Emergency Section -->
+      <div class="emergency-section">
+        <h2><i class="fas fa-exclamation-triangle"></i> Emergency Resources</h2>
+        <p>
+          If you're in immediate danger or need urgent help, contact local
+          emergency services.
+        </p>
+
+        <div class="emergency-contacts">
+          <div class="emergency-contact">
+            <h3>🆘 Emergency Services</h3>
+            <p>Police, Fire, Ambulance</p>
+            <strong>911 (US) or 112 (EU)</strong>
+          </div>
+          <div class="emergency-contact">
+            <h3>📞 Crisis Hotline</h3>
+            <p>Suicide & Crisis Lifeline</p>
+            <strong>988 (US & Canada)</strong>
+          </div>
+          <div class="emergency-contact">
+            <h3>👥 Abuse Hotline</h3>
+            <p>Domestic Violence Support</p>
+            <strong>1-800-799-7233</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Safety Cards Grid -->
+      <div class="safety-grid">
+        <div class="safety-card danger">
+          <div class="safety-icon">
+            <i class="fas fa-ban"></i>
+          </div>
+          <h3>Never Share</h3>
+          <ul>
+            <li>Personal identification</li>
+            <li>Home or work address</li>
+            <li>Financial information</li>
+            <li>Social media accounts</li>
+            <li>Phone numbers</li>
+            <li>Exact location data</li>
+          </ul>
+        </div>
+
+        <div class="safety-card warning">
+          <div class="safety-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <h3>Warning Signs</h3>
+          <ul>
+            <li>Requests for personal information</li>
+            <li>Pressure to move to other platforms</li>
+            <li>Threatening or aggressive language</li>
+            <li>Inappropriate content or requests</li>
+            <li>Suspicious link sharing</li>
+            <li>Attempts to meet in person</li>
+          </ul>
+        </div>
+
+        <div class="safety-card safe">
+          <div class="safety-icon">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <h3>Safe Practices</h3>
+          <ul>
+            <li>Use the platform's anonymity features</li>
+            <li>Report suspicious behavior immediately</li>
+            <li>Block users who make you uncomfortable</li>
+            <li>Trust your instincts</li>
+            <li>Keep conversations on the platform</li>
+            <li>Use strong, unique passwords</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>Reporting and Blocking</h2>
+
+        <h3>When to Report</h3>
+        <p>Immediately report users who:</p>
+        <ul>
+          <li>Send threatening or harassing messages</li>
+          <li>Share inappropriate or explicit content</li>
+          <li>Attempt to obtain personal information</li>
+          <li>Engage in hate speech or discrimination</li>
+          <li>Share spam or malicious links</li>
+          <li>Violate our Terms of Service in any way</li>
+        </ul>
+
+        <h3>How to Report</h3>
+        <ul>
+          <li>Click the report button in the chat interface</li>
+          <li>Select the appropriate violation category</li>
+          <li>Provide specific details about the incident</li>
+          <li>
+            Submit screenshots if possible (they're automatically anonymized)
+          </li>
+        </ul>
+
+        <h3>Blocking Users</h3>
+        <p>You can block any user at any time. Blocked users cannot:</p>
+        <ul>
+          <li>Send you messages</li>
+          <li>See your online status</li>
+          <li>Match with you in future chats</li>
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h2>AI Safety Features</h2>
+
+        <h3>Automatic Moderation</h3>
+        <p>Our AI systems work 24/7 to protect you:</p>
+        <ul>
+          <li>Real-time toxicity detection</li>
+          <li>Automatic content filtering</li>
+          <li>Suspicious behavior monitoring</li>
+          <li>Pattern recognition for repeat offenders</li>
+        </ul>
+
+        <h3>Privacy Protection</h3>
+        <ul>
+          <li>Automatic blurring of personal information</li>
+          <li>Encrypted message transmission</li>
+          <li>No permanent chat logs stored</li>
+          <li>Automatic data deletion policies</li>
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h2>Mental Health and Well-being</h2>
+
+        <h3>Setting Boundaries</h3>
+        <ul>
+          <li>Take regular breaks from chatting</li>
+          <li>Set time limits for your sessions</li>
+          <li>Don't feel obligated to continue uncomfortable conversations</li>
+          <li>Remember you can leave any chat at any time</li>
+        </ul>
+
+        <h3>Recognizing Emotional Impact</h3>
+        <p>Online interactions can affect your mental health. Be aware of:</p>
+        <ul>
+          <li>Feeling drained or anxious after chats</li>
+          <li>Changes in your mood or sleep patterns</li>
+          <li>Excessive time spent on the platform</li>
+          <li>Difficulty disconnecting from conversations</li>
+        </ul>
+
+        <h3>Seeking Support</h3>
+        <p>If you're experiencing emotional distress:</p>
+        <ul>
+          <li>Reach out to trusted friends or family</li>
+          <li>Contact mental health professionals</li>
+          <li>Use crisis hotlines for immediate support</li>
+          <li>Consider taking a break from online platforms</li>
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h2>Parental Guidance</h2>
+        <p>
+          ShadowTalk is intended for users 18 years and older. Parents and
+          guardians should:
+        </p>
+        <ul>
+          <li>Monitor internet usage of minors</li>
+          <li>Discuss online safety practices</li>
+          <li>Use parental control software</li>
+          <li>Report any underage usage to us immediately</li>
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h2>Legal Protection</h2>
+        <p>Remember that online actions have real-world consequences:</p>
+        <ul>
+          <li>Threats and harassment are illegal in most jurisdictions</li>
+          <li>Sharing explicit content without consent may violate laws</li>
+          <li>Impersonation and fraud are criminal offenses</li>
+          <li>We cooperate with law enforcement for serious violations</li>
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h2>Need Help?</h2>
+        <p>If you have safety concerns or need assistance:</p>
+        <ul>
+          <li>Email: safety@shadowtalk.com</li>
+          <li>Use the in-app reporting system</li>
+          <li>
+            Visit our
+            <a href="{{ url_for('help_center') }}" style="color: var(--primary)"
+              >Help Center</a
+            >
+          </li>
+          <li>
+            Contact us through our
+            <a href="{{ url_for('contact') }}" style="color: var(--primary)"
+              >Contact Page</a
+            >
+          </li>
+        </ul>
+        <p>
+          <strong>Response Time:</strong> We typically respond to safety reports
+          within 1-2 hours.
+        </p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="logo">
+          <i class="fas fa-comments"></i>
+          <span>ShadowTalk</span>
+        </div>
+        <div class="footer-links">
+          <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a>
+          <a href="{{ url_for('terms_of_service') }}">Terms of Service</a>
+          <a href="{{ url_for('safety_guidelines') }}">Safety Guidelines</a>
+          <a href="{{ url_for('contact') }}">Contact</a>
+          <a href="{{ url_for('help_center') }}">Help Center</a>
+        </div>
+        <div class="copyright">
+          &copy; 2024 ShadowTalk. All rights reserved. | Anonymous Chat Platform
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

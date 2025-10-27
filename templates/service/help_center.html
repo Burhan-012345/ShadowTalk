@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Help Center - ShadowTalk</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #8b5cf6;
+        --primary-dark: #7c3aed;
+        --secondary: #1a1a1a;
+        --accent: #10b981;
+        --text: #e2e8f0;
+        --text-secondary: #94a3b8;
+        --background: #0f0f0f;
+        --card-bg: #1e1e1e;
+        --gradient: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: var(--background);
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      .navbar {
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--card-bg);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.5rem;
+        font-weight: bold;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-decoration: none;
+      }
+
+      .logo i {
+        font-size: 2rem;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+      }
+
+      .nav-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.3s ease;
+        font-weight: 500;
+      }
+
+      .nav-links a:hover {
+        color: var(--text);
+      }
+
+      .service-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 3rem 2rem;
+      }
+
+      .service-header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      .service-header h1 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .service-header p {
+        color: var(--text-secondary);
+        font-size: 1.2rem;
+      }
+
+      .search-box {
+        max-width: 600px;
+        margin: 0 auto 3rem;
+        position: relative;
+      }
+
+      .search-box input {
+        width: 100%;
+        padding: 1rem 1rem 1rem 3rem;
+        background: var(--card-bg);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50px;
+        color: var(--text);
+        font-size: 1rem;
+      }
+
+      .search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+      }
+
+      .help-categories {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin-bottom: 4rem;
+      }
+
+      .category-card {
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.3s ease;
+        cursor: pointer;
+      }
+
+      .category-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .category-icon {
+        font-size: 2.5rem;
+        color: var(--primary);
+        margin-bottom: 1rem;
+      }
+
+      .category-card h3 {
+        margin-bottom: 1rem;
+        font-size: 1.4rem;
+      }
+
+      .category-card p {
+        color: var(--text-secondary);
+      }
+
+      .faq-section {
+        margin-bottom: 4rem;
+      }
+
+      .faq-category {
+        margin-bottom: 3rem;
+      }
+
+      .faq-category h2 {
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+        font-size: 1.8rem;
+      }
+
+      .faq-item {
+        background: var(--card-bg);
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+      }
+
+      .faq-question {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+      }
+
+      .faq-answer {
+        margin-top: 1rem;
+        color: var(--text-secondary);
+        display: none;
+      }
+
+      .faq-item.active .faq-answer {
+        display: block;
+      }
+
+      .quick-links {
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .quick-links h2 {
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+        text-align: center;
+      }
+
+      .links-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+      }
+
+      .quick-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: #2d2d2d;
+        border-radius: 8px;
+        text-decoration: none;
+        color: var(--text);
+        transition: background 0.3s ease;
+      }
+
+      .quick-link:hover {
+        background: #3d3d3d;
+      }
+
+      .quick-link i {
+        color: var(--primary);
+        font-size: 1.2rem;
+      }
+
+      .footer {
+        background: var(--card-bg);
+        padding: 3rem 2rem;
+        text-align: center;
+        margin-top: 4rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .footer-links {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+      }
+
+      .footer-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.3s ease;
+      }
+
+      .footer-links a:hover {
+        color: var(--text);
+      }
+
+      .copyright {
+        color: var(--text-secondary);
+        margin-top: 2rem;
+      }
+
+      @media (max-width: 768px) {
+        .service-header h1 {
+          font-size: 2rem;
+        }
+
+        .nav-links {
+          display: none;
+        }
+
+        .help-categories {
+          grid-template-columns: 1fr;
+        }
+
+        .links-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+      <a href="{{ url_for('intro') }}" class="logo">
+        <i class="fas fa-comments"></i>
+        <span>ShadowTalk</span>
+      </a>
+      <div class="nav-links">
+        <a href="{{ url_for('intro') }}">Home</a>
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('register') }}">Sign Up</a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="service-container">
+      <div class="service-header">
+        <h1>Help Center</h1>
+        <p>Find answers to common questions and get support</p>
+      </div>
+
+      <!-- Search Box -->
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search for help articles..." />
+      </div>
+
+      <!-- Help Categories -->
+      <div class="help-categories">
+        <div class="category-card" onclick="scrollToSection('getting-started')">
+          <div class="category-icon">
+            <i class="fas fa-rocket"></i>
+          </div>
+          <h3>Getting Started</h3>
+          <p>New user guide and basic setup</p>
+        </div>
+
+        <div class="category-card" onclick="scrollToSection('account')">
+          <div class="category-icon">
+            <i class="fas fa-user-cog"></i>
+          </div>
+          <h3>Account & Profile</h3>
+          <p>Manage your account settings</p>
+        </div>
+
+        <div class="category-card" onclick="scrollToSection('chatting')">
+          <div class="category-icon">
+            <i class="fas fa-comments"></i>
+          </div>
+          <h3>Chatting Features</h3>
+          <p>Using chat and voice features</p>
+        </div>
+
+        <div class="category-card" onclick="scrollToSection('safety')">
+          <div class="category-icon">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <h3>Safety & Privacy</h3>
+          <p>Stay safe and protect your privacy</p>
+        </div>
+
+        <div class="category-card" onclick="scrollToSection('troubleshooting')">
+          <div class="category-icon">
+            <i class="fas fa-tools"></i>
+          </div>
+          <h3>Troubleshooting</h3>
+          <p>Fix common issues and errors</p>
+        </div>
+
+        <div class="category-card" onclick="scrollToSection('technical')">
+          <div class="category-icon">
+            <i class="fas fa-laptop-code"></i>
+          </div>
+          <h3>Technical Support</h3>
+          <p>Advanced technical assistance</p>
+        </div>
+      </div>
+
+      <!-- FAQ Sections -->
+      <div class="faq-section">
+        <!-- Getting Started -->
+        <div class="faq-category" id="getting-started">
+          <h2><i class="fas fa-rocket"></i> Getting Started</h2>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>How do I create an account?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                Click "Get Started Free" on the homepage, enter your email,
+                create a password, and verify your email address. No personal
+                information is required beyond your email.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Is ShadowTalk really anonymous?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                Yes! We don't require personal information, and chat partners
+                only see your display name. We don't store chat logs
+                permanently, and your identity remains protected.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>What are the system requirements?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                ShadowTalk works on modern browsers (Chrome, Firefox, Safari,
+                Edge) and mobile devices. For voice chat, you'll need a
+                microphone and speakers/headphones.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account & Profile -->
+        <div class="faq-category" id="account">
+          <h2><i class="fas fa-user-cog"></i> Account & Profile</h2>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>How do I change my display name?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                Go to your profile settings, click "Edit Profile," and update
+                your display name. You can change it as often as you like.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Can I delete my account?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                Yes, you can permanently delete your account in the account
+                settings. This will remove all your data from our systems.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>How do I reset my password?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                Click "Forgot Password" on the login page, enter your email, and
+                follow the instructions sent to your inbox.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chatting Features -->
+        <div class="faq-category" id="chatting">
+          <h2><i class="fas fa-comments"></i> Chatting Features</h2>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>How does the matching system work?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                Our AI matches you with strangers based on shared interests and
+                conversation patterns. You can also use filters to find specific
+                types of chat partners.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Can I use voice chat?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                Yes! Once connected with a partner, click the microphone icon to
+                request voice chat. Both users need to consent to start voice
+                communication.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>What are suggested replies?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                Our AI analyzes conversations and suggests relevant responses to
+                keep chats flowing smoothly. These are optional and you're free
+                to type your own messages.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Safety & Privacy -->
+        <div class="faq-category" id="safety">
+          <h2><i class="fas fa-shield-alt"></i> Safety & Privacy</h2>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>How do I report a user?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                Click the report button in the chat interface, select the
+                violation type, and provide details. Our safety team reviews
+                reports promptly.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>What happens when I block someone?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                Blocked users can no longer message you, see your online status,
+                or be matched with you in future chats.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Is my data secure?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                We use end-to-end encryption, don't store chat logs permanently,
+                and follow strict data protection practices. Read our
+                <a
+                  href="{{ url_for('privacy_policy') }}"
+                  style="color: var(--primary)"
+                  >Privacy Policy</a
+                >
+                for details.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div class="faq-category" id="troubleshooting">
+          <h2><i class="fas fa-tools"></i> Troubleshooting</h2>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Why can't I find a chat partner?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                This could be due to low user traffic in your region or strict
+                filters. Try adjusting your search criteria or try again during
+                peak hours.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Why is my voice chat not working?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                Check your browser permissions to ensure microphone access is
+                allowed. Also verify that your partner has accepted the voice
+                chat request.
+              </p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Why are my messages not sending?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>
+                Check your internet connection. If the problem persists, refresh
+                the page or try switching browsers.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="quick-links">
+        <h2>Quick Support Links</h2>
+        <div class="links-grid">
+          <a href="{{ url_for('contact') }}" class="quick-link">
+            <i class="fas fa-envelope"></i>
+            <span>Contact Support</span>
+          </a>
+          <a href="{{ url_for('safety_guidelines') }}" class="quick-link">
+            <i class="fas fa-shield-alt"></i>
+            <span>Safety Guidelines</span>
+          </a>
+          <a href="{{ url_for('privacy_policy') }}" class="quick-link">
+            <i class="fas fa-lock"></i>
+            <span>Privacy Policy</span>
+          </a>
+          <a href="{{ url_for('terms_of_service') }}" class="quick-link">
+            <i class="fas fa-file-contract"></i>
+            <span>Terms of Service</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="logo">
+          <i class="fas fa-comments"></i>
+          <span>ShadowTalk</span>
+        </div>
+        <div class="footer-links">
+          <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a>
+          <a href="{{ url_for('terms_of_service') }}">Terms of Service</a>
+          <a href="{{ url_for('safety_guidelines') }}">Safety Guidelines</a>
+          <a href="{{ url_for('contact') }}">Contact</a>
+          <a href="{{ url_for('help_center') }}">Help Center</a>
+        </div>
+        <div class="copyright">
+          &copy; 2024 ShadowTalk. All rights reserved. | Anonymous Chat Platform
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // FAQ functionality
+      document.querySelectorAll(".faq-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          item.classList.toggle("active");
+        });
+      });
+
+      // Search functionality
+      const searchInput = document.querySelector(".search-box input");
+      const faqItems = document.querySelectorAll(".faq-item");
+
+      searchInput.addEventListener("input", function () {
+        const searchTerm = this.value.toLowerCase();
+
+        faqItems.forEach((item) => {
+          const question = item
+            .querySelector(".faq-question span")
+            .textContent.toLowerCase();
+          const answer = item
+            .querySelector(".faq-answer")
+            .textContent.toLowerCase();
+
+          if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+            item.style.display = "block";
+            // Expand matching items
+            if (searchTerm) {
+              item.classList.add("active");
+            }
+          } else {
+            item.style.display = "none";
+          }
+        });
+      });
+
+      // Scroll to section
+      function scrollToSection(sectionId) {
+        document.getElementById(sectionId).scrollIntoView({
+          behavior: "smooth",
+        });
+      }
+
+      // Auto-expand section when navigated to via URL hash
+      window.addEventListener("load", function () {
+        const hash = window.location.hash;
+        if (hash) {
+          const targetSection = document.querySelector(hash);
+          if (targetSection) {
+            targetSection.scrollIntoView({ behavior: "smooth" });
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

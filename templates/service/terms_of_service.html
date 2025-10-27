@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terms of Service - ShadowTalk</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      /* Same styles as privacy_policy.html - just change the content */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #8b5cf6;
+        --primary-dark: #7c3aed;
+        --secondary: #1a1a1a;
+        --accent: #10b981;
+        --text: #e2e8f0;
+        --text-secondary: #94a3b8;
+        --background: #0f0f0f;
+        --card-bg: #1e1e1e;
+        --gradient: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: var(--background);
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      .navbar {
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--card-bg);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.5rem;
+        font-weight: bold;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-decoration: none;
+      }
+
+      .logo i {
+        font-size: 2rem;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+      }
+
+      .nav-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.3s ease;
+        font-weight: 500;
+      }
+
+      .nav-links a:hover {
+        color: var(--text);
+      }
+
+      .service-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 3rem 2rem;
+      }
+
+      .service-header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      .service-header h1 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .service-header p {
+        color: var(--text-secondary);
+        font-size: 1.2rem;
+      }
+
+      .last-updated {
+        text-align: center;
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+        font-style: italic;
+      }
+
+      .content-section {
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .content-section h2 {
+        color: var(--primary);
+        margin-bottom: 1rem;
+        font-size: 1.8rem;
+      }
+
+      .content-section h3 {
+        color: var(--text);
+        margin: 1.5rem 0 1rem;
+        font-size: 1.3rem;
+      }
+
+      .content-section p {
+        margin-bottom: 1rem;
+        color: var(--text-secondary);
+      }
+
+      .content-section ul,
+      .content-section ol {
+        margin: 1rem 0;
+        padding-left: 2rem;
+      }
+
+      .content-section li {
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+      }
+
+      .highlight-box {
+        background: rgba(139, 92, 246, 0.1);
+        border-left: 4px solid var(--primary);
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .warning-box {
+        background: rgba(239, 68, 68, 0.1);
+        border-left: 4px solid #ef4444;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .footer {
+        background: var(--card-bg);
+        padding: 3rem 2rem;
+        text-align: center;
+        margin-top: 4rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .footer-links {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+      }
+
+      .footer-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.3s ease;
+      }
+
+      .footer-links a:hover {
+        color: var(--text);
+      }
+
+      .copyright {
+        color: var(--text-secondary);
+        margin-top: 2rem;
+      }
+
+      @media (max-width: 768px) {
+        .service-header h1 {
+          font-size: 2rem;
+        }
+
+        .nav-links {
+          display: none;
+        }
+
+        .content-section {
+          padding: 1.5rem;
+        }
+
+        .footer-links {
+          flex-direction: column;
+          gap: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+      <a href="{{ url_for('intro') }}" class="logo">
+        <i class="fas fa-comments"></i>
+        <span>ShadowTalk</span>
+      </a>
+      <div class="nav-links">
+        <a href="{{ url_for('intro') }}">Home</a>
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('register') }}">Sign Up</a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="service-container">
+      <div class="service-header">
+        <h1>Terms of Service</h1>
+        <p>Please read these terms carefully before using ShadowTalk</p>
+      </div>
+
+      <div class="last-updated">Last updated: December 2024</div>
+
+      <div class="highlight-box">
+        <strong>Important:</strong> By accessing or using ShadowTalk, you agree
+        to be bound by these Terms of Service. If you disagree with any part of
+        the terms, you may not access our service.
+      </div>
+
+      <div class="content-section">
+        <h2>1. Acceptance of Terms</h2>
+        <p>
+          ShadowTalk ("we," "our," or "us") provides anonymous chat services
+          subject to the following Terms of Service. These terms affect your
+          legal rights and responsibilities.
+        </p>
+      </div>
+
+      <div class="content-section">
+        <h2>2. Eligibility</h2>
+        <p>To use ShadowTalk, you must:</p>
+        <ul>
+          <li>Be at least 18 years old</li>
+          <li>Have the legal capacity to enter into binding contracts</li>
+          <li>
+            Not be prohibited from receiving our services under applicable laws
+          </li>
+          <li>Provide accurate registration information</li>
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h2>3. User Accounts</h2>
+
+        <h3>3.1 Account Creation</h3>
+        <p>
+          You must create an account to access most features. You are
+          responsible for:
+        </p>
+        <ul>
+          <li>Maintaining account confidentiality</li>
+          <li>All activities under your account</li>
+          <li>Promptly notifying us of security breaches</li>
+        </ul>
+
+        <h3>3.2 Account Termination</h3>
+        <p>
+          We reserve the right to suspend or terminate accounts that violate
+          these terms.
+        </p>
+      </div>
+
+      <div class="content-section">
+        <h2>4. Acceptable Use</h2>
+
+        <h3>4.1 Prohibited Content</h3>
+        <p>You agree not to post, transmit, or share:</p>
+        <ul>
+          <li>Illegal or unlawful content</li>
+          <li>Harassing, threatening, or abusive material</li>
+          <li>Sexually explicit content</li>
+          <li>Hate speech or discriminatory content</li>
+          <li>Spam or unsolicited commercial messages</li>
+          <li>Malicious software or code</li>
+          <li>Personal information of others</li>
+        </ul>
+
+        <div class="warning-box">
+          <strong>Zero Tolerance:</strong> We have a zero-tolerance policy for
+          harassment, threats, and illegal activities. Violations will result in
+          immediate account termination.
+        </div>
+
+        <h3>4.2 Prohibited Activities</h3>
+        <p>You agree not to:</p>
+        <ul>
+          <li>Impersonate others</li>
+          <li>Attempt to bypass security measures</li>
+          <li>Use automated systems to access the service</li>
+          <li>Interfere with service operation</li>
+          <li>Collect user information without consent</li>
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h2>5. Privacy and Data</h2>
+        <p>
+          Your privacy is important to us. Please review our
+          <a
+            href="{{ url_for('privacy_policy') }}"
+            style="color: var(--primary)"
+            >Privacy Policy</a
+          >
+          to understand how we collect and use information.
+        </p>
+
+        <h3>5.1 Chat Anonymity</h3>
+        <p>While we provide anonymous chatting, you should still:</p>
+        <ul>
+          <li>Avoid sharing personal information</li>
+          <li>Be cautious about the information you disclose</li>
+          <li>Report users who attempt to de-anonymize others</li>
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h2>6. Intellectual Property</h2>
+
+        <h3>6.1 Our Content</h3>
+        <p>
+          ShadowTalk and its original content, features, and functionality are
+          owned by us and are protected by international copyright, trademark,
+          and other intellectual property laws.
+        </p>
+
+        <h3>6.2 User Content</h3>
+        <p>
+          You retain rights to content you create, but grant us a license to
+          use, modify, and display it in connection with our services.
+        </p>
+      </div>
+
+      <div class="content-section">
+        <h2>7. Service Modifications</h2>
+        <p>We reserve the right to:</p>
+        <ul>
+          <li>Modify or discontinue services temporarily or permanently</li>
+          <li>Change pricing (with notice for paid services)</li>
+          <li>
+            Update these terms (with continued use constituting acceptance)
+          </li>
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h2>8. Disclaimer of Warranties</h2>
+        <p>
+          ShadowTalk is provided "as is" without warranties of any kind. We do
+          not guarantee:
+        </p>
+        <ul>
+          <li>Uninterrupted or error-free service</li>
+          <li>Accuracy of chat matching</li>
+          <li>Behavior of other users</li>
+          <li>Security of information transmission</li>
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h2>9. Limitation of Liability</h2>
+        <p>
+          To the maximum extent permitted by law, ShadowTalk shall not be liable
+          for:
+        </p>
+        <ul>
+          <li>Indirect, incidental, or consequential damages</li>
+          <li>Loss of data or privacy</li>
+          <li>User conduct or content</li>
+          <li>Third-party actions</li>
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h2>10. Indemnification</h2>
+        <p>
+          You agree to indemnify and hold harmless ShadowTalk from any claims,
+          damages, or expenses arising from your use of the service or violation
+          of these terms.
+        </p>
+      </div>
+
+      <div class="content-section">
+        <h2>11. Governing Law</h2>
+        <p>
+          These terms shall be governed by the laws of [Your Jurisdiction],
+          without regard to its conflict of law provisions.
+        </p>
+      </div>
+
+      <div class="content-section">
+        <h2>12. Contact Information</h2>
+        <p>For questions about these Terms of Service, please contact us:</p>
+        <ul>
+          <li>Email: legal@shadowtalk.com</li>
+          <li>
+            Contact Form:
+            <a href="{{ url_for('contact') }}" style="color: var(--primary)"
+              >Contact Page</a
+            >
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="logo">
+          <i class="fas fa-comments"></i>
+          <span>ShadowTalk</span>
+        </div>
+        <div class="footer-links">
+          <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a>
+          <a href="{{ url_for('terms_of_service') }}">Terms of Service</a>
+          <a href="{{ url_for('safety_guidelines') }}">Safety Guidelines</a>
+          <a href="{{ url_for('contact') }}">Contact</a>
+          <a href="{{ url_for('help_center') }}">Help Center</a>
+        </div>
+        <div class="copyright">
+          &copy; 2024 ShadowTalk. All rights reserved. | Anonymous Chat Platform
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
