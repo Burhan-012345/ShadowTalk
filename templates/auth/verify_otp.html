@@ -1,0 +1,546 @@
+{% extends "base.html" %} {% block content %}
+<div class="auth-container">
+  <div class="auth-card">
+    <h2 class="auth-title">Verify Your Email</h2>
+
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <p class="auth-subtitle">
+      We've sent a 6-digit OTP to your email address. Please enter it below.
+    </p>
+
+    <form method="POST" class="auth-form" id="otpForm">
+      <div class="form-group">
+        <label for="otp">Enter OTP</label>
+        <div class="otp-input-container">
+          <input
+            type="text"
+            id="otp1"
+            name="otp1"
+            maxlength="1"
+            required
+            class="otp-input"
+            autocomplete="off"
+          />
+          <input
+            type="text"
+            id="otp2"
+            name="otp2"
+            maxlength="1"
+            required
+            class="otp-input"
+            autocomplete="off"
+          />
+          <input
+            type="text"
+            id="otp3"
+            name="otp3"
+            maxlength="1"
+            required
+            class="otp-input"
+            autocomplete="off"
+          />
+          <input
+            type="text"
+            id="otp4"
+            name="otp4"
+            maxlength="1"
+            required
+            class="otp-input"
+            autocomplete="off"
+          />
+          <input
+            type="text"
+            id="otp5"
+            name="otp5"
+            maxlength="1"
+            required
+            class="otp-input"
+            autocomplete="off"
+          />
+          <input
+            type="text"
+            id="otp6"
+            name="otp6"
+            maxlength="1"
+            required
+            class="otp-input"
+            autocomplete="off"
+          />
+        </div>
+        <input type="hidden" id="otp" name="otp" />
+        
+        <!-- OTP Status -->
+        <div class="otp-status" id="otpStatus">
+          <div class="otp-timer">
+            <i class="fas fa-clock"></i>
+            <span>Time remaining: <span id="countdown">05:00</span></span>
+          </div>
+          <div class="otp-validity" id="otpValidity">
+            <i class="fas fa-info-circle"></i>
+            <span>Enter the 6-digit code</span>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary btn-full" id="submitBtn">
+        <span class="btn-text">Verify</span>
+        <div class="btn-loading" style="display: none;">
+          <div class="loading-spinner"></div>
+          <span>Verifying...</span>
+        </div>
+      </button>
+    </form>
+
+    <div class="auth-links">
+      <p>Didn't receive the code? <a href="#" id="resendLink">Resend OTP</a></p>
+      <a href="{{ url_for('register') }}">Back to Register</a>
+    </div>
+  </div>
+</div>
+
+<style>
+.otp-input-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.otp-input {
+  width: 50px;
+  height: 60px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fff;
+  transition: all 0.3s ease;
+}
+
+.otp-input:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  transform: scale(1.05);
+}
+
+.otp-input.filled {
+  border-color: #27ae60;
+  background-color: rgba(39, 174, 96, 0.05);
+}
+
+.otp-input.error {
+  border-color: #e74c3c;
+  background-color: rgba(231, 76, 60, 0.05);
+  animation: shake 0.5s ease-in-out;
+}
+
+.otp-status {
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.otp-timer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  color: #666;
+}
+
+.otp-timer i {
+  margin-right: 8px;
+  color: #8b5cf6;
+}
+
+.otp-timer.expiring {
+  color: #e74c3c;
+  animation: pulse 1s infinite;
+}
+
+.otp-validity {
+  display: flex;
+  align-items: center;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.otp-validity i {
+  margin-right: 8px;
+}
+
+.otp-validity.valid {
+  color: #27ae60;
+}
+
+.otp-validity.invalid {
+  color: #e74c3c;
+}
+
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-primary .btn-text,
+.btn-primary .btn-loading {
+  transition: opacity 0.3s ease;
+}
+
+.btn-primary .btn-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-card {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.alert {
+  animation: slideIn 0.3s ease-out;
+}
+
+#resendLink {
+  position: relative;
+  overflow: hidden;
+}
+
+#resendLink::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: #8b5cf6;
+  transform: scaleX(0);
+  transform-origin: bottom right;
+  transition: transform 0.3s ease;
+}
+
+#resendLink:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+.btn-primary:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+}
+
+.resend-disabled {
+  color: #95a5a6 !important;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const otpInputs = document.querySelectorAll('.otp-input');
+  const hiddenOtpInput = document.getElementById('otp');
+  const otpForm = document.getElementById('otpForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const resendLink = document.getElementById('resendLink');
+  const countdownElement = document.getElementById('countdown');
+  const otpValidity = document.getElementById('otpValidity');
+  const otpTimer = document.querySelector('.otp-timer');
+  
+  let countdown;
+  let timeLeft = 300; // 5 minutes in seconds
+  let canResend = false;
+  
+  // Initialize OTP input behavior
+  function initializeOTPInputs() {
+    otpInputs.forEach((input, index) => {
+      // Handle input
+      input.addEventListener('input', function(e) {
+        const value = e.target.value;
+        
+        // Only allow numbers
+        if (!/^\d*$/.test(value)) {
+          e.target.value = '';
+          return;
+        }
+        
+        // Auto-focus next input
+        if (value && index < otpInputs.length - 1) {
+          otpInputs[index + 1].focus();
+        }
+        
+        // Update filled state
+        updateInputState();
+        updateOTPValue();
+        validateOTP();
+      });
+      
+      // Handle backspace
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+          otpInputs[index - 1].focus();
+        }
+      });
+      
+      // Handle paste
+      input.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData('text').slice(0, 6);
+        
+        // Fill inputs with pasted data
+        pastedData.split('').forEach((char, i) => {
+          if (i < otpInputs.length && /^\d$/.test(char)) {
+            otpInputs[i].value = char;
+          }
+        });
+        
+        // Focus next empty input or last input
+        const nextEmptyIndex = Array.from(otpInputs).findIndex(input => !input.value);
+        if (nextEmptyIndex !== -1) {
+          otpInputs[nextEmptyIndex].focus();
+        } else {
+          otpInputs[otpInputs.length - 1].focus();
+        }
+        
+        updateInputState();
+        updateOTPValue();
+        validateOTP();
+      });
+    });
+  }
+  
+  // Update input visual state
+  function updateInputState() {
+    otpInputs.forEach(input => {
+      if (input.value) {
+        input.classList.add('filled');
+        input.classList.remove('error');
+      } else {
+        input.classList.remove('filled');
+      }
+    });
+  }
+  
+  // Update hidden OTP value
+  function updateOTPValue() {
+    const otpValue = Array.from(otpInputs).map(input => input.value).join('');
+    hiddenOtpInput.value = otpValue;
+  }
+  
+  // Validate OTP format
+  function validateOTP() {
+    const otpValue = hiddenOtpInput.value;
+    const isValid = /^\d{6}$/.test(otpValue);
+    
+    if (otpValue.length === 6) {
+      if (isValid) {
+        otpValidity.className = 'otp-validity valid';
+        otpValidity.innerHTML = '<i class="fas fa-check-circle"></i><span>Valid OTP format</span>';
+      } else {
+        otpValidity.className = 'otp-validity invalid';
+        otpValidity.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>Invalid OTP format</span>';
+      }
+    } else {
+      otpValidity.className = 'otp-validity';
+      otpValidity.innerHTML = '<i class="fas fa-info-circle"></i><span>Enter the 6-digit code</span>';
+    }
+    
+    return isValid;
+  }
+  
+  // Start countdown timer
+  function startCountdown() {
+    clearInterval(countdown);
+    
+    countdown = setInterval(() => {
+      timeLeft--;
+      
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      
+      countdownElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      
+      // Add warning when time is running out
+      if (timeLeft <= 60) {
+        otpTimer.classList.add('expiring');
+      }
+      
+      // Enable resend when timer expires
+      if (timeLeft <= 0) {
+        clearInterval(countdown);
+        canResend = true;
+        resendLink.classList.remove('resend-disabled');
+        countdownElement.textContent = '00:00';
+        otpTimer.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>OTP expired</span>';
+      }
+    }, 1000);
+  }
+  
+  // Handle form submission
+  otpForm.addEventListener('submit', function(e) {
+    const otpValue = hiddenOtpInput.value;
+    
+    if (!validateOTP()) {
+      e.preventDefault();
+      
+      // Show error on all inputs
+      otpInputs.forEach(input => {
+        input.classList.add('error');
+      });
+      
+      // Shake animation
+      otpForm.classList.add('shake');
+      setTimeout(() => {
+        otpForm.classList.remove('shake');
+      }, 500);
+      
+      return;
+    }
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoading = submitBtn.querySelector('.btn-loading');
+    
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'flex';
+  });
+  
+  // Handle resend OTP
+  resendLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    if (!canResend) return;
+    
+    // Reset timer
+    timeLeft = 300;
+    canResend = false;
+    resendLink.classList.add('resend-disabled');
+    otpTimer.classList.remove('expiring');
+    startCountdown();
+    
+    // Clear OTP inputs
+    otpInputs.forEach(input => {
+      input.value = '';
+      input.classList.remove('filled', 'error');
+    });
+    
+    // Reset validation
+    otpValidity.className = 'otp-validity';
+    otpValidity.innerHTML = '<i class="fas fa-info-circle"></i><span>Enter the 6-digit code</span>';
+    
+    // Focus first input
+    otpInputs[0].focus();
+    
+    // Show success message
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-success';
+    alert.innerHTML = '<i class="fas fa-check-circle"></i> New OTP sent to your email';
+    document.querySelector('.auth-card').insertBefore(alert, document.querySelector('.auth-subtitle'));
+    
+    // Remove alert after 3 seconds
+    setTimeout(() => {
+      alert.style.opacity = '0';
+      alert.style.transform = 'translateY(-10px)';
+      setTimeout(() => {
+        alert.remove();
+      }, 300);
+    }, 3000);
+    
+    // Simulate API call to resend OTP
+    // In a real application, you would make an AJAX request here
+    console.log('Resending OTP...');
+  });
+  
+  // Initialize
+  initializeOTPInputs();
+  startCountdown();
+  
+  // Focus first input on page load
+  otpInputs[0].focus();
+});
+
+// Add shake animation to CSS
+const style = document.createElement('style');
+style.textContent = `
+  .shake {
+    animation: shake 0.5s ease-in-out;
+  }
+  
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  
+  .alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    animation: slideIn 0.3s ease-out;
+    display: flex;
+    align-items: center;
+  }
+  
+  .alert-success i {
+    margin-right: 8px;
+  }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}
