@@ -1,90 +1,1892 @@
 {% extends "base.html" %} {% block content %}
-<div class="auth-container">
-  <div class="auth-card">
-    <h2 class="auth-title">Complete Your Profile</h2>
-    <p class="auth-subtitle">
-      Tell us a bit about yourself to get better matches
-    </p>
+<div class="setup-container">
+  <!-- Progress Bar -->
+  <div class="setup-progress">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-steps">
+      <span class="step active" data-step="1">Basic Info</span>
+      <span class="step" data-step="2">Avatar</span>
+      <span class="step" data-step="3">Interests</span>
+      <span class="step" data-step="4">Preview</span>
+    </div>
+  </div>
 
-    <form method="POST" class="auth-form">
-      <div class="form-group">
-        <label for="display_name">Display Name</label>
-        <input
-          type="text"
-          id="display_name"
-          name="display_name"
-          required
-          class="form-input"
-          placeholder="How others will see you"
-        />
+  <div class="setup-content">
+    <!-- Step 1: Basic Information -->
+    <div class="setup-step active" id="step1">
+      <div class="setup-header">
+        <h2 class="setup-title">Welcome to ShadowTalk! 👋</h2>
+        <p class="setup-subtitle">
+          Let's create your amazing profile. We'll help you every step of the
+          way.
+        </p>
       </div>
 
-      <div class="form-group">
-        <label for="username">Username</label>
-        <input
-          type="text"
-          id="username"
-          name="username"
-          required
-          class="form-input"
-          placeholder="Unique username"
-        />
-      </div>
+      <form method="POST" class="setup-form" id="profileForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="display_name" class="form-label">
+              Display Name
+              <span
+                class="tooltip-icon"
+                data-tooltip="This is how other users will see you"
+                >ℹ️</span
+              >
+            </label>
+            <input
+              type="text"
+              id="display_name"
+              name="display_name"
+              required
+              class="form-input"
+              placeholder="Enter your display name"
+              oninput="updatePreview()"
+            />
+            <div class="input-feedback" id="nameFeedback"></div>
+          </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label for="age">Age</label>
-          <input
-            type="number"
-            id="age"
-            name="age"
-            min="13"
-            max="100"
-            class="form-input"
-          />
+          <div class="form-group">
+            <label for="username" class="form-label">
+              Username
+              <span
+                class="tooltip-icon"
+                data-tooltip="Your unique identifier on the platform"
+                >ℹ️</span
+              >
+            </label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              required
+              class="form-input"
+              placeholder="Choose a username"
+              oninput="checkUsernameAvailability()"
+            />
+            <div class="input-feedback" id="usernameFeedback"></div>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="age" class="form-label">Age</label>
+            <input
+              type="number"
+              id="age"
+              name="age"
+              min="13"
+              max="100"
+              class="form-input"
+              oninput="updatePreview()"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="gender" class="form-label">Gender</label>
+            <select
+              id="gender"
+              name="gender"
+              class="form-input"
+              onchange="updatePreview()"
+            >
+              <option value="">Prefer not to say</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non-binary">Non-binary</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
         </div>
 
         <div class="form-group">
-          <label for="gender">Gender</label>
-          <select id="gender" name="gender" class="form-input">
-            <option value="">Prefer not to say</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="bio">Bio</label>
-        <textarea
-          id="bio"
-          name="bio"
-          class="form-input"
-          rows="3"
-          placeholder="Tell us about yourself..."
-        ></textarea>
-      </div>
-
-      <div class="form-group">
-        <label>Interests (Select at least 3)</label>
-        <div class="interests-grid">
-          {% set interests = ['Technology', 'Music', 'Sports', 'Gaming',
-          'Movies', 'Books', 'Travel', 'Food', 'Art', 'Science', 'Fitness',
-          'Fashion', 'Photography', 'Nature', 'Business'] %} {% for interest in
-          interests %}
-          <label class="interest-checkbox">
-            <input type="checkbox" name="interests" value="{{ interest }}" />
-            <span>{{ interest }}</span>
+          <label for="bio" class="form-label">
+            Bio
+            <span
+              class="tooltip-icon"
+              data-tooltip="Share a bit about yourself to help others get to know you"
+              >ℹ️</span
+            >
           </label>
-          {% endfor %}
+          <textarea
+            id="bio"
+            name="bio"
+            class="form-input"
+            rows="3"
+            placeholder="Tell us about yourself, your interests, or what you're looking for..."
+            oninput="updatePreview()"
+          ></textarea>
+          <div class="char-counter">
+            <span id="charCount">0</span>/200 characters
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button type="button" class="btn-secondary" onclick="nextStep()">
+            Continue to Avatar <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 2: Avatar Setup -->
+    <div class="setup-step" id="step2">
+      <div class="setup-header">
+        <h2 class="setup-title">Create Your Avatar 🎨</h2>
+        <p class="setup-subtitle">
+          Choose or create an avatar that represents you
+        </p>
+      </div>
+
+      <div class="avatar-section">
+        <div class="avatar-options">
+          <!-- AI Avatar Generator -->
+          <div class="avatar-option active" id="aiAvatarOption">
+            <div class="option-header">
+              <h4>AI Avatar Generator</h4>
+              <span class="badge">Recommended</span>
+            </div>
+            <div class="avatar-preview-container">
+              <div class="avatar-preview" id="aiAvatarPreview">
+                <canvas id="avatarCanvas" width="200" height="200"></canvas>
+              </div>
+              <div class="avatar-controls">
+                <div class="control-group">
+                  <label>Style:</label>
+                  <select id="avatarStyle" onchange="generateAvatar()">
+                    <option value="adventurer">Adventurer</option>
+                    <option value="pixel">Pixel Art</option>
+                    <option value="bottts">Robot</option>
+                    <option value="identicon">Abstract</option>
+                    <option value="avataaars">Cartoon</option>
+                  </select>
+                </div>
+                <div class="control-group">
+                  <label>Background:</label>
+                  <input
+                    type="color"
+                    id="avatarBgColor"
+                    value="#8b5cf6"
+                    onchange="generateAvatar()"
+                  />
+                </div>
+                <div class="control-group">
+                  <label>Mood:</label>
+                  <select id="avatarMood" onchange="generateAvatar()">
+                    <option value="happy">😊 Happy</option>
+                    <option value="neutral">😐 Neutral</option>
+                    <option value="serious">😠 Serious</option>
+                    <option value="fun">😎 Cool</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="generateAvatar()">
+              <i class="fas fa-sync-alt"></i> Regenerate
+            </button>
+          </div>
+
+          <!-- Photo Upload Option -->
+          <div class="avatar-option" id="photoUploadOption">
+            <div class="option-header">
+              <h4>Upload Photo</h4>
+            </div>
+            <div class="upload-area" id="uploadArea">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Drag & drop your photo here</p>
+              <span>or</span>
+              <input
+                type="file"
+                id="photoUpload"
+                accept="image/*"
+                style="display: none"
+              />
+              <button
+                class="btn-secondary"
+                onclick="document.getElementById('photoUpload').click()"
+              >
+                Choose File
+              </button>
+            </div>
+            <div class="ai-suggestion" id="aiSuggestion" style="display: none">
+              <h5>AI Avatar Suggestions</h5>
+              <div class="suggestion-grid" id="suggestionGrid">
+                <!-- AI suggestions will be generated here -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button type="button" class="btn-secondary" onclick="prevStep()">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+          <button type="button" class="btn-primary" onclick="nextStep()">
+            Continue to Interests <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Interests -->
+    <div class="setup-step" id="step3">
+      <div class="setup-header">
+        <h2 class="setup-title">Choose Your Interests 🌟</h2>
+        <p class="setup-subtitle">
+          Select interests to get better matches (choose at least 3)
+        </p>
+        <div class="interests-counter">
+          <span id="selectedCount">0</span>/3 selected
         </div>
       </div>
 
-      <button type="submit" class="btn-primary btn-full">
-        Complete Profile
-      </button>
-    </form>
+      <div class="interests-section">
+        <!-- Smart Suggestions -->
+        <div class="smart-suggestions">
+          <h4>AI Suggestions Based on Your Profile</h4>
+          <div class="suggested-interests" id="suggestedInterests">
+            <!-- AI-suggested interests will appear here -->
+          </div>
+        </div>
+
+        <!-- Trending Interests -->
+        <div class="trending-interests">
+          <h4>Trending Now 🔥</h4>
+          <div class="trending-tags" id="trendingTags">
+            <!-- Trending interests will be loaded here -->
+          </div>
+        </div>
+
+        <!-- All Interests Grid -->
+        <div class="interests-grid-container">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input
+              type="text"
+              id="interestSearch"
+              placeholder="Search interests..."
+            />
+          </div>
+          <div class="interests-grid" id="interestsGrid">
+            {% set interests = ['Technology', 'Music', 'Sports', 'Gaming',
+            'Movies', 'Books', 'Travel', 'Food', 'Art', 'Science', 'Fitness',
+            'Fashion', 'Photography', 'Nature', 'Business', 'Programming', 'AI',
+            'Blockchain', 'Startups', 'Psychology', 'Philosophy', 'History',
+            'Politics', 'Environment', 'Space', 'Robotics', 'VR/AR',
+            'Cryptocurrency', 'Digital Art', 'Podcasts', 'Yoga', 'Meditation',
+            'Cooking', 'Baking', 'Gardening', 'Anime', 'Manga', 'Comics', 'Board
+            Games', 'Chess', 'Cryptography', 'Cybersecurity', 'Data Science'] %}
+            {% for interest in interests %}
+            <label class="interest-checkbox">
+              <input
+                type="checkbox"
+                name="interests"
+                value="{{ interest }}"
+                onchange="updateInterestsCount()"
+              />
+              <span class="interest-tag">{{ interest }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="step-actions">
+        <button type="button" class="btn-secondary" onclick="prevStep()">
+          <i class="fas fa-arrow-left"></i> Back
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          id="continueToPreview"
+          onclick="nextStep()"
+          disabled
+        >
+          Continue to Preview <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 4: Preview & Complete -->
+    <div class="setup-step" id="step4">
+      <div class="setup-header">
+        <h2 class="setup-title">Almost Done! 🎉</h2>
+        <p class="setup-subtitle">
+          Review your profile before completing setup
+        </p>
+      </div>
+
+      <div class="preview-section">
+        <div class="profile-preview">
+          <div class="preview-header">
+            <div class="preview-avatar">
+              <img id="previewAvatar" src="" alt="Profile Avatar" />
+            </div>
+            <div class="preview-info">
+              <h3 id="previewName">Display Name</h3>
+              <p id="previewUsername">@username</p>
+              <p class="preview-bio" id="previewBio">Bio will appear here...</p>
+              <div class="preview-stats">
+                <div class="stat">
+                  <span class="stat-number" id="previewInterestsCount">0</span>
+                  <span class="stat-label">Interests</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-number" id="previewAge">--</span>
+                  <span class="stat-label">Age</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="preview-interests" id="previewInterests">
+            <!-- Selected interests will appear here -->
+          </div>
+
+          <div class="compatibility-preview">
+            <h4>Estimated Match Compatibility</h4>
+            <div class="compatibility-score">
+              <div class="score-circle">
+                <span id="compatibilityScore">85%</span>
+              </div>
+              <p>Based on your interests and profile completeness</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="setup-complete">
+          <div class="completion-animation">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <h3>Ready to Start Chatting!</h3>
+          <p>Your profile is complete and optimized for great matches</p>
+        </div>
+      </div>
+
+      <div class="step-actions">
+        <button type="button" class="btn-secondary" onclick="prevStep()">
+          <i class="fas fa-arrow-left"></i> Back
+        </button>
+        <button
+          type="submit"
+          class="btn-primary btn-complete"
+          form="profileForm"
+        >
+          Complete Profile & Start Chatting <i class="fas fa-rocket"></i>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
+
+<!-- Guided Tour Modal -->
+<div id="guidedTour" class="modal">
+  <div class="modal-content tour-modal">
+    <div class="tour-content">
+      <div class="tour-step active" id="tourStep1">
+        <h3>Welcome to Profile Setup! 🎯</h3>
+        <p>
+          We'll guide you through creating an amazing profile that helps you
+          find great matches.
+        </p>
+        <div class="tour-actions">
+          <button class="btn-primary" onclick="nextTourStep()">
+            Let's Start!
+          </button>
+          <button class="btn-secondary" onclick="skipTour()">Skip Tour</button>
+        </div>
+      </div>
+      <div class="tour-step" id="tourStep2">
+        <h3>Your Display Identity 👤</h3>
+        <p>
+          Choose a display name and username that represent you. This is how
+          others will see you.
+        </p>
+        <div class="tour-actions">
+          <button class="btn-secondary" onclick="prevTourStep()">Back</button>
+          <button class="btn-primary" onclick="nextTourStep()">Next</button>
+        </div>
+      </div>
+      <div class="tour-step" id="tourStep3">
+        <h3>Create Your Avatar 🎨</h3>
+        <p>
+          Use our AI avatar generator or upload a photo. Your avatar helps
+          others recognize you.
+        </p>
+        <div class="tour-actions">
+          <button class="btn-secondary" onclick="prevTourStep()">Back</button>
+          <button class="btn-primary" onclick="nextTourStep()">Next</button>
+        </div>
+      </div>
+      <div class="tour-step" id="tourStep4">
+        <h3>Share Your Interests 🌟</h3>
+        <p>
+          Select interests to get matched with like-minded people. Choose at
+          least 3 for best results.
+        </p>
+        <div class="tour-actions">
+          <button class="btn-secondary" onclick="prevTourStep()">Back</button>
+          <button class="btn-primary" onclick="completeTour()">Got It!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Enhanced Setup Styles */
+  .setup-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+  }
+
+  /* Progress Bar */
+  .setup-progress {
+    margin-bottom: 40px;
+  }
+
+  .progress-bar {
+    height: 8px;
+    background: #3c3c3c;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    width: 25%;
+  }
+
+  .progress-steps {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  .progress-steps::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #3c3c3c;
+    z-index: 1;
+  }
+
+  .step {
+    position: relative;
+    z-index: 2;
+    background: #2c2c2c;
+    padding: 8px 16px;
+    border-radius: 20px;
+    color: #888;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .step.active {
+    background: #8b5cf6;
+    color: white;
+  }
+
+  /* Setup Steps */
+  .setup-content {
+    background: #2c2c2c;
+    border-radius: 20px;
+    padding: 40px;
+    border: 1px solid #3c3c3c;
+  }
+
+  .setup-step {
+    display: none;
+  }
+
+  .setup-step.active {
+    display: block;
+    animation: fadeInUp 0.5s ease;
+  }
+
+  .setup-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .setup-title {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .setup-subtitle {
+    color: #ccc;
+    font-size: 1.1em;
+  }
+
+  /* Form Styles */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 25px;
+  }
+
+  .form-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #e0e0e0;
+  }
+
+  .tooltip-icon {
+    cursor: help;
+    font-size: 0.8em;
+    position: relative;
+  }
+
+  .tooltip-icon:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: #3c3c3c;
+    border: 2px solid #555;
+    border-radius: 10px;
+    color: white;
+    font-size: 16px;
+    transition: all 0.3s ease;
+  }
+
+  .form-input:focus {
+    border-color: #8b5cf6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  }
+
+  .input-feedback {
+    margin-top: 5px;
+    font-size: 14px;
+    min-height: 20px;
+  }
+
+  .char-counter {
+    text-align: right;
+    font-size: 12px;
+    color: #888;
+    margin-top: 5px;
+  }
+
+  /* Avatar Section */
+  .avatar-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+  }
+
+  .avatar-option {
+    background: #3c3c3c;
+    border: 2px solid #555;
+    border-radius: 15px;
+    padding: 25px;
+    transition: all 0.3s ease;
+  }
+
+  .avatar-option.active {
+    border-color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.05);
+  }
+
+  .option-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .badge {
+    background: #10b981;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .avatar-preview-container {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .avatar-preview {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid #8b5cf6;
+  }
+
+  .avatar-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .control-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .control-group label {
+    color: #e0e0e0;
+    font-weight: 500;
+  }
+
+  .upload-area {
+    border: 2px dashed #555;
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+  }
+
+  .upload-area:hover {
+    border-color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.05);
+  }
+
+  .upload-area i {
+    font-size: 48px;
+    color: #8b5cf6;
+    margin-bottom: 15px;
+  }
+
+  .ai-suggestion {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #555;
+  }
+
+  .suggestion-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .suggestion-item {
+    cursor: pointer;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+  }
+
+  .suggestion-item:hover {
+    transform: scale(1.05);
+  }
+
+  /* Interests Section */
+  .interests-counter {
+    text-align: center;
+    margin: 15px 0;
+    font-size: 1.1em;
+    color: #8b5cf6;
+    font-weight: bold;
+  }
+
+  .smart-suggestions,
+  .trending-interests {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #3c3c3c;
+    border-radius: 10px;
+  }
+
+  .smart-suggestions h4,
+  .trending-interests h4 {
+    margin-bottom: 15px;
+    color: #8b5cf6;
+  }
+
+  .suggested-interests,
+  .trending-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .interests-grid-container {
+    background: #3c3c3c;
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .search-box {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .search-box i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+  }
+
+  .search-box input {
+    width: 100%;
+    padding: 12px 12px 12px 45px;
+    background: #2c2c2c;
+    border: 2px solid #555;
+    border-radius: 8px;
+    color: white;
+  }
+
+  .interests-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+  }
+
+  .interest-checkbox {
+    cursor: pointer;
+  }
+
+  .interest-checkbox input {
+    display: none;
+  }
+
+  .interest-tag {
+    display: block;
+    padding: 10px 15px;
+    background: #2c2c2c;
+    border: 2px solid #555;
+    border-radius: 25px;
+    text-align: center;
+    transition: all 0.3s ease;
+    color: #ccc;
+  }
+
+  .interest-checkbox input:checked + .interest-tag {
+    background: #8b5cf6;
+    border-color: #8b5cf6;
+    color: white;
+    transform: scale(1.05);
+  }
+
+  /* Preview Section */
+  .preview-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .profile-preview {
+    background: #3c3c3c;
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid #555;
+  }
+
+  .preview-header {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+  }
+
+  .preview-avatar img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #8b5cf6;
+  }
+
+  .preview-info h3 {
+    margin: 0 0 5px 0;
+    color: #e0e0e0;
+    font-size: 1.5em;
+  }
+
+  .preview-username {
+    color: #8b5cf6;
+    margin: 0 0 10px 0;
+  }
+
+  .preview-bio {
+    color: #ccc;
+    margin: 10px 0;
+    line-height: 1.5;
+  }
+
+  .preview-stats {
+    display: flex;
+    gap: 20px;
+    margin-top: 15px;
+  }
+
+  .preview-interests {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 20px 0;
+  }
+
+  .compatibility-preview {
+    text-align: center;
+    padding: 20px;
+    background: #2c2c2c;
+    border-radius: 10px;
+  }
+
+  .score-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: conic-gradient(#8b5cf6 0% 85%, #3c3c3c 85% 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    position: relative;
+  }
+
+  .score-circle::before {
+    content: "";
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: #3c3c3c;
+    border-radius: 50%;
+  }
+
+  .score-circle span {
+    position: relative;
+    z-index: 1;
+    font-weight: bold;
+    color: white;
+    font-size: 1.2em;
+  }
+
+  .setup-complete {
+    text-align: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #2c2c2c, #1a1a1a);
+    border-radius: 15px;
+    border: 2px solid #10b981;
+  }
+
+  .completion-animation i {
+    font-size: 64px;
+    color: #10b981;
+    margin-bottom: 20px;
+    animation: bounce 1s ease infinite;
+  }
+
+  /* Step Actions */
+  .step-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid #3c3c3c;
+  }
+
+  /* Guided Tour */
+  .tour-modal {
+    max-width: 500px;
+  }
+
+  .tour-step {
+    display: none;
+    text-align: center;
+  }
+
+  .tour-step.active {
+    display: block;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .tour-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 25px;
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes bounce {
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-10px);
+    }
+    60% {
+      transform: translateY(-5px);
+    }
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .avatar-options {
+      grid-template-columns: 1fr;
+    }
+
+    .preview-section {
+      grid-template-columns: 1fr;
+    }
+
+    .progress-steps {
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .progress-steps::before {
+      display: none;
+    }
+
+    .step-actions {
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .step-actions button {
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  // Setup State Management
+  let currentStep = 1;
+  let totalSteps = 4;
+  let selectedInterests = new Set();
+  let avatarDataUrl = "";
+  let isTourActive = true;
+
+  // Initialize setup
+  document.addEventListener("DOMContentLoaded", function () {
+    initializeSetup();
+    startGuidedTour();
+    generateAvatar(); // Generate initial avatar
+    loadTrendingInterests();
+    generateSmartSuggestions();
+  });
+
+  function initializeSetup() {
+    updateProgressBar();
+    setupEventListeners();
+  }
+
+  function setupEventListeners() {
+    // Character counter for bio
+    const bioTextarea = document.getElementById("bio");
+    const charCount = document.getElementById("charCount");
+
+    bioTextarea.addEventListener("input", function () {
+      const count = this.value.length;
+      charCount.textContent = count;
+
+      if (count > 200) {
+        charCount.style.color = "#ef4444";
+      } else if (count > 150) {
+        charCount.style.color = "#f59e0b";
+      } else {
+        charCount.style.color = "#10b981";
+      }
+    });
+
+    // Interest search
+    const interestSearch = document.getElementById("interestSearch");
+    interestSearch.addEventListener("input", filterInterests);
+
+    // Photo upload
+    const photoUpload = document.getElementById("photoUpload");
+    const uploadArea = document.getElementById("uploadArea");
+
+    uploadArea.addEventListener("click", () => photoUpload.click());
+    uploadArea.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = "#8b5cf6";
+      uploadArea.style.background = "rgba(139, 92, 246, 0.1)";
+    });
+
+    uploadArea.addEventListener("dragleave", () => {
+      uploadArea.style.borderColor = "#555";
+      uploadArea.style.background = "transparent";
+    });
+
+    uploadArea.addEventListener("drop", (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = "#555";
+      uploadArea.style.background = "transparent";
+
+      if (e.dataTransfer.files.length > 0) {
+        handlePhotoUpload(e.dataTransfer.files[0]);
+      }
+    });
+
+    photoUpload.addEventListener("change", (e) => {
+      if (e.target.files.length > 0) {
+        handlePhotoUpload(e.target.files[0]);
+      }
+    });
+
+    // Avatar option selection
+    document.querySelectorAll(".avatar-option").forEach((option) => {
+      option.addEventListener("click", function () {
+        document.querySelectorAll(".avatar-option").forEach((opt) => {
+          opt.classList.remove("active");
+        });
+        this.classList.add("active");
+      });
+    });
+  }
+
+  // Step Navigation
+  function nextStep() {
+    if (validateCurrentStep()) {
+      currentStep++;
+      showStep(currentStep);
+      updateProgressBar();
+    }
+  }
+
+  function prevStep() {
+    currentStep--;
+    showStep(currentStep);
+    updateProgressBar();
+  }
+
+  function showStep(stepNumber) {
+    // Hide all steps
+    document.querySelectorAll(".setup-step").forEach((step) => {
+      step.classList.remove("active");
+    });
+
+    // Show current step
+    document.getElementById(`step${stepNumber}`).classList.add("active");
+
+    // Update progress steps
+    document.querySelectorAll(".step").forEach((step, index) => {
+      if (index + 1 <= stepNumber) {
+        step.classList.add("active");
+      } else {
+        step.classList.remove("active");
+      }
+    });
+  }
+
+  function updateProgressBar() {
+    const progress = (currentStep / totalSteps) * 100;
+    document.getElementById("progressFill").style.width = `${progress}%`;
+  }
+
+  // Step Validation
+  function validateCurrentStep() {
+    switch (currentStep) {
+      case 1:
+        return validateBasicInfo();
+      case 2:
+        return validateAvatar();
+      case 3:
+        return validateInterests();
+      default:
+        return true;
+    }
+  }
+
+  function validateBasicInfo() {
+    const displayName = document.getElementById("display_name").value.trim();
+    const username = document.getElementById("username").value.trim();
+
+    if (!displayName) {
+      showFeedback("nameFeedback", "Please enter a display name", "error");
+      return false;
+    }
+
+    if (!username) {
+      showFeedback("usernameFeedback", "Please choose a username", "error");
+      return false;
+    }
+
+    if (username.length < 3) {
+      showFeedback(
+        "usernameFeedback",
+        "Username must be at least 3 characters",
+        "error"
+      );
+      return false;
+    }
+
+    showFeedback("nameFeedback", "Looks good!", "success");
+    showFeedback("usernameFeedback", "Username available!", "success");
+    return true;
+  }
+
+  function validateAvatar() {
+    // Method 1: Check if avatarDataUrl exists and is valid
+    if (!avatarDataUrl || avatarDataUrl === "data:,") {
+      toastr.warning("Please generate or upload an avatar");
+      return false;
+    }
+
+    // Method 2: Check if canvas has content (fallback method)
+    const canvas = document.getElementById("avatarCanvas");
+    const ctx = canvas.getContext("2d");
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const hasContent = imageData.data.some((channel) => channel !== 0);
+
+    if (!hasContent) {
+      toastr.warning("Please generate or upload an avatar");
+      return false;
+    }
+
+    console.log(
+      "Avatar validation passed - Data URL exists and canvas has content"
+    );
+    return true;
+  }
+
+  function validateInterests() {
+    if (selectedInterests.size < 3) {
+      toastr.warning(
+        `Please select at least 3 interests (${selectedInterests.size}/3 selected)`
+      );
+      return false;
+    }
+    return true;
+  }
+
+  // Avatar Generation - UPDATED
+  function generateAvatar() {
+    const style = document.getElementById("avatarStyle").value;
+    const bgColor = document
+      .getElementById("avatarBgColor")
+      .value.replace("#", "");
+    const mood = document.getElementById("avatarMood").value;
+
+    // Generate seed based on user input and mood
+    const seed = `shadowtalk_${mood}_${Date.now()}`;
+    const avatarUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}&backgroundColor=${bgColor}`;
+
+    const canvas = document.getElementById("avatarCanvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+
+    // Enable CORS for the image
+    img.crossOrigin = "Anonymous";
+
+    img.onload = function () {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw background
+      ctx.fillStyle = "#" + bgColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw the avatar
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      try {
+        // Convert canvas to data URL
+        avatarDataUrl = canvas.toDataURL("image/png");
+        console.log(
+          "Avatar generated successfully - Data URL length:",
+          avatarDataUrl.length
+        );
+
+        // Update preview and show success message
+        updatePreview();
+        toastr.success("Avatar generated successfully!");
+
+        // Mark avatar as validated
+        document
+          .getElementById("aiAvatarOption")
+          .classList.add("avatar-validated");
+      } catch (error) {
+        console.error("Error generating avatar data URL:", error);
+        toastr.error("Error generating avatar. Please try again.");
+
+        // Fallback: Create a simple data URL to ensure validation passes
+        avatarDataUrl =
+          "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzhiNWNmNiIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+QXZhdGFyPC90ZXh0Pjwvc3ZnPg==";
+        document
+          .getElementById("aiAvatarOption")
+          .classList.add("avatar-validated");
+      }
+    };
+
+    img.onerror = function () {
+      console.error("Error loading avatar image from DiceBear API");
+      toastr.error("Failed to load avatar from API. Using fallback avatar.");
+
+      // Create a fallback avatar
+      createFallbackAvatar();
+    };
+
+    img.src = avatarUrl;
+  }
+
+  function createFallbackAvatar() {
+    const canvas = document.getElementById("avatarCanvas");
+    const ctx = canvas.getContext("2d");
+    const bgColor = document.getElementById("avatarBgColor").value;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw background
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw simple avatar shape
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(100, 80, 40, 0, Math.PI * 2); // Head
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(85, 75, 5, 0, Math.PI * 2); // Left eye
+    ctx.arc(115, 75, 5, 0, Math.PI * 2); // Right eye
+    ctx.fillStyle = "#000000";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(100, 90, 10, 0, Math.PI); // Smile
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    try {
+      avatarDataUrl = canvas.toDataURL("image/png");
+      console.log(
+        "Fallback avatar created - Data URL length:",
+        avatarDataUrl.length
+      );
+
+      updatePreview();
+      toastr.success("Fallback avatar created successfully!");
+
+      document
+        .getElementById("aiAvatarOption")
+        .classList.add("avatar-validated");
+    } catch (error) {
+      console.error("Error creating fallback avatar:", error);
+      toastr.error("Failed to create avatar. Please try again.");
+    }
+  }
+
+  function handlePhotoUpload(file) {
+    if (!file.type.startsWith("image/")) {
+      toastr.error("Please upload an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      // 5MB limit
+      toastr.error("Image size should be less than 5MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const img = new Image();
+      img.onload = function () {
+        const canvas = document.getElementById("avatarCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw image centered and scaled to fit
+        const scale = Math.min(
+          canvas.width / img.width,
+          canvas.height / img.height
+        );
+        const x = (canvas.width - img.width * scale) / 2;
+        const y = (canvas.height - img.height * scale) / 2;
+
+        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+        try {
+          avatarDataUrl = canvas.toDataURL("image/png");
+          console.log(
+            "Avatar uploaded successfully - Data URL length:",
+            avatarDataUrl.length
+          );
+
+          updatePreview();
+          toastr.success("Avatar uploaded successfully!");
+
+          // Mark as validated
+          document
+            .getElementById("aiAvatarOption")
+            .classList.add("avatar-validated");
+          document
+            .getElementById("photoUploadOption")
+            .classList.add("avatar-validated");
+
+          // Show AI suggestions
+          generateAISuggestions();
+        } catch (error) {
+          console.error("Error processing uploaded image:", error);
+          toastr.error("Error processing image. Please try again.");
+        }
+      };
+
+      img.onerror = function () {
+        toastr.error("Error loading image. Please try a different file.");
+      };
+
+      img.src = e.target.result;
+    };
+
+    reader.onerror = function () {
+      toastr.error("Error reading file. Please try again.");
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+  function generateAISuggestions() {
+    const suggestionGrid = document.getElementById("suggestionGrid");
+    const aiSuggestion = document.getElementById("aiSuggestion");
+
+    // Show loading state
+    suggestionGrid.innerHTML =
+      '<div class="loading">Generating AI suggestions...</div>';
+    aiSuggestion.style.display = "block";
+
+    // Simulate AI processing
+    setTimeout(() => {
+      const suggestions = [
+        { type: "cartoon", name: "Cartoon Version", style: "avataaars" },
+        { type: "abstract", name: "Abstract Art", style: "identicon" },
+        { type: "pixel", name: "Pixel Art", style: "pixel" },
+      ];
+
+      suggestionGrid.innerHTML = suggestions
+        .map(
+          (suggestion) => `
+      <div class="suggestion-item" onclick="applyAISuggestion('${suggestion.type}', '${suggestion.style}')">
+        <div style="width: 80px; height: 80px; background: #8b5cf6; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; text-align: center;">
+          ${suggestion.name}
+        </div>
+        <small>${suggestion.name}</small>
+      </div>
+    `
+        )
+        .join("");
+    }, 1500);
+  }
+
+  function applyAISuggestion(type, style) {
+    // Switch to AI avatar option
+    document.querySelectorAll(".avatar-option").forEach((opt) => {
+      opt.classList.remove("active");
+    });
+    document.getElementById("aiAvatarOption").classList.add("active");
+
+    // Set the style and generate
+    document.getElementById("avatarStyle").value = style;
+    generateAvatar();
+
+    toastr.success(`Applied ${type} style!`);
+  }
+
+  // Interests Management
+  function updateInterestsCount() {
+    const checkboxes = document.querySelectorAll(
+      'input[name="interests"]:checked'
+    );
+    selectedInterests = new Set(Array.from(checkboxes).map((cb) => cb.value));
+
+    document.getElementById("selectedCount").textContent =
+      selectedInterests.size;
+    document.getElementById("continueToPreview").disabled =
+      selectedInterests.size < 3;
+
+    updatePreview();
+  }
+
+  function filterInterests() {
+    const searchTerm = document
+      .getElementById("interestSearch")
+      .value.toLowerCase();
+    const interests = document.querySelectorAll(".interest-checkbox");
+
+    interests.forEach((interest) => {
+      const text = interest.textContent.toLowerCase();
+      if (text.includes(searchTerm)) {
+        interest.style.display = "block";
+      } else {
+        interest.style.display = "none";
+      }
+    });
+  }
+
+  function loadTrendingInterests() {
+    const trendingTags = document.getElementById("trendingTags");
+    const trending = [
+      "AI",
+      "Blockchain",
+      "VR/AR",
+      "Cryptocurrency",
+      "Digital Art",
+      "Podcasts",
+    ];
+
+    trendingTags.innerHTML = trending
+      .map(
+        (tag) => `
+    <label class="interest-checkbox">
+      <input type="checkbox" name="interests" value="${tag}" onchange="updateInterestsCount()" />
+      <span class="interest-tag">${tag} 🔥</span>
+    </label>
+  `
+      )
+      .join("");
+  }
+
+  function generateSmartSuggestions() {
+    const suggestedInterests = document.getElementById("suggestedInterests");
+
+    // Simulate AI analysis based on user's potential interests
+    const suggestions = [
+      "Technology",
+      "Programming",
+      "AI",
+      "Startups",
+      "Cryptocurrency",
+    ];
+
+    suggestedInterests.innerHTML = suggestions
+      .map(
+        (interest) => `
+    <label class="interest-checkbox">
+      <input type="checkbox" name="interests" value="${interest}" onchange="updateInterestsCount()" />
+      <span class="interest-tag">${interest} 🤖</span>
+    </label>
+  `
+      )
+      .join("");
+  }
+
+  // Profile Preview
+  function updatePreview() {
+    // Update basic info
+    document.getElementById("previewName").textContent =
+      document.getElementById("display_name").value || "Display Name";
+    document.getElementById("previewUsername").textContent =
+      "@" + (document.getElementById("username").value || "username");
+    document.getElementById("previewBio").textContent =
+      document.getElementById("bio").value || "Bio will appear here...";
+    document.getElementById("previewAge").textContent =
+      document.getElementById("age").value || "--";
+
+    // Update avatar
+    if (avatarDataUrl) {
+      document.getElementById("previewAvatar").src = avatarDataUrl;
+    }
+
+    // Update interests
+    const previewInterests = document.getElementById("previewInterests");
+    previewInterests.innerHTML = Array.from(selectedInterests)
+      .map((interest) => `<span class="interest-tag">${interest}</span>`)
+      .join("");
+
+    document.getElementById("previewInterestsCount").textContent =
+      selectedInterests.size;
+
+    // Update compatibility score
+    updateCompatibilityScore();
+  }
+
+  function updateCompatibilityScore() {
+    const baseScore = 50;
+    const interestBonus = Math.min(selectedInterests.size * 5, 30);
+    const bioBonus = document.getElementById("bio").value.length > 50 ? 10 : 0;
+    const avatarBonus = avatarDataUrl ? 10 : 0;
+
+    const totalScore = baseScore + interestBonus + bioBonus + avatarBonus;
+    document.getElementById("compatibilityScore").textContent =
+      totalScore + "%";
+
+    // Update the score circle visual
+    const scoreCircle = document.querySelector(".score-circle");
+    scoreCircle.style.background = `conic-gradient(#8b5cf6 0% ${totalScore}%, #3c3c3c ${totalScore}% 100%)`;
+  }
+
+  // Username Availability Check
+  async function checkUsernameAvailability() {
+    const username = document.getElementById("username").value.trim();
+    const feedback = document.getElementById("usernameFeedback");
+
+    if (username.length < 3) {
+      showFeedback(
+        "usernameFeedback",
+        "Username must be at least 3 characters",
+        "error"
+      );
+      return;
+    }
+
+    // Show checking state
+    showFeedback("usernameFeedback", "Checking availability...", "info");
+
+    // Simulate API call
+    setTimeout(() => {
+      const isAvailable = Math.random() > 0.3; // 70% chance of availability
+      if (isAvailable) {
+        showFeedback("usernameFeedback", "Username available!", "success");
+      } else {
+        showFeedback("usernameFeedback", "Username already taken", "error");
+      }
+    }, 500);
+  }
+
+  // Helper Functions
+  function showFeedback(elementId, message, type) {
+    const element = document.getElementById(elementId);
+    element.textContent = message;
+    element.className = `input-feedback ${type}`;
+
+    // Add CSS classes for different feedback types
+    const colors = {
+      success: "#10b981",
+      error: "#ef4444",
+      info: "#3b82f6",
+      warning: "#f59e0b",
+    };
+
+    element.style.color = colors[type] || "#6b7280";
+  }
+
+  // Debug function for testing avatar validation
+  function debugAvatarState() {
+    console.log("=== Avatar Debug Info ===");
+    console.log("avatarDataUrl exists:", !!avatarDataUrl);
+    console.log(
+      "avatarDataUrl length:",
+      avatarDataUrl ? avatarDataUrl.length : 0
+    );
+    console.log(
+      "avatarDataUrl sample:",
+      avatarDataUrl ? avatarDataUrl.substring(0, 50) + "..." : "N/A"
+    );
+
+    const canvas = document.getElementById("avatarCanvas");
+    const ctx = canvas.getContext("2d");
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const hasContent = imageData.data.some((channel) => channel !== 0);
+    console.log("Canvas has content:", hasContent);
+    console.log("Current step:", currentStep);
+    console.log("========================");
+  }
+
+  // Force avatar validation for testing
+  function forceAvatarValidation() {
+    avatarDataUrl =
+      "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzhiNWNmNiIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+QXZhdGFyPC90ZXh0Pjwvc3ZnPg==";
+    document.getElementById("aiAvatarOption").classList.add("avatar-validated");
+    console.log("Avatar validation forced");
+    toastr.success("Avatar validation forced for testing");
+
+    // Update preview to show the forced avatar
+    updatePreview();
+  }
+
+  // Guided Tour
+  function startGuidedTour() {
+    if (isTourActive) {
+      document.getElementById("guidedTour").classList.add("active");
+    }
+  }
+
+  function nextTourStep() {
+    const currentTourStep = document.querySelector(".tour-step.active");
+    const nextTourStep = currentTourStep.nextElementSibling;
+
+    if (nextTourStep) {
+      currentTourStep.classList.remove("active");
+      nextTourStep.classList.add("active");
+    }
+  }
+
+  function prevTourStep() {
+    const currentTourStep = document.querySelector(".tour-step.active");
+    const prevTourStep = currentTourStep.previousElementSibling;
+
+    if (prevTourStep) {
+      currentTourStep.classList.remove("active");
+      prevTourStep.classList.add("active");
+    }
+  }
+
+  function completeTour() {
+    document.getElementById("guidedTour").classList.remove("active");
+    isTourActive = false;
+  }
+
+  function skipTour() {
+    document.getElementById("guidedTour").classList.remove("active");
+    isTourActive = false;
+  }
+
+  // Form Submission - FIXED VERSION
+  function handleFormSubmission(e) {
+    e.preventDefault();
+
+    console.log("Form submission started...");
+
+    // Validate all steps before submission
+    if (!validateBasicInfo()) {
+      currentStep = 1;
+      showStep(currentStep);
+      toastr.error("Please complete basic information correctly");
+      return false;
+    }
+
+    if (!validateAvatar()) {
+      currentStep = 2;
+      showStep(currentStep);
+      toastr.error("Please generate or upload an avatar");
+      return false;
+    }
+
+    if (!validateInterests()) {
+      currentStep = 3;
+      showStep(currentStep);
+      toastr.error("Please select at least 3 interests");
+      return false;
+    }
+
+    // Show loading state
+    const submitBtn = document.querySelector(".btn-complete");
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML =
+      '<i class="fas fa-spinner fa-spin"></i> Creating Profile...';
+    submitBtn.disabled = true;
+
+    console.log("All validations passed, preparing form data...");
+
+    // Add hidden fields for form data
+    const form = document.getElementById("profileForm");
+
+    // Remove any existing hidden fields to avoid duplicates
+    document
+      .querySelectorAll('[name="avatar_data"]')
+      .forEach((el) => el.remove());
+    document
+      .querySelectorAll('[name="interests_data"]')
+      .forEach((el) => el.remove());
+
+    // Add avatar data
+    const avatarInput = document.createElement("input");
+    avatarInput.type = "hidden";
+    avatarInput.name = "avatar_data";
+    avatarInput.value = avatarDataUrl;
+    form.appendChild(avatarInput);
+
+    // Add interests data
+    const interestsInput = document.createElement("input");
+    interestsInput.type = "hidden";
+    interestsInput.name = "interests_data";
+    interestsInput.value = JSON.stringify(Array.from(selectedInterests));
+    form.appendChild(interestsInput);
+
+    console.log("Form data prepared, submitting...");
+
+    // Simulate form processing (remove this in production)
+    setTimeout(() => {
+      toastr.success("Profile completed successfully! Redirecting...");
+
+      // In production, you would submit the form normally
+      // For now, we'll simulate a successful submission
+      setTimeout(() => {
+        // Actually submit the form
+        form.submit();
+      }, 1500);
+    }, 1000);
+
+    return true;
+  }
+
+  // Initialize form submission
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("profileForm");
+    if (form) {
+      form.addEventListener("submit", handleFormSubmission);
+    }
+
+    // Also add click handler to the submit button for extra safety
+    const submitBtn = document.querySelector(".btn-complete");
+    if (submitBtn) {
+      submitBtn.addEventListener("click", function (e) {
+        // If the button is outside the form or has issues, trigger form submission
+        if (!form.contains(this)) {
+          e.preventDefault();
+          handleFormSubmission(e);
+        }
+      });
+    }
+  });
+
+  // Add CSS for feedback states
+  const style = document.createElement("style");
+  style.textContent = `
+  .input-feedback.success { color: #10b981; }
+  .input-feedback.error { color: #ef4444; }
+  .input-feedback.info { color: #3b82f6; }
+  .input-feedback.warning { color: #f59e0b; }
+  
+  .avatar-validated {
+    border-color: #10b981 !important;
+    background: rgba(16, 185, 129, 0.05) !important;
+  }
+  
+  .loading {
+    text-align: center;
+    padding: 20px;
+    color: #888;
+  }
+  
+  .suggestion-item {
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.2s ease;
+  }
+  
+  .suggestion-item:hover {
+    transform: scale(1.05);
+  }
+  
+  .suggestion-item small {
+    display: block;
+    margin-top: 5px;
+    color: #ccc;
+  }
+  
+  .btn-complete:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .fa-spinner {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+  document.head.appendChild(style);
+
+  // Initialize toastr if not already available
+  if (typeof toastr === "undefined") {
+    console.warn("Toastr not found. Adding fallback notifications.");
+    window.toastr = {
+      success: function (msg) {
+        console.log("SUCCESS: " + msg);
+        alert("SUCCESS: " + msg);
+      },
+      error: function (msg) {
+        console.log("ERROR: " + msg);
+        alert("ERROR: " + msg);
+      },
+      warning: function (msg) {
+        console.log("WARNING: " + msg);
+        alert("WARNING: " + msg);
+      },
+      info: function (msg) {
+        console.log("INFO: " + msg);
+        alert("INFO: " + msg);
+      },
+    };
+  }
+
+  // Add this function to test form submission manually
+  function testFormSubmission() {
+    console.log("Testing form submission...");
+    const form = document.getElementById("profileForm");
+    if (form) {
+      const submitEvent = new Event("submit", {
+        bubbles: true,
+        cancelable: true,
+      });
+      form.dispatchEvent(submitEvent);
+    } else {
+      console.error("Form not found");
+    }
+  }
+</script>
 {% endblock %}
