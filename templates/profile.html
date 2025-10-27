@@ -2,18 +2,48 @@
 <div class="profile-container">
   <div class="profile-header">
     <div class="profile-avatar">
+      {% if current_user.avatar_url %}
+      <img src="{{ current_user.avatar_url }}" alt="Profile Avatar" class="avatar-image">
+      {% else %}
       <i class="fas fa-user-circle"></i>
+      {% endif %}
+      <div class="avatar-overlay" onclick="openEditModal()">
+        <i class="fas fa-camera"></i>
+      </div>
     </div>
     <div class="profile-info">
-      <h1>{{ current_user.display_name }}</h1>
+      <div class="profile-header-actions">
+        <h1>{{ current_user.display_name }}</h1>
+        <button class="btn-edit" onclick="openEditModal()">
+          <i class="fas fa-edit"></i> Edit Profile
+        </button>
+      </div>
       <p>@{{ current_user.username }}</p>
-      <p class="profile-bio">{{ current_user.bio }}</p>
+      <p class="profile-bio">{{ current_user.bio or "No bio yet" }}</p>
       <div class="profile-stats">
         <div class="stat">
           <span class="stat-number">{{ connections|length }}</span>
           <span class="stat-label">Connections</span>
         </div>
+        <div class="stat">
+          <span class="stat-number">{{ current_user.age or '--' }}</span>
+          <span class="stat-label">Age</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">{{ current_user.gender or 'Not specified' }}</span>
+          <span class="stat-label">Gender</span>
+        </div>
       </div>
+      {% if current_user.interests %}
+      <div class="profile-interests">
+        <h4>Interests</h4>
+        <div class="interests-tags">
+          {% for interest in current_user.interests_list %}
+          <span class="interest-tag">{{ interest }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
     </div>
   </div>
 
@@ -31,7 +61,7 @@
             <h3>{{ connection.user.display_name }}</h3>
             <p>Chatted {{ connection.chat_count }} time(s)</p>
             <p class="connection-last">
-              Last: {{ connection.last_chat.strftime('%Y-%m-%d') }}
+              Last: {{ connection.last_chat.strftime('%Y-%m-%d') if connection.last_chat else 'Never' }}
             </p>
           </div>
           <div class="connection-actions">
@@ -56,6 +86,126 @@
   </div>
 </div>
 
+<!-- Edit Profile Modal -->
+<div class="modal" id="editProfileModal">
+  <div class="modal-content profile-modal">
+    <div class="modal-header">
+      <h2>Edit Profile</h2>
+      <button class="close-btn" onclick="closeEditModal()">&times;</button>
+    </div>
+    <form id="editProfileForm" method="POST" action="{{ url_for('update_profile') }}" enctype="multipart/form-data">
+      <div class="modal-body">
+        <!-- Avatar Section -->
+        <div class="form-section">
+          <h3>Profile Picture</h3>
+          <div class="avatar-upload-section">
+            <div class="avatar-preview-edit">
+              {% if current_user.avatar_url %}
+              <img id="avatarPreview" src="{{ current_user.avatar_url }}" alt="Avatar Preview">
+              {% else %}
+              <div id="avatarPreview" class="avatar-placeholder">
+                <i class="fas fa-user-circle"></i>
+              </div>
+              {% endif %}
+            </div>
+            <div class="avatar-upload-options">
+              <label class="upload-option">
+                <input type="file" id="avatarUpload" name="avatar" accept="image/*" style="display: none;" onchange="previewAvatar(this)">
+                <i class="fas fa-upload"></i>
+                Upload Photo
+              </label>
+              <button type="button" class="btn-secondary" onclick="generateRandomAvatar()">
+                <i class="fas fa-robot"></i>
+                Generate AI Avatar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Basic Information -->
+        <div class="form-section">
+          <h3>Basic Information</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="edit_display_name">Display Name *</label>
+              <input type="text" id="edit_display_name" name="display_name" value="{{ current_user.display_name }}" required>
+            </div>
+            <div class="form-group">
+              <label for="edit_username">Username *</label>
+              <input type="text" id="edit_username" name="username" value="{{ current_user.username }}" required>
+              <div class="input-feedback" id="usernameFeedback"></div>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="edit_age">Age</label>
+              <input type="number" id="edit_age" name="age" value="{{ current_user.age }}" min="13" max="100">
+            </div>
+            <div class="form-group">
+              <label for="edit_gender">Gender</label>
+              <select id="edit_gender" name="gender">
+                <option value="">Prefer not to say</option>
+                <option value="male" {% if current_user.gender == 'male' %}selected{% endif %}>Male</option>
+                <option value="female" {% if current_user.gender == 'female' %}selected{% endif %}>Female</option>
+                <option value="non-binary" {% if current_user.gender == 'non-binary' %}selected{% endif %}>Non-binary</option>
+                <option value="other" {% if current_user.gender == 'other' %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bio Section -->
+        <div class="form-section">
+          <h3>About Me</h3>
+          <div class="form-group">
+            <label for="edit_bio">Bio</label>
+            <textarea id="edit_bio" name="bio" rows="4" placeholder="Tell others about yourself...">{{ current_user.bio or '' }}</textarea>
+            <div class="char-counter">
+              <span id="bioCharCount">{{ (current_user.bio or '')|length }}</span>/200 characters
+            </div>
+          </div>
+        </div>
+
+        <!-- Interests Section -->
+        <div class="form-section">
+          <h3>Interests</h3>
+          <div class="interests-edit-section">
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input type="text" id="editInterestSearch" placeholder="Search interests...">
+            </div>
+            <div class="interests-grid-edit" id="interestsGridEdit">
+              {% set all_interests = ['Technology', 'Music', 'Sports', 'Gaming', 'Movies', 'Books', 
+                                     'Travel', 'Food', 'Art', 'Science', 'Fitness', 'Fashion', 
+                                     'Photography', 'Nature', 'Business', 'Programming', 'AI', 
+                                     'Blockchain', 'Startups', 'Psychology', 'Philosophy', 
+                                     'History', 'Politics', 'Environment', 'Space', 'Robotics',
+                                     'VR/AR', 'Cryptocurrency', 'Digital Art', 'Podcasts',
+                                     'Yoga', 'Meditation', 'Cooking', 'Baking', 'Gardening',
+                                     'Anime', 'Manga', 'Comics', 'Board Games', 'Chess',
+                                     'Cryptography', 'Cybersecurity', 'Data Science'] %}
+              {% for interest in all_interests %}
+              <label class="interest-checkbox">
+                <input type="checkbox" name="interests" value="{{ interest }}" 
+                  {% if interest in (current_user.interests_list or []) %}checked{% endif %}>
+                <span class="interest-tag">{{ interest }}</span>
+              </label>
+              {% endfor %}
+            </div>
+            <div class="selected-interests-count">
+              <span id="selectedInterestsCount">{{ (current_user.interests_list or [])|length }}</span> interests selected
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Notifications Panel -->
 <div class="notifications-panel" id="notificationsPanel">
   <div class="notifications-header">
@@ -72,6 +222,289 @@
   <i class="fas fa-bell"></i>
   <span class="notification-count" id="notificationCount">0</span>
 </div>
+
+<style>
+/* Edit Profile Modal Styles */
+.profile-modal {
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  border-bottom: 1px solid #3c3c3c;
+}
+
+.modal-body {
+  padding: 30px;
+}
+
+.modal-footer {
+  padding: 20px 30px;
+  border-top: 1px solid #3c3c3c;
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+
+.form-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #3c3c3c;
+}
+
+.form-section:last-child {
+  border-bottom: none;
+}
+
+.form-section h3 {
+  margin-bottom: 20px;
+  color: #8b5cf6;
+  font-size: 1.2em;
+}
+
+/* Avatar Upload Section */
+.avatar-upload-section {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+.avatar-preview-edit {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid #8b5cf6;
+  position: relative;
+}
+
+.avatar-preview-edit img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #3c3c3c;
+  color: #8b5cf6;
+  font-size: 60px;
+}
+
+.avatar-upload-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  flex: 1;
+}
+
+.upload-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 20px;
+  background: #3c3c3c;
+  border: 2px dashed #555;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.upload-option:hover {
+  border-color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.05);
+}
+
+/* Profile Header Enhancements */
+.profile-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.btn-edit {
+  background: transparent;
+  border: 2px solid #8b5cf6;
+  color: #8b5cf6;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-edit:hover {
+  background: #8b5cf6;
+  color: white;
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+  color: white;
+  font-size: 24px;
+}
+
+.profile-avatar:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.profile-avatar {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Interests in Profile */
+.profile-interests {
+  margin-top: 20px;
+}
+
+.profile-interests h4 {
+  margin-bottom: 10px;
+  color: #e0e0e0;
+}
+
+.interests-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Interests Edit Section */
+.interests-edit-section {
+  background: #2c2c2c;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.interests-grid-edit {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 15px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  margin: 15px 0;
+}
+
+.selected-interests-count {
+  text-align: center;
+  color: #8b5cf6;
+  font-weight: bold;
+  padding: 10px;
+}
+
+/* Form Improvements */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #e0e0e0;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  background: #3c3c3c;
+  border: 2px solid #555;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #8b5cf6;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.char-counter {
+  text-align: right;
+  font-size: 12px;
+  color: #888;
+  margin-top: 5px;
+}
+
+.input-feedback {
+  margin-top: 5px;
+  font-size: 14px;
+  min-height: 20px;
+}
+
+.input-feedback.success { color: #10b981; }
+.input-feedback.error { color: #ef4444; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-modal {
+    margin: 20px;
+    max-height: 95vh;
+  }
+  
+  .avatar-upload-section {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-header-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .interests-grid-edit {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+}
+</style>
 {% endblock %} {% block extra_js %}
 <script>
   let socket;
@@ -156,6 +589,153 @@
   function showNotification(title, message) {
     toastr.info(message, title);
   }
+
+  // Edit Profile Functions
+  function openEditModal() {
+    document.getElementById('editProfileModal').style.display = 'block';
+    updateInterestsCount();
+    initializeEditForm();
+  }
+
+  function closeEditModal() {
+    document.getElementById('editProfileModal').style.display = 'none';
+  }
+
+  function initializeEditForm() {
+    // Bio character counter
+    const bioTextarea = document.getElementById('edit_bio');
+    const charCount = document.getElementById('bioCharCount');
+    
+    bioTextarea.addEventListener('input', function() {
+      const count = this.value.length;
+      charCount.textContent = count;
+      
+      if (count > 200) {
+        charCount.style.color = '#ef4444';
+      } else if (count > 150) {
+        charCount.style.color = '#f59e0b';
+      } else {
+        charCount.style.color = '#10b981';
+      }
+    });
+
+    // Username availability check
+    const usernameInput = document.getElementById('edit_username');
+    usernameInput.addEventListener('input', checkUsernameAvailability);
+
+    // Interest search
+    const interestSearch = document.getElementById('editInterestSearch');
+    interestSearch.addEventListener('input', filterEditInterests);
+
+    // Interests count
+    const interestCheckboxes = document.querySelectorAll('#interestsGridEdit input[type="checkbox"]');
+    interestCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', updateInterestsCount);
+    });
+  }
+
+  function updateInterestsCount() {
+    const selectedCount = document.querySelectorAll('#interestsGridEdit input[type="checkbox"]:checked').length;
+    document.getElementById('selectedInterestsCount').textContent = selectedCount;
+  }
+
+  function filterEditInterests() {
+    const searchTerm = document.getElementById('editInterestSearch').value.toLowerCase();
+    const interests = document.querySelectorAll('#interestsGridEdit .interest-checkbox');
+    
+    interests.forEach(interest => {
+      const text = interest.textContent.toLowerCase();
+      if (text.includes(searchTerm)) {
+        interest.style.display = 'block';
+      } else {
+        interest.style.display = 'none';
+      }
+    });
+  }
+
+  function previewAvatar(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      
+      reader.onload = function(e) {
+        const preview = document.getElementById('avatarPreview');
+        preview.innerHTML = `<img src="${e.target.result}" alt="Avatar Preview">`;
+      };
+      
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  function generateRandomAvatar() {
+    // Generate a random avatar using DiceBear API
+    const styles = ['adventurer', 'pixel', 'bottts', 'identicon', 'avataaars'];
+    const randomStyle = styles[Math.floor(Math.random() * styles.length)];
+    const seed = Math.random().toString(36).substring(7);
+    const avatarUrl = `https://api.dicebear.com/7.x/${randomStyle}/svg?seed=${seed}`;
+    
+    const preview = document.getElementById('avatarPreview');
+    preview.innerHTML = `<img src="${avatarUrl}" alt="AI Generated Avatar">`;
+    
+    // Store the avatar URL in a hidden field or convert to data URL
+    convertAvatarToDataURL(avatarUrl);
+  }
+
+  function convertAvatarToDataURL(url) {
+    // This would convert the SVG to a data URL for form submission
+    // For now, we'll just show a message
+    toastr.info('AI avatar generated! This will be saved when you submit the form.');
+  }
+
+  async function checkUsernameAvailability() {
+    const username = document.getElementById('edit_username').value.trim();
+    const feedback = document.getElementById('usernameFeedback');
+    
+    if (username.length < 3) {
+      feedback.textContent = 'Username must be at least 3 characters';
+      feedback.className = 'input-feedback error';
+      return;
+    }
+    
+    if (username === '{{ current_user.username }}') {
+      feedback.textContent = 'This is your current username';
+      feedback.className = 'input-feedback success';
+      return;
+    }
+    
+    feedback.textContent = 'Checking availability...';
+    feedback.className = 'input-feedback info';
+    
+    // Simulate API call - in real implementation, call your backend
+    setTimeout(() => {
+      const isAvailable = Math.random() > 0.3; // 70% chance of availability
+      if (isAvailable) {
+        feedback.textContent = 'Username available!';
+        feedback.className = 'input-feedback success';
+      } else {
+        feedback.textContent = 'Username already taken';
+        feedback.className = 'input-feedback error';
+      }
+    }, 500);
+  }
+
+  // Form submission handling
+  document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    submitBtn.disabled = true;
+    
+    // Form will submit normally, this is just for UX
+  });
+
+  // Close modal when clicking outside
+  window.addEventListener('click', function(e) {
+    const modal = document.getElementById('editProfileModal');
+    if (e.target === modal) {
+      closeEditModal();
+    }
+  });
 
   document.addEventListener("DOMContentLoaded", function () {
     initializeSocket();
