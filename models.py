@@ -103,3 +103,66 @@ class Admin(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+class PasswordResetRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False)
+    ip_address = db.Column(db.String(45), nullable=False)
+    user_agent = db.Column(db.Text)
+    requested_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_used = db.Column(db.Boolean, default=False)
+    
+    def __repr__(self):
+        return f'<PasswordResetRequest {self.email} {self.requested_at}>'
+
+# In models.py, update these foreign key references:
+
+class AuditLog(db.Model):
+    __tablename__ = 'audit_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'))  # Changed from 'admins.id'
+    action = db.Column(db.String(200), nullable=False)
+    target_type = db.Column(db.String(50))  # 'user', 'chat', 'report'
+    target_id = db.Column(db.String(50))
+    details = db.Column(db.Text)
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ModerationQueue(db.Model):
+    __tablename__ = 'moderation_queue'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    chat_session_id = db.Column(db.Integer, db.ForeignKey('chat_session.id'))
+    message_id = db.Column(db.Integer, db.ForeignKey('message.id'))
+    reason = db.Column(db.String(200))  # 'toxic', 'spam', 'harassment', etc.
+    confidence_score = db.Column(db.Float)  # AI confidence score
+    status = db.Column(db.String(20), default='pending')  # pending, reviewed, action_taken
+    reviewed_by = db.Column(db.Integer, db.ForeignKey('admin.id'))  # Changed from 'admins.id'
+    reviewed_at = db.Column(db.DateTime)
+    action_taken = db.Column(db.String(100))  # 'warning', 'ban', 'message_deleted'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class UserWarning(db.Model):
+    __tablename__ = 'user_warnings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'))  # Changed from 'admins.id'
+    reason = db.Column(db.Text, nullable=False)
+    severity = db.Column(db.String(20), default='low')  # low, medium, high
+    is_acknowledged = db.Column(db.Boolean, default=False)
+    expires_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class EmailAlert(db.Model):
+    __tablename__ = 'email_alerts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    alert_type = db.Column(db.String(100), nullable=False)
+    recipient = db.Column(db.String(200))
+    subject = db.Column(db.String(200))
+    message = db.Column(db.Text)
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='sent')  # sent, failed, pending
