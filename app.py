@@ -26,14 +26,13 @@ except ImportError:
     print("Flask-Admin not installed. Admin features disabled.")
 
 from config import Config
-from models import PasswordResetRequest, db, User, OTP, ChatSession, Message, Connection, Notification, Report, Admin
+from models import AuditLog, PasswordResetRequest, UserWarningLog, db, User, OTP, ChatSession, Message, Connection, Notification, Report, Admin
 from email_utils import mail, send_otp_email, send_notification_email, send_password_reset_email
 from flask_mail import Message as MailMessage
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# Initialize extensions
 db.init_app(app)
 mail.init_app(app)
 
@@ -45,19 +44,19 @@ login_manager.login_view = 'login'
 # Initialize SocketIO with threading only (for PythonAnywhere compatibility)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
-# Global variables for matchmaking
-waiting_users = {
-    'text': [],
-    'video': []
+
+online_users = set()  
+active_chats = {}     
+waiting_users = {    
+    'text': [],       
+    'video': []       
 }
-active_chats = {}
-online_users = set()
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
 
-# Create database tables
+# Create database tables - with proper error handling
 with app.app_context():
     try:
         db.create_all()
@@ -80,14 +79,9 @@ with app.app_context():
 
     except Exception as e:
         print(f"Error creating database: {e}")
-
-@property
-def interests_list(self):
-    if self.interests:
-        return json.loads(self.interests)
-    return []
-
-online_users = set()
+        # If there's an error, try to identify the problem
+        import traceback
+        traceback.print_exc()
 
 from flask_admin import Admin as FlaskAdmin
 
@@ -144,20 +138,27 @@ class SecureModelView(ModelView):
             current_user.username == 'admin@shadowtalk.com' or  # Added this line
             hasattr(current_user, 'is_admin') and current_user.is_admin
         )
-
-# In the UserAdminView class, update the form_columns to remove non-existent fields:
 class UserAdminView(SecureModelView):
     column_list = ['id', 'email', 'display_name', 'username', 'is_verified',
                    'is_profile_complete', 'created_at', 'last_login']
     column_searchable_list = ['email', 'display_name', 'username']
     column_filters = ['is_verified', 'is_profile_complete', 'created_at', 'gender']
     column_editable_list = ['is_verified', 'is_profile_complete']
+    
+    # Only include fields that actually exist and are safe
     form_columns = ['email', 'display_name', 'username', 'age', 'gender', 'bio',
                    'interests', 'is_verified', 'is_profile_complete']
+    
+    # Exclude problematic fields from create and edit forms
+    form_excluded_columns = ['is_online', 'last_seen', 'status', 'custom_status', 
+                           'last_heartbeat', 'avatar_url', 'is_banned', 'ban_reason',
+                           'banned_at', 'banned_by', 'ban_expires_at', 'theme',
+                           'notifications_enabled', 'password', 'profile_picture']
 
     def on_model_change(self, form, model, is_created):
         if is_created and 'password' in form:
             model.password = generate_password_hash(form.password.data)
+
 class ChatSessionAdminView(SecureModelView):
     column_list = ['id', 'user1_id', 'user2_id', 'session_type', 'started_at',
                    'ended_at', 'duration', 'end_reason', 'last_activity']
@@ -357,9 +358,10 @@ def index():
     # Otherwise, show intro page
     return redirect(url_for('intro'))
 
-# Auth Routes
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    from datetime import datetime
+    
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -367,7 +369,56 @@ def login():
 
         user = User.query.filter_by(email=email).first()
 
+        if user:
+            # Enhanced ban checking
+            if user.is_banned:
+                # Check if ban has expired
+                current_time = datetime.utcnow()
+                if user.ban_expires_at and user.ban_expires_at < current_time:
+                    # Ban has expired, unban the user
+                    user.is_banned = False
+                    user.ban_reason = None
+                    user.banned_at = None
+                    user.banned_by = None
+                    user.ban_expires_at = None
+                    db.session.commit()
+                    
+                    # Log the auto-unban
+                    print(f"Auto-unbanned user {user.email} - ban expired")
+                else:
+                    # User is still banned
+                    ban_info = "Your account has been suspended"
+                    if user.ban_reason:
+                        ban_info += f" for: {user.ban_reason}"
+                    
+                    if user.ban_expires_at:
+                        remaining_time = user.ban_expires_at - current_time
+                        days = remaining_time.days
+                        hours = remaining_time.seconds // 3600
+                        minutes = (remaining_time.seconds % 3600) // 60
+                        
+                        if days > 0:
+                            ban_info += f". Suspension ends in {days} day(s), {hours} hour(s)"
+                        elif hours > 0:
+                            ban_info += f". Suspension ends in {hours} hour(s), {minutes} minute(s)"
+                        else:
+                            ban_info += f". Suspension ends in {minutes} minute(s)"
+                    else:
+                        ban_info += ". This is a permanent suspension."
+                    
+                    ban_info += ". If you believe this is a mistake, please contact our support team."
+                    
+                    return render_template('auth/login.html', 
+                                         error=ban_info,
+                                         show_contact_link=True)
+
         if user and check_password_hash(user.password, password):
+            # Final check if user got unbanned between checks
+            if user.is_banned:
+                return render_template('auth/login.html', 
+                                     error='Your account has been suspended. Please contact support.',
+                                     show_contact_link=True)
+            
             if user.is_verified:
                 login_user(user, remember=remember)
                 user.last_login = datetime.utcnow()
@@ -536,6 +587,8 @@ def forgot_password():
 @app.route('/reset-password', methods=['GET', 'POST'])
 def reset_password():
     """Complete password reset functionality"""
+    from datetime import datetime  # Import at function level to avoid conflicts
+    
     # Get token from URL parameters
     token = request.args.get('token')
 
@@ -789,11 +842,11 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-# Admin Routes
+# In the admin dashboard route, update the user_warnings_count calculation:
+
 @app.route('/admin')
 @login_required
 def admin_dashboard():
-    # Simple admin check - in production, use proper role-based authentication
     if current_user.email != 'admin@shadowtalk.com':
         return redirect(url_for('index'))
 
@@ -802,7 +855,8 @@ def admin_dashboard():
         'total_users': User.query.count(),
         'active_chats': len(active_chats) // 2,
         'pending_reports': Report.query.filter_by(status='pending').count(),
-        'banned_users': 0,
+        'banned_users': User.query.filter_by(is_banned=True).count(),
+        'moderation_queue': 0,
         'text_chats': ChatSession.query.filter_by(session_type='text').count(),
         'video_chats': ChatSession.query.filter_by(session_type='video').count(),
         'daily_active_users': User.query.filter(
@@ -813,7 +867,9 @@ def admin_dashboard():
         ).count(),
         'avg_chat_duration': db.session.query(
             db.func.avg(ChatSession.duration)
-        ).scalar() or 0
+        ).scalar() or 0,
+        'ai_flagged_today': 0,
+        'manual_actions_today': 0
     }
 
     # Get recent reports
@@ -821,7 +877,7 @@ def admin_dashboard():
         Report.created_at.desc()
     ).all()
 
-    # Get users
+    # Get all users for user management
     users = User.query.order_by(User.created_at.desc()).limit(50).all()
 
     # Get chat sessions
@@ -836,7 +892,25 @@ def admin_dashboard():
             user_reports_count[report.reported_user_id] = \
                 user_reports_count.get(report.reported_user_id, 0) + 1
 
-    # Recent activity (mock data)
+    # Get user warnings count - UPDATED
+    user_warnings_count = {}
+    for warning in UserWarningLog.query.all():  # Changed from UserWarning
+        if warning.user_id:
+            user_warnings_count[warning.user_id] = \
+                user_warnings_count.get(warning.user_id, 0) + 1
+
+    # Get moderation queue
+    moderation_queue = []
+
+    # Get live sessions (active chats)
+    live_sessions = ChatSession.query.filter(
+        ChatSession.ended_at.is_(None)
+    ).order_by(ChatSession.started_at.desc()).all()
+
+    # Get audit logs
+    audit_logs = AuditLog.query.order_by(AuditLog.created_at.desc()).limit(50).all()
+
+    # Recent activity
     recent_activity = [
         {
             'icon': 'user-plus',
@@ -861,7 +935,12 @@ def admin_dashboard():
                          users=users,
                          chat_sessions=chat_sessions,
                          user_reports_count=user_reports_count,
-                         recent_activity=recent_activity)
+                         user_warnings_count=user_warnings_count,
+                         moderation_queue=moderation_queue,
+                         live_sessions=live_sessions,
+                         audit_logs=audit_logs,
+                         recent_activity=recent_activity,
+                         current_user_id=current_user.id)
 
 @app.route('/admin/resolve-report/<int:report_id>', methods=['POST'])
 @login_required
@@ -878,20 +957,116 @@ def resolve_report(report_id):
 @app.route('/admin/ban-user', methods=['POST'])
 @login_required
 def ban_user():
+    """Ban a user with detailed options"""
     # Admin check
-    if current_user.email != 'admin@shadowtalk.com':
+    if current_user.email != 'admin@shadowtalk.com' and not (hasattr(current_user, 'is_admin') and current_user.is_admin):
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
 
     data = request.get_json()
     user_id = data.get('user_id')
+    ban_reason = data.get('reason', 'Violation of terms of service')
+    ban_duration = data.get('duration', 'permanent')  # 'permanent' or number of days
+    report_id = data.get('report_id')
+
+    if not user_id:
+        return jsonify({'success': False, 'error': 'User ID is required'})
 
     user = User.query.get(user_id)
-    if user:
-        # In a real application, you would set a 'banned' field to True
-        # For now, we'll just return success
-        return jsonify({'success': True, 'message': 'User banned successfully'})
+    if not user:
+        return jsonify({'success': False, 'error': 'User not found'})
 
-    return jsonify({'success': False, 'error': 'User not found'})
+    if user.id == current_user.id:
+        return jsonify({'success': False, 'error': 'Cannot ban yourself'})
+
+    try:
+        # Set ban details
+        user.is_banned = True
+        user.ban_reason = ban_reason
+        user.banned_at = datetime.utcnow()
+        user.banned_by = current_user.id
+        
+        if ban_duration != 'permanent' and isinstance(ban_duration, int):
+            user.ban_expires_at = datetime.utcnow() + timedelta(days=ban_duration)
+        else:
+            user.ban_expires_at = None  # Permanent ban
+
+        # Mark report as resolved if provided
+        if report_id:
+            report = Report.query.get(report_id)
+            if report:
+                report.status = 'resolved'
+
+        # End any active chats for the banned user
+        active_sessions = ChatSession.query.filter(
+            (ChatSession.user1_id == user_id) | (ChatSession.user2_id == user_id),
+            ChatSession.ended_at.is_(None)
+        ).all()
+
+        for session in active_sessions:
+            session.ended_at = datetime.utcnow()
+            session.end_reason = 'user_banned'
+            if session.started_at:
+                duration = (session.ended_at - session.started_at).total_seconds()
+                session.duration = int(duration)
+
+        # Remove from waiting lists and active chats
+        global waiting_users, active_chats
+        
+        for chat_type in ['text', 'video']:
+            waiting_users[chat_type] = [u for u in waiting_users[chat_type] if u.get('user_id') != user_id]
+        
+        if user_id in active_chats:
+            partner_id = active_chats[user_id]['partner']
+            if partner_id in active_chats:
+                # Notify partner
+                emit('chat_ended', {
+                    'session_id': active_chats[user_id]['session_id'],
+                    'reason': 'partner_banned',
+                    'partner_left': True,
+                    'timestamp': datetime.utcnow().isoformat()
+                }, room=partner_id)
+                del active_chats[partner_id]
+            del active_chats[user_id]
+
+        db.session.commit()
+
+        # Send ban notification email
+        try:
+            from email_utils import send_ban_notification_email
+            send_ban_notification_email(
+                user.email,
+                ban_reason,
+                ban_duration,
+                user.ban_expires_at
+            )
+        except Exception as e:
+            print(f"Error sending ban notification: {e}")
+
+        # Create audit log
+        try:
+            audit_log = AuditLog(
+                admin_id=current_user.id,
+                action=f'Banned user {user.email}',
+                target_type='user',
+                target_id=user_id,
+                details=f'Reason: {ban_reason}, Duration: {ban_duration}',
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get('User-Agent')
+            )
+            db.session.add(audit_log)
+            db.session.commit()
+        except Exception as e:
+            print(f"Error creating audit log: {e}")
+
+        return jsonify({
+            'success': True, 
+            'message': f'User {user.email} has been banned successfully'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error banning user: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to ban user'})
 
 @app.route('/admin/report/<int:report_id>')
 @login_required
@@ -1283,73 +1458,124 @@ def help_center():
 @socketio.on('connect')
 def handle_connect():
     """Handle user connection"""
-    if current_user.is_authenticated:
-        user_id = current_user.id
-        join_room(user_id)
-        online_users.add(user_id)
+    global online_users, active_chats, waiting_users
+    
+    try:
+        if current_user.is_authenticated:
+            user_id = current_user.id
+            join_room(user_id)
+            online_users.add(user_id)
 
-        # Update user online status
-        current_user.is_online = True
-        current_user.last_seen = datetime.utcnow()
-        db.session.commit()
+            # Update user online status in database
+            current_user.is_online = True
+            current_user.last_seen = datetime.utcnow()
+            current_user.last_heartbeat = datetime.utcnow()
+            db.session.commit()
 
-        # Broadcast user online status
-        emit('user_online_status', {
-            'user_id': user_id,
-            'display_name': current_user.display_name,
-            'status': 'online',
+            # Broadcast user online status to all users
+            emit('user_online_status', {
+                'user_id': user_id,
+                'display_name': current_user.display_name,
+                'status': 'online',
+                'timestamp': datetime.utcnow().isoformat()
+            }, broadcast=True)
+
+            # Send online count to all users
+            emit('online_count_update', {
+                'count': len(online_users),
+                'timestamp': datetime.utcnow().isoformat()
+            }, broadcast=True)
+
+            # Send connection success to the connected user
+            emit('connection_established', {
+                'user_id': user_id,
+                'online_users': len(online_users),
+                'waiting_text': len(waiting_users['text']),
+                'waiting_video': len(waiting_users['video']),
+                'active_chats': len(active_chats),
+                'server_time': datetime.utcnow().isoformat()
+            }, room=user_id)
+
+            print(f"User {current_user.display_name} ({user_id}) connected. Online users: {len(online_users)}")
+
+        else:
+            # Handle unauthenticated connections
+            emit('connection_error', {
+                'message': 'Authentication required',
+                'timestamp': datetime.utcnow().isoformat()
+            })
+            return False  # Reject the connection
+
+    except Exception as e:
+        print(f"Error in handle_connect: {str(e)}")
+        emit('connection_error', {
+            'message': 'Internal server error',
             'timestamp': datetime.utcnow().isoformat()
-        }, broadcast=True)
-
-        # Send online count to all users
-        emit('online_count_update', {
-            'count': len(online_users),
-            'timestamp': datetime.utcnow().isoformat()
-        }, broadcast=True)
-
-        # Send connection success to user
-        emit('connection_established', {
-            'user_id': user_id,
-            'online_users': len(online_users),
-            'server_time': datetime.utcnow().isoformat()
-        }, room=user_id)
-
-        print(f"User {current_user.display_name} connected. Online users: {len(online_users)}")
+        })
+        return False
 
 @socketio.on('disconnect')
 def handle_disconnect():
     """Handle user disconnection"""
-    if current_user.is_authenticated:
-        user_id = current_user.id
-        leave_room(user_id)
+    global online_users, active_chats, waiting_users
+    
+    try:
+        if current_user.is_authenticated:
+            user_id = current_user.id
+            leave_room(user_id)
 
-        # Remove from online users
-        if user_id in online_users:
-            online_users.remove(user_id)
+            # Remove from online users
+            if user_id in online_users:
+                online_users.remove(user_id)
 
-        # Update user offline status
-        current_user.is_online = False
-        current_user.last_seen = datetime.utcnow()
-        db.session.commit()
+            # Update user offline status in database
+            current_user.is_online = False
+            current_user.last_seen = datetime.utcnow()
+            db.session.commit()
 
-        # Clean up chat sessions
-        cleanup_user_sessions(user_id)
+            # Clean up any active chat sessions for this user
+            cleanup_user_sessions(user_id)
 
-        # Broadcast user offline status
-        emit('user_online_status', {
-            'user_id': user_id,
-            'display_name': current_user.display_name,
-            'status': 'offline',
-            'timestamp': datetime.utcnow().isoformat()
-        }, broadcast=True)
+            # Broadcast user offline status to all users
+            emit('user_online_status', {
+                'user_id': user_id,
+                'display_name': current_user.display_name,
+                'status': 'offline',
+                'timestamp': datetime.utcnow().isoformat()
+            }, broadcast=True)
 
-        # Update online count
-        emit('online_count_update', {
-            'count': len(online_users),
-            'timestamp': datetime.utcnow().isoformat()
-        }, broadcast=True)
+            # Update online count for all users
+            emit('online_count_update', {
+                'count': len(online_users),
+                'timestamp': datetime.utcnow().isoformat()
+            }, broadcast=True)
 
-        print(f"User {current_user.display_name} disconnected. Online users: {len(online_users)}")
+            print(f"User {current_user.display_name} ({user_id}) disconnected. Online users: {len(online_users)}")
+
+    except Exception as e:
+        print(f"Error in handle_disconnect: {str(e)}")
+
+@socketio.on('heartbeat')
+def handle_heartbeat(data):
+    """Handle client heartbeat to track active connection"""
+    global online_users
+    
+    try:
+        if current_user.is_authenticated:
+            user_id = current_user.id
+            
+            # Update last heartbeat timestamp
+            current_user.last_heartbeat = datetime.utcnow()
+            db.session.commit()
+
+            # Send acknowledgment back to client
+            emit('heartbeat_ack', {
+                'server_time': datetime.utcnow().isoformat(),
+                'user_status': 'active'
+            }, room=user_id)
+
+    except Exception as e:
+        print(f"Error in handle_heartbeat: {str(e)}")
 
 # Chat Session Management
 @socketio.on('start_chat_search')
@@ -1866,12 +2092,6 @@ def handle_block_user(data):
     user_id_to_block = data.get('user_id')
     session_id = data.get('session_id')
 
-    # Create block record (you'd need a BlockedUser model)
-    # blocked = BlockedUser(blocker_id=current_user.id, blocked_id=user_id_to_block)
-    # db.session.add(blocked)
-    # db.session.commit()
-
-    # End current chat if blocking chat partner
     if session_id and current_user.id in active_chats:
         handle_end_chat({
             'session_id': session_id,
@@ -1904,10 +2124,6 @@ def handle_admin_get_stats(data):
     }
 
     emit('admin_stats', stats, room=current_user.id)
-
-# =============================================
-# HELPER FUNCTIONS
-# =============================================
 
 def attempt_matchmaking(chat_type):
     """Attempt to match users in the waiting queue"""
@@ -2017,31 +2233,55 @@ def get_system_uptime():
     """Get system uptime (simplified)"""
     return "0 days, 0 hours, 0 minutes"  # Implement actual uptime tracking
 
-# Background task for periodic cleanup
 def cleanup_inactive_sessions():
     """Periodically clean up inactive sessions"""
-    with app.app_context():
-        # Clean up abandoned waiting users (older than 10 minutes)
-        cutoff_time = datetime.utcnow() - timedelta(minutes=10)
+    global active_chats, waiting_users, online_users
+    
+    try:
+        with app.app_context():
+            # Clean up abandoned waiting users (older than 10 minutes)
+            cutoff_time = datetime.utcnow() - timedelta(minutes=10)
 
-        for chat_type in ['text', 'video']:
-            waiting_users[chat_type] = [
-                u for u in waiting_users[chat_type]
-                if datetime.fromisoformat(u.get('joined_at', datetime.utcnow().isoformat())) > cutoff_time
-            ]
+            for chat_type in ['text', 'video']:
+                original_count = len(waiting_users[chat_type])
+                waiting_users[chat_type] = [
+                    u for u in waiting_users[chat_type]
+                    if datetime.fromisoformat(u.get('joined_at', datetime.utcnow().isoformat())) > cutoff_time
+                ]
+                if len(waiting_users[chat_type]) != original_count:
+                    print(f"Cleaned up {original_count - len(waiting_users[chat_type])} inactive waiting users from {chat_type} queue")
 
-        # Clean up stale active chats (no activity for 5 minutes)
-        stale_cutoff = datetime.utcnow() - timedelta(minutes=5)
-        users_to_remove = []
+            # Clean up stale active chats (no activity for 5 minutes)
+            stale_cutoff = datetime.utcnow() - timedelta(minutes=5)
+            users_to_remove = []
 
-        for user_id, chat_data in active_chats.items():
-            if chat_data.get('start_time', datetime.utcnow()) < stale_cutoff:
-                users_to_remove.append(user_id)
+            for user_id, chat_data in active_chats.items():
+                if chat_data.get('start_time', datetime.utcnow()) < stale_cutoff:
+                    users_to_remove.append(user_id)
 
-        for user_id in users_to_remove:
-            cleanup_user_sessions(user_id)
+            for user_id in users_to_remove:
+                cleanup_user_sessions(user_id)
+                print(f"Cleaned up stale chat session for user {user_id}")
 
-# Start background cleanup task
+            # Clean up users who haven't sent heartbeat in 2 minutes
+            heartbeat_cutoff = datetime.utcnow() - timedelta(minutes=2)
+            stale_users = User.query.filter(
+                User.is_online == True,
+                User.last_heartbeat < heartbeat_cutoff
+            ).all()
+
+            for user in stale_users:
+                user.is_online = False
+                if user.id in online_users:
+                    online_users.remove(user.id)
+                print(f"Marked user {user.id} as offline due to inactivity")
+
+            if stale_users:
+                db.session.commit()
+
+    except Exception as e:
+        print(f"Error in cleanup_inactive_sessions: {str(e)}")
+
 def start_background_tasks():
     """Start background maintenance tasks"""
     def periodic_cleanup():
@@ -2051,12 +2291,265 @@ def start_background_tasks():
 
     socketio.start_background_task(periodic_cleanup)
 
-# Initialize background tasks when app starts
+# Initialize background tasks when first client connects
 @socketio.on('connect')
-def initialize_app():
-    """Initialize application when first client connects"""
+def initialize_background_tasks():
+    """Initialize background tasks when first client connects"""
+    global online_users
+    
     if len(online_users) == 1:  # First connection
+        print("Starting background tasks...")
         start_background_tasks()
+
+@app.route('/admin/unban-user', methods=['POST'])
+@login_required
+def unban_user():
+    """Unban a user"""
+    # Admin check
+    if current_user.email != 'admin@shadowtalk.com' and not (hasattr(current_user, 'is_admin') and current_user.is_admin):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    data = request.get_json()
+    user_id = data.get('user_id')
+
+    user = User.query.get(user_id)
+    if user and user.is_banned:
+        try:
+            # Remove ban
+            user.is_banned = False
+            user.ban_reason = None
+            user.banned_at = None
+            user.banned_by = None
+            user.ban_expires_at = None
+
+            db.session.commit()
+
+            # Send unban notification email
+            try:
+                from email_utils import send_notification_email
+                send_notification_email(
+                    user.email,
+                    'Account Reinstated',
+                    'Your ShadowTalk account has been reinstated. You can now login and use the platform normally. Please review our community guidelines to ensure compliance.'
+                )
+            except Exception as e:
+                print(f"Error sending unban notification email: {e}")
+
+            # Create audit log entry
+            try:
+                audit_log = AuditLog(
+                    admin_id=current_user.id,
+                    action=f'Unbanned user {user.email}',
+                    target_type='user',
+                    target_id=user_id,
+                    details='User ban removed',
+                    ip_address=request.remote_addr,
+                    user_agent=request.headers.get('User-Agent')
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+            except Exception as e:
+                print(f"Error creating audit log: {e}")
+
+            return jsonify({
+                'success': True, 
+                'message': f'User {user.email} has been unbanned successfully'
+            })
+
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error unbanning user: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to unban user'})
+
+    return jsonify({'success': False, 'error': 'User not found or not banned'})
+
+@app.route('/admin/banned-users')
+@login_required
+def get_banned_users():
+    """Get list of banned users"""
+    if current_user.email != 'admin@shadowtalk.com' and not (hasattr(current_user, 'is_admin') and current_user.is_admin):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    banned_users = User.query.filter_by(is_banned=True).all()
+    
+    users_data = []
+    for user in banned_users:
+        users_data.append({
+            'id': user.id,
+            'email': user.email,
+            'display_name': user.display_name,
+            'ban_reason': user.ban_reason,
+            'banned_at': user.banned_at.isoformat() if user.banned_at else None,
+            'ban_expires_at': user.ban_expires_at.isoformat() if user.ban_expires_at else None,
+            'banned_by': user.banned_by
+        })
+    
+    return jsonify({'success': True, 'banned_users': users_data})
+
+@app.route('/admin/user/<user_id>/ban-status')
+@login_required
+def get_user_ban_status(user_id):
+    """Get ban status for a specific user"""
+    if current_user.email != 'admin@shadowtalk.com' and not (hasattr(current_user, 'is_admin') and current_user.is_admin):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'success': False, 'error': 'User not found'})
+
+    ban_info = {
+        'is_banned': user.is_banned,
+        'ban_reason': user.ban_reason,
+        'banned_at': user.banned_at.isoformat() if user.banned_at else None,
+        'ban_expires_at': user.ban_expires_at.isoformat() if user.ban_expires_at else None,
+        'banned_by': user.banned_by
+    }
+
+    return jsonify({'success': True, 'ban_info': ban_info})
+
+@app.route('/admin/warn-user', methods=['POST'])
+@login_required
+def warn_user():
+    """Issue a warning to a user"""
+    # Admin check
+    if current_user.email != 'admin@shadowtalk.com' and not (hasattr(current_user, 'is_admin') and current_user.is_admin):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    data = request.get_json()
+    user_id = data.get('user_id')
+    reason = data.get('reason')
+    severity = data.get('severity', 'medium')
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'success': False, 'error': 'User not found'})
+
+    try:
+        # Create user warning
+        warning = UserWarningLog(
+            user_id=user_id,
+            admin_id=current_user.id,
+            reason=reason,
+            severity=severity
+        )
+        db.session.add(warning)
+
+        # Create notification for the user
+        notification = Notification(
+            user_id=user_id,
+            title=f'Warning Issued ({severity.upper()} Severity)',
+            message=f'You have received a warning: {reason}',
+            notification_type='warning',
+            related_user_id=current_user.id
+        )
+        db.session.add(notification)
+
+        # Send email notification
+        try:
+            from email_utils import send_notification_email
+            send_notification_email(
+                user.email,
+                f'ShadowTalk - Warning Issued ({severity.upper()} Severity)',
+                f'You have received a warning from ShadowTalk moderators.\n\nReason: {reason}\n\nSeverity: {severity.upper()}\n\nPlease review our community guidelines to ensure this does not happen again.'
+            )
+        except Exception as e:
+            print(f"Error sending warning email: {e}")
+
+        # Create audit log
+        audit_log = AuditLog(
+            admin_id=current_user.id,
+            action=f'Warning issued to user {user.email}',
+            target_type='user',
+            target_id=user_id,
+            details=f'Reason: {reason}, Severity: {severity}',
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+        db.session.add(audit_log)
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True, 
+            'message': f'Warning issued to {user.email} successfully'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error warning user: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to issue warning'})
+
+@app.route('/admin/extend-ban', methods=['POST'])
+@login_required
+def extend_ban():
+    """Extend an existing ban"""
+    # Admin check
+    if current_user.email != 'admin@shadowtalk.com' and not (hasattr(current_user, 'is_admin') and current_user.is_admin):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    data = request.get_json()
+    user_id = data.get('user_id')
+    duration = data.get('duration')
+    reason = data.get('reason', '')
+
+    user = User.query.get(user_id)
+    if not user or not user.is_banned:
+        return jsonify({'success': False, 'error': 'User not found or not banned'})
+
+    try:
+        current_time = datetime.utcnow()
+        
+        if duration == 'permanent':
+            user.ban_expires_at = None
+            duration_display = 'permanent'
+        else:
+            # Calculate new expiration
+            if user.ban_expires_at and user.ban_expires_at > current_time:
+                # Extend from current expiration
+                new_expiration = user.ban_expires_at + timedelta(days=int(duration))
+            else:
+                # Start from now
+                new_expiration = current_time + timedelta(days=int(duration))
+            
+            user.ban_expires_at = new_expiration
+            duration_display = f'{duration} days extension'
+
+        # Update ban reason if additional reason provided
+        if reason:
+            user.ban_reason = f"{user.ban_reason or 'Previous ban'}. Additional reason: {reason}"
+
+        # Create audit log
+        audit_log = AuditLog(
+            admin_id=current_user.id,
+            action=f'Extended ban for user {user.email}',
+            target_type='user',
+            target_id=user_id,
+            details=f'Extended by: {duration_display}, Additional reason: {reason}',
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+        db.session.add(audit_log)
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True, 
+            'message': f'Ban extended for {user.email} successfully'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error extending ban: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to extend ban'})
+    
+def update_database_schema():
+    """Update database schema for the renamed UserWarningLog model"""
+    try:
+    
+        db.create_all()
+        print("Database schema updated successfully!")
+    except Exception as e:
+        print(f"Error updating database schema: {e}")
 
 if __name__ == '__main__':
     with app.app_context():
