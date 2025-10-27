@@ -39,6 +39,24 @@
           <span class="stat-label">Banned Users</span>
         </div>
       </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-robot"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-number">{{ stats.moderation_queue }}</span>
+          <span class="stat-label">AI Moderation</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-number">{{ stats.daily_active_users }}</span>
+          <span class="stat-label">Daily Active</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -46,7 +64,17 @@
     <button class="tab-btn active" onclick="openTab('reports')">Reports</button>
     <button class="tab-btn" onclick="openTab('users')">Users</button>
     <button class="tab-btn" onclick="openTab('chats')">Chat Sessions</button>
+    <button class="tab-btn" onclick="openTab('moderation')">
+      AI Moderation
+    </button>
+    <button class="tab-btn" onclick="openTab('banned_users')">
+      Banned Users
+    </button>
+    <button class="tab-btn" onclick="openTab('live_monitor')">
+      Live Monitor
+    </button>
     <button class="tab-btn" onclick="openTab('analytics')">Analytics</button>
+    <button class="tab-btn" onclick="openTab('audit_logs')">Audit Logs</button>
   </div>
 
   <div class="tab-content">
@@ -57,6 +85,12 @@
         <div class="section-actions">
           <button class="btn-secondary" onclick="refreshReports()">
             <i class="fas fa-sync-alt"></i> Refresh
+          </button>
+          <button class="btn-primary" onclick="exportReports('pdf')">
+            <i class="fas fa-file-pdf"></i> Export PDF
+          </button>
+          <button class="btn-primary" onclick="exportReports('csv')">
+            <i class="fas fa-file-csv"></i> Export CSV
           </button>
         </div>
       </div>
@@ -127,9 +161,15 @@
                   </button>
                   <button
                     class="btn-danger btn-small"
-                    onclick="banUser('{{ report.reported_user.id if report.reported_user else '' }}', {{ report.id }})"
+                    onclick="showBanModal('{{ report.reported_user.id if report.reported_user else '' }}', {{ report.id }})"
                   >
                     <i class="fas fa-ban"></i> Ban
+                  </button>
+                  <button
+                    class="btn-warning btn-small"
+                    onclick="showWarnUserModal('{{ report.reported_user.id if report.reported_user else '' }}', {{ report.id }})"
+                  >
+                    <i class="fas fa-exclamation-triangle"></i> Warn
                   </button>
                   <button
                     class="btn-secondary btn-small"
@@ -164,8 +204,17 @@
             placeholder="Search users..."
             class="search-input"
           />
+          <select id="userStatusFilter" class="filter-select">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="banned">Banned</option>
+            <option value="verified">Verified</option>
+          </select>
           <button class="btn-secondary" onclick="searchUsers()">
             <i class="fas fa-search"></i> Search
+          </button>
+          <button class="btn-primary" onclick="exportUsers()">
+            <i class="fas fa-download"></i> Export
           </button>
         </div>
       </div>
@@ -181,6 +230,7 @@
               <th>Joined</th>
               <th>Last Login</th>
               <th>Reports</th>
+              <th>Warnings</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -196,7 +246,9 @@
               </td>
               <td>{{ user.email }}</td>
               <td>
-                {% if user.is_verified %}
+                {% if user.is_banned %}
+                <span class="status-badge status-banned">Banned</span>
+                {% elif user.is_verified %}
                 <span class="status-badge status-verified">Verified</span>
                 {% else %}
                 <span class="status-badge status-pending">Pending</span>
@@ -214,13 +266,33 @@
                 >
               </td>
               <td>
+                <span class="warning-count" data-user-id="{{ user.id }}"
+                  >{{ user_warnings_count[user.id] if user.id in
+                  user_warnings_count else 0 }}</span
+                >
+              </td>
+              <td>
                 <div class="action-buttons">
-                  {% if user.id != current_user.id %}
+                  {% if user.id != current_user.id %} {% if user.is_banned %}
+                  <button
+                    class="btn-success btn-small"
+                    onclick="unbanUser('{{ user.id }}')"
+                  >
+                    <i class="fas fa-unlock"></i> Unban
+                  </button>
+                  {% else %}
                   <button
                     class="btn-danger btn-small"
-                    onclick="banUser('{{ user.id }}')"
+                    onclick="showBanModal('{{ user.id }}')"
                   >
                     <i class="fas fa-ban"></i> Ban
+                  </button>
+                  {% endif %}
+                  <button
+                    class="btn-warning btn-small"
+                    onclick="showWarnUserModal('{{ user.id }}')"
+                  >
+                    <i class="fas fa-exclamation-triangle"></i> Warn
                   </button>
                   {% endif %}
                   <button
@@ -248,8 +320,16 @@
             <option value="text">Text Only</option>
             <option value="video">Video Only</option>
           </select>
+          <select id="chatStatusFilter" class="filter-select">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="ended">Ended</option>
+          </select>
           <button class="btn-secondary" onclick="filterChats()">
             <i class="fas fa-filter"></i> Filter
+          </button>
+          <button class="btn-primary" onclick="exportChats()">
+            <i class="fas fa-download"></i> Export
           </button>
         </div>
       </div>
@@ -265,6 +345,7 @@
               <th>Start Time</th>
               <th>Duration</th>
               <th>Messages</th>
+              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -302,6 +383,13 @@
               </td>
               <td>{{ chat.messages|length }}</td>
               <td>
+                {% if chat.ended_at %}
+                <span class="status-badge status-ended">Ended</span>
+                {% else %}
+                <span class="status-badge status-active">Active</span>
+                {% endif %}
+              </td>
+              <td>
                 <div class="action-buttons">
                   <button
                     class="btn-secondary btn-small"
@@ -316,6 +404,13 @@
                   >
                     <i class="fas fa-download"></i> Log
                   </button>
+                  {% endif %} {% if not chat.ended_at %}
+                  <button
+                    class="btn-danger btn-small"
+                    onclick="terminateChat('{{ chat.id }}')"
+                  >
+                    <i class="fas fa-times"></i> Terminate
+                  </button>
                   {% endif %}
                 </div>
               </td>
@@ -323,6 +418,337 @@
             {% endfor %}
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- AI Moderation Queue Tab -->
+    <div id="moderation" class="tab-pane">
+      <div class="section-header">
+        <h2>AI Moderation Queue</h2>
+        <div class="section-actions">
+          <select
+            id="moderationFilter"
+            class="filter-select"
+            onchange="filterModerationQueue()"
+          >
+            <option value="all">All Items</option>
+            <option value="pending">Pending Only</option>
+            <option value="toxic">Toxic Content</option>
+            <option value="spam">Spam</option>
+            <option value="harassment">Harassment</option>
+          </select>
+          <button class="btn-secondary" onclick="refreshModerationQueue()">
+            <i class="fas fa-sync-alt"></i> Refresh
+          </button>
+          <button class="btn-primary" onclick="exportModerationQueue()">
+            <i class="fas fa-download"></i> Export CSV
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Chat Session</th>
+              <th>Message Preview</th>
+              <th>Reason</th>
+              <th>Confidence</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="moderationQueueBody">
+            {% for item in moderation_queue %}
+            <tr data-confidence="{{ item.confidence_score }}">
+              <td>#{{ item.id }}</td>
+              <td>
+                <a
+                  href="javascript:void(0)"
+                  onclick="viewChatDetails('{{ item.chat_session_id }}')"
+                >
+                  {{ item.chat_session.id[:8] }}...
+                </a>
+              </td>
+              <td class="message-preview">
+                {% if item.message %}
+                <span class="preview-text"
+                  >{{ item.message.content[:50] }}{% if
+                  item.message.content|length > 50 %}...{% endif %}</span
+                >
+                <button
+                  class="btn-small"
+                  onclick="viewFullMessage({{ item.message_id }})"
+                >
+                  View Full
+                </button>
+                {% else %}
+                <span class="text-muted">Message deleted</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="reason-badge reason-{{ item.reason }}"
+                  >{{ item.reason|title }}</span
+                >
+              </td>
+              <td>
+                <div class="confidence-meter">
+                  <div
+                    class="confidence-bar"
+                    style="width: {{ (item.confidence_score * 100)|round }}%"
+                  ></div>
+                  <span class="confidence-text"
+                    >{{ (item.confidence_score * 100)|round }}%</span
+                  >
+                </div>
+              </td>
+              <td>
+                <span class="status-badge status-{{ item.status }}"
+                  >{{ item.status|title }}</span
+                >
+              </td>
+              <td>{{ item.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>
+                <div class="action-buttons">
+                  <button
+                    class="btn-success btn-small"
+                    onclick="approveMessage({{ item.id }})"
+                  >
+                    <i class="fas fa-check"></i> Approve
+                  </button>
+                  <button
+                    class="btn-danger btn-small"
+                    onclick="deleteMessage({{ item.id }})"
+                  >
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                  <button
+                    class="btn-warning btn-small"
+                    onclick="showWarnUserModal('{{ item.message.sender_id if item.message else '' }}', {{ item.id }})"
+                  >
+                    <i class="fas fa-exclamation-triangle"></i> Warn
+                  </button>
+                  <button
+                    class="btn-danger btn-small"
+                    onclick="showBanModal('{{ item.message.sender_id if item.message else '' }}', null, '{{ item.reason }}')"
+                  >
+                    <i class="fas fa-ban"></i> Ban
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Banned Users Tab -->
+    <div id="banned_users" class="tab-pane">
+      <div class="section-header">
+        <h2>Banned Users</h2>
+        <div class="section-actions">
+          <button class="btn-secondary" onclick="refreshBannedUsers()">
+            <i class="fas fa-sync-alt"></i> Refresh
+          </button>
+          <button class="btn-primary" onclick="exportBannedUsers()">
+            <i class="fas fa-download"></i> Export
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Email</th>
+              <th>Display Name</th>
+              <th>Ban Reason</th>
+              <th>Banned At</th>
+              <th>Expires At</th>
+              <th>Banned By</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="bannedUsersTableBody">
+            {% for user in users if user.is_banned %}
+            <tr>
+              <td>{{ user.id[:8] }}...</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.display_name or 'N/A' }}</td>
+              <td class="reason-cell">
+                <span class="reason-text"
+                  >{{ user.ban_reason[:100] if user.ban_reason else 'No reason
+                  provided' }}{% if user.ban_reason and user.ban_reason|length >
+                  100 %}...{% endif %}</span
+                >
+                {% if user.ban_reason and user.ban_reason|length > 100 %}
+                <button
+                  class="btn-small"
+                  onclick="showFullBanReason('{{ user.id }}')"
+                >
+                  View Full
+                </button>
+                {% endif %}
+              </td>
+              <td>
+                {{ user.banned_at.strftime('%Y-%m-%d %H:%M') if user.banned_at
+                else 'N/A' }}
+              </td>
+              <td>
+                {% if user.ban_expires_at %} {% if user.ban_expires_at >
+                datetime.utcnow() %}
+                <span class="status-badge status-warning"
+                  >{{ user.ban_expires_at.strftime('%Y-%m-%d %H:%M') }}</span
+                >
+                {% else %}
+                <span class="status-badge status-expired">Expired</span>
+                {% endif %} {% else %}
+                <span class="status-badge status-permanent">Permanent</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if user.banned_by %} {{ user.banned_by_admin_rel.username if
+                user.banned_by_admin_rel else 'System' }} {% else %} System {%
+                endif %}
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button
+                    class="btn-success btn-small"
+                    onclick="unbanUser('{{ user.id }}')"
+                  >
+                    <i class="fas fa-unlock"></i> Unban
+                  </button>
+                  <button
+                    class="btn-secondary btn-small"
+                    onclick="viewUserDetails('{{ user.id }}')"
+                  >
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                  <button
+                    class="btn-danger btn-small"
+                    onclick="showExtendBanModal('{{ user.id }}')"
+                  >
+                    <i class="fas fa-clock"></i> Extend
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="8" class="text-center">
+                <div class="empty-state">
+                  <i class="fas fa-ban"></i>
+                  <h3>No Banned Users</h3>
+                  <p>All users are currently in good standing.</p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Live Chat Monitor Tab -->
+    <div id="live_monitor" class="tab-pane">
+      <div class="section-header">
+        <h2>Live Chat Monitor</h2>
+        <div class="section-actions">
+          <div class="filter-group">
+            <input
+              type="text"
+              id="sessionSearch"
+              placeholder="Search sessions..."
+              class="search-input"
+            />
+            <select id="sessionFilter" class="filter-select">
+              <option value="all">All Sessions</option>
+              <option value="active">Active Only</option>
+              <option value="recent">Recent (Last 1h)</option>
+            </select>
+          </div>
+          <button class="btn-secondary" onclick="refreshLiveMonitor()">
+            <i class="fas fa-sync-alt"></i> Refresh
+          </button>
+          <button class="btn-primary" onclick="startAutoRefresh()">
+            <i class="fas fa-play"></i> Auto Refresh
+          </button>
+          <button class="btn-danger" onclick="stopAutoRefresh()">
+            <i class="fas fa-stop"></i> Stop
+          </button>
+        </div>
+      </div>
+
+      <div class="live-monitor-container">
+        <div class="live-sessions-grid" id="liveSessionsGrid">
+          {% for session in live_sessions %}
+          <div class="session-card" data-session-id="{{ session.id }}">
+            <div class="session-header">
+              <h4>Session {{ session.id[:8] }}...</h4>
+              <span class="session-type type-{{ session.session_type }}"
+                >{{ session.session_type|title }}</span
+              >
+            </div>
+            <div class="session-users">
+              <div class="session-user">
+                <i class="fas fa-user"></i>
+                <span
+                  >{{ session.user1.display_name if session.user1 else 'Unknown'
+                  }}</span
+                >
+              </div>
+              <div class="session-user">
+                <i class="fas fa-user"></i>
+                <span
+                  >{{ session.user2.display_name if session.user2 else 'Unknown'
+                  }}</span
+                >
+              </div>
+            </div>
+            <div class="session-info">
+              <div class="info-item">
+                <span class="label">Started:</span>
+                <span class="value"
+                  >{{ session.started_at.strftime('%H:%M:%S') }}</span
+                >
+              </div>
+              <div class="info-item">
+                <span class="label">Duration:</span>
+                <span class="value">{{ session.duration or 'Ongoing' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Messages:</span>
+                <span class="value">{{ session.messages|length }}</span>
+              </div>
+            </div>
+            <div class="session-actions">
+              <button
+                class="btn-small btn-secondary"
+                onclick="viewLiveChat('{{ session.id }}')"
+              >
+                <i class="fas fa-eye"></i> Monitor
+              </button>
+              <button
+                class="btn-small btn-danger"
+                onclick="terminateChat('{{ session.id }}')"
+              >
+                <i class="fas fa-times"></i> Terminate
+              </button>
+              <button
+                class="btn-small btn-warning"
+                onclick="showWarnBothUsersModal('{{ session.user1.id if session.user1 else '' }}', '{{ session.user2.id if session.user2 else '' }}', '{{ session.id }}')"
+              >
+                <i class="fas fa-exclamation-triangle"></i> Warn Both
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
       </div>
     </div>
 
@@ -382,6 +808,24 @@
             </div>
           </div>
         </div>
+
+        <div class="analytics-card">
+          <h3>Moderation Stats</h3>
+          <div class="moderation-stats">
+            <div class="metric">
+              <span class="metric-label">AI Flagged</span>
+              <span class="metric-value">{{ stats.ai_flagged_today }}</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Manual Actions</span>
+              <span class="metric-value">{{ stats.manual_actions_today }}</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Accuracy</span>
+              <span class="metric-value">94.2%</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="recent-activity">
@@ -399,6 +843,90 @@
           </div>
           {% endfor %}
         </div>
+      </div>
+    </div>
+
+    <!-- Audit Logs Tab -->
+    <div id="audit_logs" class="tab-pane">
+      <div class="section-header">
+        <h2>Audit Logs</h2>
+        <div class="section-actions">
+          <input
+            type="text"
+            id="auditSearch"
+            placeholder="Search actions..."
+            class="search-input"
+          />
+          <select id="auditActionFilter" class="filter-select">
+            <option value="all">All Actions</option>
+            <option value="ban">User Bans</option>
+            <option value="warn">User Warnings</option>
+            <option value="delete">Content Deletion</option>
+            <option value="terminate">Chat Termination</option>
+          </select>
+          <input type="date" id="auditDateFilter" class="filter-select" />
+          <button class="btn-secondary" onclick="filterAuditLogs()">
+            <i class="fas fa-filter"></i> Filter
+          </button>
+          <button class="btn-primary" onclick="exportAuditLogs()">
+            <i class="fas fa-download"></i> Export
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Admin</th>
+              <th>Action</th>
+              <th>Target</th>
+              <th>Details</th>
+              <th>IP Address</th>
+            </tr>
+          </thead>
+          <tbody id="auditLogsBody">
+            {% for log in audit_logs %}
+            <tr>
+              <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+              <td>{{ log.admin.username if log.admin else 'System' }}</td>
+              <td>
+                <span class="action-badge action-{{ log.action_type }}"
+                  >{{ log.action_type|title }}</span
+                >
+              </td>
+              <td>
+                {% if log.target_user %}
+                <div class="user-info">
+                  <i class="fas fa-user"></i>
+                  <span
+                    >{{ log.target_user.display_name or log.target_user.email
+                    }}</span
+                  >
+                </div>
+                {% elif log.target_id %} {{ log.target_type }} #{{ log.target_id
+                }} {% else %} N/A {% endif %}
+              </td>
+              <td class="details-cell">
+                <span class="details-text"
+                  >{{ log.details[:100] }}{% if log.details|length > 100 %}...{%
+                  endif %}</span
+                >
+                {% if log.details|length > 100 %}
+                <button
+                  class="btn-small"
+                  onclick="showFullDetails({{ log.id }})"
+                >
+                  View Full
+                </button>
+                {% endif %}
+              </td>
+              <td>{{ log.ip_address }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -432,6 +960,221 @@
     </div>
   </div>
 </div>
+
+<!-- Ban User Modal -->
+<div id="banUserModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Ban User</h3>
+      <button class="close-btn" onclick="closeModal('banUserModal')">
+        &times;
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="banUserForm">
+        <input type="hidden" id="banUserId" />
+        <input type="hidden" id="banReportId" />
+
+        <div class="form-group">
+          <label for="banReason">Reason for Ban:</label>
+          <textarea
+            id="banReason"
+            rows="4"
+            placeholder="Enter the reason for this ban..."
+            required
+          ></textarea>
+          <div class="char-counter" id="banReasonCounter"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="banDuration">Ban Duration:</label>
+          <select id="banDuration" required>
+            <option value="1">1 Day</option>
+            <option value="7">7 Days</option>
+            <option value="30">30 Days</option>
+            <option value="permanent">Permanent</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        <div id="customDaysDiv" class="form-group" style="display: none">
+          <label for="customDays">Custom Days:</label>
+          <input
+            type="number"
+            id="customDays"
+            min="1"
+            max="365"
+            placeholder="Enter number of days"
+          />
+        </div>
+
+        <div class="warning-message">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span
+            >This action will immediately log out the user and prevent them from
+            accessing the platform.</span
+          >
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="closeModal('banUserModal')"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn-danger">Ban User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Extend Ban Modal -->
+<div id="extendBanModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Extend Ban</h3>
+      <button class="close-btn" onclick="closeModal('extendBanModal')">
+        &times;
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="extendBanForm">
+        <input type="hidden" id="extendBanUserId" />
+
+        <div class="form-group">
+          <label for="extendBanDuration">Extend Ban By:</label>
+          <select id="extendBanDuration" required>
+            <option value="1">1 Day</option>
+            <option value="7">7 Days</option>
+            <option value="30">30 Days</option>
+            <option value="permanent">Make Permanent</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        <div id="extendCustomDaysDiv" class="form-group" style="display: none">
+          <label for="extendCustomDays">Custom Days:</label>
+          <input
+            type="number"
+            id="extendCustomDays"
+            min="1"
+            max="365"
+            placeholder="Enter number of days"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="extendBanReason" class="optional"
+            >Additional Reason (Optional):</label
+          >
+          <textarea
+            id="extendBanReason"
+            rows="3"
+            placeholder="Additional context for extending the ban..."
+          ></textarea>
+          <div class="char-counter" id="extendBanReasonCounter"></div>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="closeModal('extendBanModal')"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn-warning">Extend Ban</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="warnUserModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Warn User</h3>
+      <button class="close-btn" onclick="closeModal('warnUserModal')">
+        &times;
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="warnUserForm">
+        <input type="hidden" id="warnUserId" />
+        <div class="form-group">
+          <label for="warnReason">Reason for Warning:</label>
+          <textarea
+            id="warnReason"
+            rows="4"
+            placeholder="Enter the reason for this warning..."
+            required
+          ></textarea>
+          <div class="char-counter" id="warnReasonCounter"></div>
+        </div>
+        <div class="form-group">
+          <label for="warnSeverity">Severity:</label>
+          <select id="warnSeverity" required>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="closeModal('warnUserModal')"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn-warning">Issue Warning</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="liveChatModal" class="modal large-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Live Chat Monitor - Session <span id="liveSessionId"></span></h3>
+      <button class="close-btn" onclick="closeLiveChat()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="live-chat-container">
+        <div class="chat-messages" id="liveChatMessages">
+          <!-- Messages will be loaded here -->
+        </div>
+        <div class="chat-controls">
+          <button class="btn-danger" onclick="terminateCurrentChat()">
+            <i class="fas fa-times"></i> Terminate Chat
+          </button>
+          <button class="btn-warning" onclick="warnCurrentUsers()">
+            <i class="fas fa-exclamation-triangle"></i> Warn Both Users
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="messageDetailsModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Message Details</h3>
+      <button class="close-btn" onclick="closeModal('messageDetailsModal')">
+        &times;
+      </button>
+    </div>
+    <div class="modal-body" id="messageDetailsContent">
+      <!-- Message details will be loaded here -->
+    </div>
+  </div>
+</div>
+
 {% endblock %} {% block extra_js %}
 <script>
   // Tab management
@@ -455,12 +1198,329 @@
 
   // Modal management
   function closeModal(modalId) {
-    document.getElementById(modalId).style.display = "none";
+    const modal = document.getElementById(modalId);
+    modal.style.display = "none";
+    document.body.style.overflow = ""; // Restore scrolling
+
+    // Reset form states
+    const form = modal.querySelector("form");
+    if (form) {
+      form.reset();
+      form.classList.remove("form-loading");
+
+      // Re-enable submit button
+      const submitButton = form.querySelector('button[type="submit"]');
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = submitButton.innerHTML.replace(
+          '<i class="fas fa-spinner fa-spin"></i> Processing...',
+          modalId === "banUserModal"
+            ? "Ban User"
+            : modalId === "warnUserModal"
+            ? "Issue Warning"
+            : "Extend Ban"
+        );
+      }
+    }
   }
 
   function showModal(modalId) {
-    document.getElementById(modalId).style.display = "flex";
+    const modal = document.getElementById(modalId);
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden"; // Prevent background scrolling
+
+    // Focus first input after a small delay
+    setTimeout(() => {
+      const firstInput = modal.querySelector("input, select, textarea");
+      if (firstInput) {
+        firstInput.focus();
+      }
+    }, 100);
   }
+
+  // Auto-refresh for live monitor
+  let autoRefreshInterval = null;
+
+  function startAutoRefresh() {
+    autoRefreshInterval = setInterval(refreshLiveMonitor, 5000); // Refresh every 5 seconds
+    toastr.info("Auto-refresh enabled");
+  }
+
+  function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+      clearInterval(autoRefreshInterval);
+      autoRefreshInterval = null;
+    }
+    toastr.info("Auto-refresh disabled");
+  }
+
+  // Ban User Functionality
+  function showBanModal(userId, reportId = null, presetReason = null) {
+    document.getElementById("banUserId").value = userId;
+    document.getElementById("banReportId").value = reportId || "";
+
+    if (presetReason) {
+      document.getElementById("banReason").value = presetReason;
+    } else {
+      document.getElementById("banReason").value = "";
+    }
+
+    // Reset custom days
+    document.getElementById("customDays").value = "";
+    document.getElementById("customDaysDiv").style.display = "none";
+
+    showModal("banUserModal");
+  }
+
+  function showExtendBanModal(userId) {
+    document.getElementById("extendBanUserId").value = userId;
+
+    // Reset custom days
+    document.getElementById("extendCustomDays").value = "";
+    document.getElementById("extendCustomDaysDiv").style.display = "none";
+    document.getElementById("extendBanReason").value = "";
+
+    showModal("extendBanModal");
+  }
+
+  // Enhanced Ban form submission handler
+  document
+    .getElementById("banUserForm")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const userId = document.getElementById("banUserId").value;
+      const reportId = document.getElementById("banReportId").value;
+      const reason = document.getElementById("banReason").value;
+      const duration = document.getElementById("banDuration").value;
+      const customDays = document.getElementById("customDays").value;
+
+      // Validation
+      if (!reason.trim()) {
+        toastr.error("Please enter a ban reason");
+        document.getElementById("banReason").focus();
+        return;
+      }
+
+      let banDuration = duration;
+      if (duration === "custom") {
+        if (!customDays || customDays < 1) {
+          toastr.error("Please enter a valid number of days");
+          document.getElementById("customDays").focus();
+          return;
+        }
+        banDuration = parseInt(customDays);
+      }
+
+      // Show loading state
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Banning...';
+      submitBtn.disabled = true;
+      this.classList.add("form-loading");
+
+      fetch("/admin/ban-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          report_id: reportId || null,
+          reason: reason,
+          duration: banDuration,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            toastr.success(data.message || "User banned successfully");
+            closeModal("banUserModal");
+
+            // Refresh the page to show updated banned users list
+            setTimeout(() => {
+              location.reload();
+            }, 1500);
+          } else {
+            toastr.error(data.error || "Failed to ban user");
+            // Re-enable button on error
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            this.classList.remove("form-loading");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          toastr.error("An error occurred while banning user");
+          // Re-enable button on error
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+          this.classList.remove("form-loading");
+        });
+    });
+
+  // Enhanced Warn form submission handler
+  document
+    .getElementById("warnUserForm")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const userId = document.getElementById("warnUserId").value;
+      const reason = document.getElementById("warnReason").value;
+      const severity = document.getElementById("warnSeverity").value;
+
+      // Validation
+      if (!reason.trim()) {
+        toastr.error("Please enter a warning reason");
+        document.getElementById("warnReason").focus();
+        return;
+      }
+
+      // Show loading state
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Warning...';
+      submitBtn.disabled = true;
+      this.classList.add("form-loading");
+
+      fetch("/admin/warn-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          reason: reason,
+          severity: severity,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            toastr.success(data.message || "User warned successfully");
+            closeModal("warnUserModal");
+
+            // Update warning count dynamically
+            setTimeout(() => {
+              const warningCountElement = document.querySelector(
+                `[data-user-id="${userId}"]`
+              );
+              if (warningCountElement) {
+                const currentCount =
+                  parseInt(warningCountElement.textContent) || 0;
+                warningCountElement.textContent = currentCount + 1;
+              }
+            }, 1000);
+          } else {
+            toastr.error(data.error || "Failed to warn user");
+            // Re-enable button on error
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            this.classList.remove("form-loading");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          toastr.error("An error occurred while warning user");
+          // Re-enable button on error
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+          this.classList.remove("form-loading");
+        });
+    });
+
+  // Enhanced Extend Ban form submission handler
+  document
+    .getElementById("extendBanForm")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const userId = document.getElementById("extendBanUserId").value;
+      const duration = document.getElementById("extendBanDuration").value;
+      const customDays = document.getElementById("extendCustomDays").value;
+      const reason = document.getElementById("extendBanReason").value;
+
+      let extendDuration = duration;
+      if (duration === "custom") {
+        if (!customDays || customDays < 1) {
+          toastr.error("Please enter a valid number of days");
+          document.getElementById("extendCustomDays").focus();
+          return;
+        }
+        extendDuration = parseInt(customDays);
+      }
+
+      // Show loading state
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> Extending...';
+      submitBtn.disabled = true;
+      this.classList.add("form-loading");
+
+      fetch("/admin/extend-ban", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          duration: extendDuration,
+          reason: reason,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            toastr.success(data.message || "Ban extended successfully");
+            closeModal("extendBanModal");
+
+            // Refresh the page to show updated ban information
+            setTimeout(() => {
+              location.reload();
+            }, 1500);
+          } else {
+            toastr.error(data.error || "Failed to extend ban");
+            // Re-enable button on error
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            this.classList.remove("form-loading");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          toastr.error("An error occurred while extending ban");
+          // Re-enable button on error
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+          this.classList.remove("form-loading");
+        });
+    });
+
+  // Show/hide custom days inputs
+  document
+    .getElementById("banDuration")
+    .addEventListener("change", function () {
+      const customDaysDiv = document.getElementById("customDaysDiv");
+      if (this.value === "custom") {
+        customDaysDiv.style.display = "block";
+      } else {
+        customDaysDiv.style.display = "none";
+      }
+    });
+
+  document
+    .getElementById("extendBanDuration")
+    .addEventListener("change", function () {
+      const extendCustomDaysDiv = document.getElementById(
+        "extendCustomDaysDiv"
+      );
+      if (this.value === "custom") {
+        extendCustomDaysDiv.style.display = "block";
+      } else {
+        extendCustomDaysDiv.style.display = "none";
+      }
+    });
 
   // Report management
   function resolveReport(reportId) {
@@ -487,33 +1547,24 @@
     }
   }
 
-  function banUser(userId, reportId = null) {
-    if (
-      confirm(
-        "Are you sure you want to ban this user? This action cannot be undone."
-      )
-    ) {
-      fetch("/admin/ban-user", {
+  function unbanUser(userId) {
+    if (confirm("Are you sure you want to unban this user?")) {
+      fetch("/admin/unban-user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           user_id: userId,
-          report_id: reportId,
         }),
       })
         .then((response) => response.json())
         .then((data) => {
           if (data.success) {
-            toastr.success("User banned successfully");
-            if (reportId) {
-              resolveReport(reportId);
-            } else {
-              setTimeout(() => location.reload(), 1000);
-            }
+            toastr.success("User unbanned successfully");
+            setTimeout(() => location.reload(), 1000);
           } else {
-            toastr.error(data.error || "Failed to ban user");
+            toastr.error(data.error || "Failed to unban user");
           }
         })
         .catch((error) => {
@@ -521,6 +1572,19 @@
           toastr.error("An error occurred");
         });
     }
+  }
+
+  function showWarnUserModal(userId, reportId = null) {
+    document.getElementById("warnUserId").value = userId;
+    showModal("warnUserModal");
+  }
+
+  function warnUser(userId, reportId = null) {
+    showWarnUserModal(userId);
+  }
+
+  function warnUserFromModeration(userId, moderationId) {
+    showWarnUserModal(userId);
   }
 
   function viewReportDetails(reportId) {
@@ -626,6 +1690,46 @@
                             <label>Reports Against:</label>
                             <span>${data.user.report_count || 0}</span>
                         </div>
+                        <div class="detail-row">
+                            <label>Active Warnings:</label>
+                            <span>${data.user.warning_count || 0}</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Banned:</label>
+                            <span class="status-badge status-${
+                              data.user.is_banned ? "banned" : "active"
+                            }">
+                                ${data.user.is_banned ? "Yes" : "No"}
+                            </span>
+                        </div>
+                        ${
+                          data.user.is_banned
+                            ? `
+                        <div class="detail-row">
+                            <label>Ban Reason:</label>
+                            <span>${data.user.ban_reason || "N/A"}</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Banned At:</label>
+                            <span>${
+                              data.user.banned_at
+                                ? new Date(data.user.banned_at).toLocaleString()
+                                : "N/A"
+                            }</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Ban Expires:</label>
+                            <span>${
+                              data.user.ban_expires_at
+                                ? new Date(
+                                    data.user.ban_expires_at
+                                  ).toLocaleString()
+                                : "Permanent"
+                            }</span>
+                        </div>
+                        `
+                            : ""
+                        }
                     </div>
                 `;
           showModal("userDetailsModal");
@@ -636,13 +1740,286 @@
   }
 
   function viewChatDetails(chatId) {
-    // Implement chat details view
-    toastr.info("Chat details feature coming soon");
+    fetch(`/admin/chat/${chatId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          // Implement chat details view
+          const messages = data.chat.messages
+            .map(
+              (msg) => `
+            <div class="chat-message ${
+              msg.sender_id === data.chat.user1_id ? "user1" : "user2"
+            }">
+              <strong>${
+                msg.sender_id === data.chat.user1_id
+                  ? data.chat.user1_name
+                  : data.chat.user2_name
+              }:</strong>
+              <span>${msg.content}</span>
+              <small>${new Date(msg.timestamp).toLocaleString()}</small>
+            </div>
+          `
+            )
+            .join("");
+
+          const content = document.getElementById("messageDetailsContent");
+          content.innerHTML = `
+            <div class="chat-details">
+              <div class="chat-header">
+                <h4>Chat between ${data.chat.user1_name} and ${data.chat.user2_name}</h4>
+                <span class="chat-type type-${data.chat.session_type}">${data.chat.session_type}</span>
+              </div>
+              <div class="chat-messages">
+                ${messages}
+              </div>
+            </div>
+          `;
+          showModal("messageDetailsModal");
+        } else {
+          toastr.error("Failed to load chat details");
+        }
+      });
+  }
+
+  function viewLiveChat(sessionId) {
+    document.getElementById("liveSessionId").textContent = sessionId;
+    fetch(`/admin/live-chat/${sessionId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          const messagesContainer = document.getElementById("liveChatMessages");
+          messagesContainer.innerHTML = data.messages
+            .map(
+              (msg) => `
+            <div class="live-message ${
+              msg.sender_id === data.chat.user1_id ? "user1" : "user2"
+            }">
+              <div class="message-header">
+                <strong>${
+                  msg.sender_id === data.chat.user1_id
+                    ? data.chat.user1_name
+                    : data.chat.user2_name
+                }</strong>
+                <span class="message-time">${new Date(
+                  msg.timestamp
+                ).toLocaleTimeString()}</span>
+              </div>
+              <div class="message-content">${msg.content}</div>
+            </div>
+          `
+            )
+            .join("");
+
+          showModal("liveChatModal");
+
+          // Start listening for new messages
+          startLiveChatUpdates(sessionId);
+        } else {
+          toastr.error("Failed to load live chat");
+        }
+      });
+  }
+
+  function closeLiveChat() {
+    stopLiveChatUpdates();
+    closeModal("liveChatModal");
+  }
+
+  function startLiveChatUpdates(sessionId) {
+    // Implement WebSocket or polling for real-time updates
+    console.log("Starting live chat updates for session:", sessionId);
+  }
+
+  function stopLiveChatUpdates() {
+    console.log("Stopping live chat updates");
+  }
+
+  function terminateChat(chatId) {
+    if (confirm("Are you sure you want to terminate this chat session?")) {
+      fetch(`/admin/terminate-chat/${chatId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            toastr.success("Chat terminated successfully");
+            setTimeout(() => location.reload(), 1000);
+          } else {
+            toastr.error("Failed to terminate chat");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          toastr.error("An error occurred");
+        });
+    }
+  }
+
+  function terminateCurrentChat() {
+    const sessionId = document.getElementById("liveSessionId").textContent;
+    terminateChat(sessionId);
+    closeLiveChat();
+  }
+
+  function warnCurrentUsers() {
+    const sessionId = document.getElementById("liveSessionId").textContent;
+    // Implement warning both users in the current chat
+    toastr.info("Warning both users feature coming soon");
   }
 
   function downloadChatLog(chatId) {
-    // Implement chat log download
-    toastr.info("Chat log download feature coming soon");
+    fetch(`/admin/chat-log/${chatId}`)
+      .then((response) => response.blob())
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = `chat-log-${chatId}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        toastr.success("Chat log downloaded successfully");
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        toastr.error("Failed to download chat log");
+      });
+  }
+
+  // Moderation queue functions
+  function approveMessage(moderationId) {
+    if (confirm("Are you sure you want to approve this message?")) {
+      fetch(`/admin/approve-message/${moderationId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            toastr.success("Message approved");
+            setTimeout(() => location.reload(), 1000);
+          } else {
+            toastr.error("Failed to approve message");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          toastr.error("An error occurred");
+        });
+    }
+  }
+
+  function deleteMessage(moderationId) {
+    if (confirm("Are you sure you want to delete this message?")) {
+      fetch(`/admin/delete-message/${moderationId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            toastr.success("Message deleted");
+            setTimeout(() => location.reload(), 1000);
+          } else {
+            toastr.error("Failed to delete message");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          toastr.error("An error occurred");
+        });
+    }
+  }
+
+  function viewFullMessage(messageId) {
+    fetch(`/admin/message/${messageId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          const content = document.getElementById("messageDetailsContent");
+          content.innerHTML = `
+            <div class="message-details">
+              <div class="detail-row">
+                <label>Message ID:</label>
+                <span>#${data.message.id}</span>
+              </div>
+              <div class="detail-row">
+                <label>Sender:</label>
+                <span>${data.message.sender_name}</span>
+              </div>
+              <div class="detail-row">
+                <label>Content:</label>
+                <div class="message-content-full">${data.message.content}</div>
+              </div>
+              <div class="detail-row">
+                <label>Timestamp:</label>
+                <span>${new Date(
+                  data.message.timestamp
+                ).toLocaleString()}</span>
+              </div>
+              <div class="detail-row">
+                <label>Chat Session:</label>
+                <span>${data.message.chat_session_id}</span>
+              </div>
+            </div>
+          `;
+          showModal("messageDetailsModal");
+        } else {
+          toastr.error("Failed to load message details");
+        }
+      });
+  }
+
+  function filterModerationQueue() {
+    const filterValue = document.getElementById("moderationFilter").value;
+    const rows = document.querySelectorAll("#moderationQueueBody tr");
+
+    rows.forEach((row) => {
+      if (filterValue === "all") {
+        row.style.display = "";
+      } else if (filterValue === "pending") {
+        row.style.display =
+          row.querySelector(".status-badge").textContent === "Pending"
+            ? ""
+            : "none";
+      } else {
+        const reason = row
+          .querySelector(".reason-badge")
+          .textContent.toLowerCase();
+        row.style.display = reason.includes(filterValue) ? "" : "none";
+      }
+    });
+  }
+
+  function refreshModerationQueue() {
+    // Implement AJAX refresh of moderation queue
+    toastr.info("Refreshing moderation queue...");
+    setTimeout(() => {
+      // This would typically be an AJAX call to refresh the data
+      location.reload();
+    }, 1000);
+  }
+
+  function refreshBannedUsers() {
+    location.reload();
+  }
+
+  function refreshLiveMonitor() {
+    // Implement AJAX refresh of live monitor
+    toastr.info("Refreshing live monitor...");
+    setTimeout(() => {
+      // This would typically be an AJAX call to refresh the data
+      location.reload();
+    }, 1000);
   }
 
   function refreshReports() {
@@ -651,14 +2028,134 @@
 
   function searchUsers() {
     const searchTerm = document.getElementById("userSearch").value;
-    // Implement user search
-    toastr.info("User search feature coming soon");
+    const statusFilter = document.getElementById("userStatusFilter").value;
+
+    // Implement user search with filtering
+    fetch("/admin/search-users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        search_term: searchTerm,
+        status: statusFilter,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          // Update users table with search results
+          const tbody = document.getElementById("usersTableBody");
+          tbody.innerHTML = data.users
+            .map(
+              (user) => `
+            <tr>
+              <td>${user.id.slice(0, 8)}...</td>
+              <td>
+                <div class="user-info">
+                  <i class="fas fa-user"></i>
+                  <span>${user.display_name || "N/A"}</span>
+                </div>
+              </td>
+              <td>${user.email}</td>
+              <td>
+                ${
+                  user.is_banned
+                    ? '<span class="status-badge status-banned">Banned</span>'
+                    : user.is_verified
+                    ? '<span class="status-badge status-verified">Verified</span>'
+                    : '<span class="status-badge status-pending">Pending</span>'
+                }
+              </td>
+              <td>${new Date(user.created_at).toLocaleDateString()}</td>
+              <td>${
+                user.last_login
+                  ? new Date(user.last_login).toLocaleString()
+                  : "Never"
+              }</td>
+              <td><span class="report-count">${
+                user.report_count || 0
+              }</span></td>
+              <td><span class="warning-count" data-user-id="${user.id}">${
+                user.warning_count || 0
+              }</span></td>
+              <td>
+                <div class="action-buttons">
+                  ${
+                    user.id !== current_user_id
+                      ? user.is_banned
+                        ? `<button class="btn-success btn-small" onclick="unbanUser('${user.id}')"><i class="fas fa-unlock"></i> Unban</button>`
+                        : `<button class="btn-danger btn-small" onclick="showBanModal('${user.id}')"><i class="fas fa-ban"></i> Ban</button>
+                       <button class="btn-warning btn-small" onclick="showWarnUserModal('${user.id}')"><i class="fas fa-exclamation-triangle"></i> Warn</button>`
+                      : ""
+                  }
+                  <button class="btn-secondary btn-small" onclick="viewUserDetails('${
+                    user.id
+                  }')"><i class="fas fa-eye"></i> View</button>
+                </div>
+              </td>
+            </tr>
+          `
+            )
+            .join("");
+
+          toastr.success(`Found ${data.users.length} users`);
+        } else {
+          toastr.error("Failed to search users");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        toastr.error("An error occurred during search");
+      });
   }
 
   function filterChats() {
-    const filterValue = document.getElementById("chatTypeFilter").value;
+    const typeFilter = document.getElementById("chatTypeFilter").value;
+    const statusFilter = document.getElementById("chatStatusFilter").value;
+
     // Implement chat filtering
     toastr.info("Chat filtering feature coming soon");
+  }
+
+  function filterAuditLogs() {
+    const searchTerm = document.getElementById("auditSearch").value;
+    const actionFilter = document.getElementById("auditActionFilter").value;
+    const dateFilter = document.getElementById("auditDateFilter").value;
+
+    // Implement audit log filtering
+    toastr.info("Audit log filtering feature coming soon");
+  }
+
+  // Export functions
+  function exportReports(format) {
+    window.open(`/admin/export/reports?format=${format}`, "_blank");
+    toastr.success(`Exporting reports as ${format.toUpperCase()}...`);
+  }
+
+  function exportUsers() {
+    window.open("/admin/export/users", "_blank");
+    toastr.success("Exporting users data...");
+  }
+
+  function exportBannedUsers() {
+    window.open("/admin/export/banned-users", "_blank");
+    toastr.success("Exporting banned users data...");
+  }
+
+  function exportChats() {
+    window.open("/admin/export/chats", "_blank");
+    toastr.success("Exporting chats data...");
+  }
+
+  function exportModerationQueue() {
+    window.open("/admin/export/moderation", "_blank");
+    toastr.success("Exporting moderation queue...");
+  }
+
+  function exportAuditLogs() {
+    window.open("/admin/export/audit-logs", "_blank");
+    toastr.success("Exporting audit logs...");
   }
 
   // Close modal when clicking outside
@@ -674,6 +2171,834 @@
   // Initialize admin features
   document.addEventListener("DOMContentLoaded", function () {
     console.log("Admin dashboard initialized");
+
+    // Initialize tooltips
+    const tooltips = document.querySelectorAll("[data-tooltip]");
+    tooltips.forEach((tooltip) => {
+      tooltip.addEventListener("mouseenter", showTooltip);
+      tooltip.addEventListener("mouseleave", hideTooltip);
+    });
+
+    // Initialize character counters
+    initializeCharacterCounters();
+
+    // Initialize form validation
+    initializeFormValidation();
   });
+
+  function showTooltip(e) {
+    const tooltipText = e.target.getAttribute("data-tooltip");
+    const tooltip = document.createElement("div");
+    tooltip.className = "tooltip";
+    tooltip.textContent = tooltipText;
+    document.body.appendChild(tooltip);
+
+    const rect = e.target.getBoundingClientRect();
+    tooltip.style.left = rect.left + "px";
+    tooltip.style.top = rect.top - tooltip.offsetHeight - 5 + "px";
+  }
+
+  function hideTooltip() {
+    const tooltip = document.querySelector(".tooltip");
+    if (tooltip) {
+      tooltip.remove();
+    }
+  }
+
+  // Character counter initialization
+  function initializeCharacterCounters() {
+    const textareas = document.querySelectorAll(
+      "#banReason, #warnReason, #extendBanReason"
+    );
+
+    textareas.forEach((textarea) => {
+      const counter = document.createElement("div");
+      counter.className = "char-counter";
+      counter.style.cssText =
+        "text-align: right; font-size: 12px; color: #6c757d; margin-top: 5px;";
+      textarea.parentNode.appendChild(counter);
+
+      function updateCounter() {
+        const maxLength = 1000; // You can set this per textarea if needed
+        const remaining = maxLength - textarea.value.length;
+        counter.textContent = `${remaining} characters remaining`;
+
+        if (remaining < 50) {
+          counter.style.color = "#ffc107";
+          counter.classList.add("warning");
+          counter.classList.remove("danger");
+        } else if (remaining < 20) {
+          counter.style.color = "#dc3545";
+          counter.classList.add("danger");
+          counter.classList.remove("warning");
+        } else {
+          counter.style.color = "#6c757d";
+          counter.classList.remove("warning", "danger");
+        }
+      }
+
+      textarea.addEventListener("input", updateCounter);
+      updateCounter(); // Initial update
+    });
+  }
+
+  // Form validation initialization
+  function initializeFormValidation() {
+    const requiredFields = document.querySelectorAll(
+      "input[required], select[required], textarea[required]"
+    );
+
+    requiredFields.forEach((field) => {
+      field.addEventListener("blur", function () {
+        if (!this.value.trim()) {
+          this.style.borderColor = "#dc3545";
+          this.style.boxShadow = "0 0 0 3px rgba(220, 53, 69, 0.1)";
+        } else {
+          this.style.borderColor = "#28a745";
+          this.style.boxShadow = "0 0 0 3px rgba(40, 167, 69, 0.1)";
+        }
+      });
+
+      field.addEventListener("input", function () {
+        if (this.value.trim()) {
+          if (this.id.includes("ban")) {
+            this.style.borderColor = "#dc3545";
+            this.style.boxShadow = "0 0 0 3px rgba(220, 53, 69, 0.1)";
+          } else if (this.id.includes("warn")) {
+            this.style.borderColor = "#ffc107";
+            this.style.boxShadow = "0 0 0 3px rgba(255, 193, 7, 0.1)";
+          } else {
+            this.style.borderColor = "#8b5cf6";
+            this.style.boxShadow = "0 0 0 3px rgba(139, 92, 246, 0.1)";
+          }
+        }
+      });
+    });
+  }
 </script>
+
+<style>
+  /* Enhanced Form Styling for Ban and Warn Modals */
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background-color: #fff;
+    box-sizing: border-box;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    background-color: #fafafa;
+  }
+
+  .form-group input:hover,
+  .form-group select:hover,
+  .form-group textarea:hover {
+    border-color: #a78bfa;
+  }
+
+  /* Ban Modal Specific Styling */
+  #banUserModal .form-group input:focus,
+  #banUserModal .form-group select:focus,
+  #banUserModal .form-group textarea:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+  }
+
+  #banUserModal .form-group input:hover,
+  #banUserModal .form-group select:hover,
+  #banUserModal .form-group textarea:hover {
+    border-color: #e74c3c;
+  }
+
+  /* Warn Modal Specific Styling */
+  #warnUserModal .form-group input:focus,
+  #warnUserModal .form-group select:focus,
+  #warnUserModal .form-group textarea:focus {
+    border-color: #ffc107;
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+  }
+
+  #warnUserModal .form-group input:hover,
+  #warnUserModal .form-group select:hover,
+  #warnUserModal .form-group textarea:hover {
+    border-color: #ffb300;
+  }
+
+  /* Extend Ban Modal Specific Styling */
+  #extendBanModal .form-group input:focus,
+  #extendBanModal .form-group select:focus,
+  #extendBanModal .form-group textarea:focus {
+    border-color: #fd7e14;
+    box-shadow: 0 0 0 3px rgba(253, 126, 20, 0.1);
+  }
+
+  #extendBanModal .form-group input:hover,
+  #extendBanModal .form-group select:hover,
+  #extendBanModal .form-group textarea:hover {
+    border-color: #e65c00;
+  }
+
+  /* Textarea Specific Styling */
+  .form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+    line-height: 1.5;
+  }
+
+  /* Select Dropdown Styling */
+  .form-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px;
+    padding-right: 40px;
+    cursor: pointer;
+  }
+
+  /* Number Input Styling */
+  .form-group input[type="number"] {
+    appearance: textfield;
+  }
+
+  .form-group input[type="number"]::-webkit-outer-spin-button,
+  .form-group input[type="number"]::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  /* Custom Days Input Container */
+  #customDaysDiv,
+  #extendCustomDaysDiv {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #8b5cf6;
+    margin-top: 10px;
+    animation: slideDown 0.3s ease;
+  }
+
+  #banUserModal #customDaysDiv {
+    border-left-color: #dc3545;
+  }
+
+  #extendBanModal #extendCustomDaysDiv {
+    border-left-color: #fd7e14;
+  }
+
+  /* Input Validation States */
+  .form-group input:invalid,
+  .form-group select:invalid,
+  .form-group textarea:invalid {
+    border-color: #dc3545;
+  }
+
+  .form-group input:valid,
+  .form-group select:valid,
+  .form-group textarea:valid {
+    border-color: #28a745;
+  }
+
+  /* Required Field Indicators */
+  .form-group label::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+  }
+
+  .form-group label.optional::after {
+    content: " (optional)";
+    color: #6c757d;
+    font-weight: normal;
+  }
+
+  /* Placeholder Styling */
+  .form-group input::placeholder,
+  .form-group textarea::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+  }
+
+  .form-group input:focus::placeholder,
+  .form-group textarea:focus::placeholder {
+    opacity: 0.7;
+  }
+
+  /* Button Styling in Forms */
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .form-actions button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+  }
+
+  .form-actions .btn-secondary {
+    background: #6c757d;
+    color: white;
+  }
+
+  .form-actions .btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+  }
+
+  .form-actions .btn-danger {
+    background: #dc3545;
+    color: white;
+  }
+
+  .form-actions .btn-danger:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+  }
+
+  .form-actions .btn-warning {
+    background: #ffc107;
+    color: #212529;
+  }
+
+  .form-actions .btn-warning:hover {
+    background: #e0a800;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+  }
+
+  /* Modal Header Styling */
+  .modal-header {
+    background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+    color: white;
+    padding: 20px 25px;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+  }
+
+  #banUserModal .modal-header {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  }
+
+  #warnUserModal .modal-header {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+  }
+
+  #extendBanModal .modal-header {
+    background: linear-gradient(135deg, #fd7e14 0%, #e65c00 100%);
+  }
+
+  .modal-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  .close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+
+  .close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+  }
+
+  /* Modal Body Styling */
+  .modal-body {
+    padding: 25px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  /* Warning Message Styling */
+  .warning-message {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 2px solid #ffc107;
+    border-radius: 10px;
+    padding: 16px;
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: pulseWarning 2s infinite;
+  }
+
+  .warning-message i {
+    color: #856404;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .warning-message span {
+    color: #856404;
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+
+  /* Character Counter Styling */
+  .char-counter {
+    text-align: right;
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 5px;
+    transition: color 0.3s ease;
+  }
+
+  .char-counter.warning {
+    color: #ffc107;
+  }
+
+  .char-counter.danger {
+    color: #dc3545;
+    font-weight: bold;
+  }
+
+  /* Additional CSS for existing features */
+  .confidence-meter {
+    position: relative;
+    background: #e0e0e0;
+    border-radius: 10px;
+    height: 20px;
+    overflow: hidden;
+  }
+
+  .confidence-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #ffc107, #f44336);
+    transition: width 0.3s ease;
+  }
+
+  .confidence-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: #000;
+  }
+
+  .reason-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .reason-toxic {
+    background: #f44336;
+    color: white;
+  }
+  .reason-spam {
+    background: #ff9800;
+    color: white;
+  }
+  .reason-harassment {
+    background: #9c27b0;
+    color: white;
+  }
+  .reason-other {
+    background: #607d8b;
+    color: white;
+  }
+
+  .live-monitor-container {
+    padding: 20px;
+  }
+
+  .live-sessions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .session-card {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #8b5cf6;
+  }
+
+  .session-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .session-header h4 {
+    margin: 0;
+    flex: 1;
+  }
+
+  .session-users {
+    margin-bottom: 10px;
+  }
+
+  .session-user {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+
+  .session-user i {
+    margin-right: 8px;
+    color: #8b5cf6;
+  }
+
+  .session-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+
+  .info-item {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .info-item .label {
+    font-weight: bold;
+    color: #666;
+  }
+
+  .session-actions {
+    display: flex;
+    gap: 5px;
+  }
+
+  .live-chat-container {
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+
+  .live-message {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 5px;
+    background: #f5f5f5;
+  }
+
+  .live-message.user1 {
+    background: #e3f2fd;
+    border-left: 3px solid #2196f3;
+  }
+
+  .live-message.user2 {
+    background: #f3e5f5;
+    border-left: 3px solid #9c27b0;
+  }
+
+  .message-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
+
+  .message-header strong {
+    color: #333;
+  }
+
+  .message-time {
+    color: #666;
+    font-size: 12px;
+  }
+
+  .chat-controls {
+    display: flex;
+    gap: 10px;
+  }
+
+  .large-modal .modal-content {
+    max-width: 800px;
+    width: 90%;
+  }
+
+  .action-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+  }
+
+  .action-ban {
+    background: #f44336;
+  }
+  .action-warn {
+    background: #ff9800;
+  }
+  .action-delete {
+    background: #607d8b;
+  }
+  .action-terminate {
+    background: #9c27b0;
+  }
+
+  .moderation-stats,
+  .health-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 5px;
+  }
+
+  .metric-label {
+    font-weight: bold;
+    color: #666;
+  }
+
+  .metric-value {
+    font-weight: bold;
+    color: #8b5cf6;
+  }
+
+  .tooltip {
+    position: fixed;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 1000;
+    pointer-events: none;
+  }
+
+  .status-expired {
+    background: #6c757d;
+    color: white;
+  }
+
+  .status-permanent {
+    background: #dc3545;
+    color: white;
+  }
+
+  .status-warning {
+    background: #ffc107;
+    color: #212529;
+  }
+
+  /* Animations */
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulseWarning {
+    0% {
+      box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+    }
+  }
+
+  /* Focus states for accessibility */
+  .form-group input:focus-visible,
+  .form-group select:focus-visible,
+  .form-group textarea:focus-visible {
+    outline: 2px solid #8b5cf6;
+    outline-offset: 2px;
+  }
+
+  #banUserModal .form-group input:focus-visible,
+  #banUserModal .form-group select:focus-visible,
+  #banUserModal .form-group textarea:focus-visible {
+    outline-color: #dc3545;
+  }
+
+  #warnUserModal .form-group input:focus-visible,
+  #warnUserModal .form-group select:focus-visible,
+  #warnUserModal .form-group textarea:focus-visible {
+    outline-color: #ffc107;
+  }
+
+  /* Disabled state styling */
+  .form-group input:disabled,
+  .form-group select:disabled,
+  .form-group textarea:disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  /* Loading state for form submission */
+  .form-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  .form-loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #8b5cf6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Custom scrollbar for modal body */
+  .modal-body::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  .modal-body::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+
+  .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .admin-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .live-sessions-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .analytics-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .section-actions {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .section-actions .filter-group {
+      flex-direction: column;
+    }
+
+    .modal-content {
+      margin: 20px;
+      width: calc(100% - 40px);
+    }
+
+    .form-actions {
+      flex-direction: column;
+    }
+
+    .form-actions button {
+      width: 100%;
+    }
+
+    .modal-body {
+      padding: 20px 15px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 10px;
+    }
+  }
+</style>
 {% endblock %}
