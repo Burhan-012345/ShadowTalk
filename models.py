@@ -10,7 +10,7 @@ def generate_uuid():
     return str(uuid.uuid4())
 
 class User(UserMixin, db.Model):
-    __tablename__ = 'users'  # Important: specify table name
+    __tablename__ = 'users' 
 
     id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -29,17 +29,26 @@ class User(UserMixin, db.Model):
     profile_picture = db.Column(db.String(200))
     is_profile_complete = db.Column(db.Boolean, default=False)
 
-    # Online status fields - ADD THESE
+    # Online status fields
     is_online = db.Column(db.Boolean, default=False)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(20), default='online')
     custom_status = db.Column(db.String(100))
     last_heartbeat = db.Column(db.DateTime, default=datetime.utcnow)
     avatar_url = db.Column(db.String(255))
-
+    
+    is_banned = db.Column(db.Boolean, default=False)
+    ban_reason = db.Column(db.Text)
+    banned_at = db.Column(db.DateTime)
+    banned_by = db.Column(db.String(36), db.ForeignKey('users.id'))  # Changed to reference users.id
+    ban_expires_at = db.Column(db.DateTime)
+    
+    
     # Preferences
     theme = db.Column(db.String(20), default='dark')
     notifications_enabled = db.Column(db.Boolean, default=True)
+
+    banned_by_admin_rel = db.relationship('User', foreign_keys=[banned_by], remote_side=[id])
 
     @property
     def interests_list(self):
@@ -64,8 +73,8 @@ class ChatSession(db.Model):
     __tablename__ = 'chat_sessions'
     
     id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
-    user1_id = db.Column(db.String(36), db.ForeignKey('users.id'))
-    user2_id = db.Column(db.String(36), db.ForeignKey('users.id'))
+    user1_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    user2_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
     session_type = db.Column(db.String(20), nullable=False)  # 'text' or 'video'
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
     ended_at = db.Column(db.DateTime)
@@ -73,7 +82,7 @@ class ChatSession(db.Model):
     end_reason = db.Column(db.String(50))
     last_activity = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationships
+    # Relationships with explicit foreign keys
     user1 = db.relationship('User', foreign_keys=[user1_id], backref='initiated_chats')
     user2 = db.relationship('User', foreign_keys=[user2_id], backref='received_chats')
 
@@ -205,7 +214,7 @@ class ModerationQueue(db.Model):
     message = db.relationship('Message')
     reviewer = db.relationship('Admin', backref='moderation_actions')
 
-class UserWarning(db.Model):
+class UserWarningLog(db.Model):
     __tablename__ = 'user_warnings'
     
     id = db.Column(db.Integer, primary_key=True)
