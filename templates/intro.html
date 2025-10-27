@@ -1062,9 +1062,9 @@
         });
 
         messageElement.innerHTML = `
-                <div class="demo-message-text">${message}</div>
-                <div class="demo-message-time">${timeString}</div>
-            `;
+          <div class="demo-message-text">${message}</div>
+          <div class="demo-message-time">${timeString}</div>
+      `;
 
         messagesContainer.appendChild(messageElement);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -1132,25 +1132,6 @@
         hideTypingIndicator();
       }
 
-      // Animate statistics counters
-      function animateCounters() {
-        const counters = document.querySelectorAll(".stat-number");
-        const speed = 200;
-
-        counters.forEach((counter) => {
-          const target = parseInt(counter.getAttribute("data-target"));
-          const count = parseInt(counter.innerText);
-          const increment = target / speed;
-
-          if (count < target) {
-            counter.innerText = Math.ceil(count + increment);
-            setTimeout(() => animateCounters(), 1);
-          } else {
-            counter.innerText = target;
-          }
-        });
-      }
-
       // Intersection Observer for scroll animations
       function setupScrollAnimations() {
         const observer = new IntersectionObserver((entries) => {
@@ -1161,11 +1142,9 @@
           });
         });
 
-        document
-          .querySelectorAll(".feature-card, .step, .stats")
-          .forEach((el) => {
-            observer.observe(el);
-          });
+        document.querySelectorAll(".feature-card, .step").forEach((el) => {
+          observer.observe(el);
+        });
       }
 
       // Initialize everything when page loads
@@ -1173,19 +1152,7 @@
         createParticles();
         setupScrollAnimations();
 
-        // Set counter targets
-        document.getElementById("userCount").setAttribute("data-target", 50000);
-        document
-          .getElementById("chatCount")
-          .setAttribute("data-target", 1000000);
-        document
-          .getElementById("countryCount")
-          .setAttribute("data-target", 150);
-        document
-          .getElementById("satisfactionRate")
-          .setAttribute("data-target", 98);
-
-        // Demo event listeners - FIXED
+        // Demo event listeners
         document.getElementById("demoBtn").addEventListener("click", openDemo);
         document.getElementById("demoBtn2").addEventListener("click", openDemo);
         document
@@ -1206,7 +1173,7 @@
             }
           });
 
-        // Close modal when clicking outside - FIXED
+        // Close modal when clicking outside
         document
           .getElementById("demoModal")
           .addEventListener("click", function (e) {
@@ -1221,21 +1188,6 @@
             closeDemo();
           }
         });
-
-        // Start counter animation when stats section is visible
-        const statsObserver = new IntersectionObserver((entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              animateCounters();
-              statsObserver.unobserve(entry.target);
-            }
-          });
-        });
-
-        const statsSection = document.querySelector(".stats");
-        if (statsSection) {
-          statsObserver.observe(statsSection);
-        }
       });
     </script>
   </body>
