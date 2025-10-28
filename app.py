@@ -8,9 +8,22 @@ import json
 import random
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
+from flask import current_app
 import uuid
 import time
 from sqlalchemy import desc
+from flask import send_file
+import csv
+import io
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+import tempfile
+from weasyprint import HTML
+import base64
+
 
 # Flask-Admin imports (comment out if not installed)
 try:
@@ -27,7 +40,7 @@ except ImportError:
 
 from config import Config
 from models import AuditLog, PasswordResetRequest, UserWarningLog, db, User, OTP, ChatSession, Message, Connection, Notification, Report, Admin
-from email_utils import mail, send_otp_email, send_notification_email, send_password_reset_email
+from email_utils import mail, send_otp_email, send_notification_email, send_password_reset_email, send_ban_notification_email
 from flask_mail import Message as MailMessage
 
 app = Flask(__name__)
@@ -43,7 +56,6 @@ login_manager.login_view = 'login'
 
 # Initialize SocketIO with threading only (for PythonAnywhere compatibility)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
-
 
 online_users = set()  
 active_chats = {}     
@@ -524,9 +536,9 @@ def resend_otp():
 def forgot_password():
     if request.method == 'POST':
         email = request.form.get('email')
-        print(f"Password reset requested for: {email}")
+        print(f"🔐 Password reset requested for: {email}")
 
-        # Rate limiting - check if too many requests from this IP
+        # Rate limiting
         client_ip = request.remote_addr
         recent_requests = PasswordResetRequest.query.filter(
             PasswordResetRequest.ip_address == client_ip,
@@ -543,10 +555,13 @@ def forgot_password():
             # Generate reset token
             reset_token = str(uuid.uuid4())
 
-            # Set session data with consistent datetime format
+            # Set session data with proper expiration
             session['reset_token'] = reset_token
             session['reset_email'] = email
-            session['reset_expires'] = (datetime.utcnow() + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+            session['reset_expires'] = (datetime.utcnow() + timedelta(hours=1)).isoformat()
+            
+            # Make sure session is saved
+            session.modified = True
 
             # Log the reset request
             reset_request = PasswordResetRequest(
@@ -556,28 +571,30 @@ def forgot_password():
             )
             db.session.add(reset_request)
 
-            print(f"Generated reset token: {reset_token}")
-            print(f"Reset expires: {session['reset_expires']}")
+            print(f"✅ Generated reset token: {reset_token}")
+            print(f"✅ Session data set for: {email}")
 
-            # Send reset email
+            # Send reset email with better error handling
             try:
                 if send_password_reset_email(email, reset_token):
                     db.session.commit()
-                    print("Password reset email sent successfully")
+                    print("✅ Password reset email sent successfully")
                     return render_template('auth/forgot_password.html',
                                          success='Password reset link has been sent to your email')
                 else:
                     db.session.rollback()
-                    print("Failed to send password reset email")
+                    print("❌ Failed to send password reset email")
+                    # Provide manual reset option
+                    reset_url = url_for('reset_password', token=reset_token, _external=True)
                     return render_template('auth/forgot_password.html',
-                                         error='Failed to send reset email. Please try again.')
+                                         error=f'Email service temporarily unavailable. Please use this link manually: {reset_url}')
             except Exception as e:
                 db.session.rollback()
-                print(f"Error in forgot_password route: {str(e)}")
+                print(f"❌ Error sending password reset email: {str(e)}")
+                reset_url = url_for('reset_password', token=reset_token, _external=True)
                 return render_template('auth/forgot_password.html',
-                                     error='An error occurred. Please try again.')
+                                     error=f'Email service error. Please use this link manually: {reset_url}')
         else:
-            print(f"No user found with email: {email}")
             # Still return success to prevent email enumeration
             return render_template('auth/forgot_password.html',
                                  success='If an account with that email exists, a reset link has been sent.')
@@ -586,70 +603,91 @@ def forgot_password():
 
 @app.route('/reset-password', methods=['GET', 'POST'])
 def reset_password():
-    """Complete password reset functionality"""
-    from datetime import datetime  # Import at function level to avoid conflicts
+    """Complete password reset functionality with proper token handling"""
+    from datetime import datetime
     
     # Get token from URL parameters
     token = request.args.get('token')
+    
+    print(f"🔑 Reset password attempt - Token from URL: {token}")
+    print(f"🔑 Session reset_token: {session.get('reset_token')}")
+    print(f"🔑 Session reset_email: {session.get('reset_email')}")
+    print(f"🔑 Session reset_expires: {session.get('reset_expires')}")
 
-    # Debug information
-    print(f"Reset password attempt - Token: {token}")
-    print(f"Session reset_token: {session.get('reset_token')}")
-    print(f"Session reset_expires: {session.get('reset_expires')}")
-    print(f"Session reset_email: {session.get('reset_email')}")
+    # For GET requests, validate the token first
+    if request.method == 'GET':
+        if not token:
+            flash('Invalid or missing reset token', 'error')
+            return render_template('auth/reset_password.html',
+                                 error='Invalid or missing reset token')
 
-    if not token:
-        flash('Invalid or missing reset token', 'error')
-        return render_template('auth/reset_password.html',
-                             error='Invalid or missing reset token')
+        # Check if token matches session
+        session_token = session.get('reset_token')
+        if not session_token or session_token != token:
+            print(f"❌ Token mismatch: Session has {session_token}, URL has {token}")
+            flash('Invalid reset token', 'error')
+            return render_template('auth/reset_password.html',
+                                 error='Invalid reset token. Please request a new password reset link.')
 
-    # Check if token matches session
-    if session.get('reset_token') != token:
-        flash('Invalid reset token', 'error')
-        return render_template('auth/reset_password.html',
-                             error='Invalid reset token')
-
-    # Check if token is expired
-    reset_expires_str = session.get('reset_expires')
-    if not reset_expires_str:
-        flash('Reset token has expired', 'error')
-        return render_template('auth/reset_password.html',
-                             error='Reset token has expired')
-
-    try:
-        # Convert string to datetime (handling both naive and aware datetimes)
-        if 'T' in reset_expires_str:
-            # ISO format with timezone info
-            reset_expires = datetime.fromisoformat(reset_expires_str.replace('Z', '+00:00'))
-        else:
-            # Simple format
-            reset_expires = datetime.strptime(reset_expires_str, '%Y-%m-%d %H:%M:%S')
-
-        # Make both datetimes naive for comparison
-        reset_expires_naive = reset_expires.replace(tzinfo=None) if reset_expires.tzinfo else reset_expires
-        current_time_naive = datetime.utcnow()
-
-        print(f"Reset expires: {reset_expires_naive}")
-        print(f"Current time: {current_time_naive}")
-        print(f"Is expired: {reset_expires_naive < current_time_naive}")
-
-        if reset_expires_naive < current_time_naive:
+        # Check if token is expired
+        reset_expires_str = session.get('reset_expires')
+        if not reset_expires_str:
             flash('Reset token has expired', 'error')
             return render_template('auth/reset_password.html',
                                  error='Reset token has expired. Please request a new one.')
 
-    except (ValueError, TypeError, AttributeError) as e:
-        print(f"Error parsing reset expiration: {e}")
-        flash('Invalid reset token format', 'error')
-        return render_template('auth/reset_password.html',
-                             error='Invalid reset token')
+        try:
+            # Convert string to datetime
+            if 'T' in reset_expires_str:
+                reset_expires = datetime.fromisoformat(reset_expires_str.replace('Z', '+00:00'))
+            else:
+                reset_expires = datetime.strptime(reset_expires_str, '%Y-%m-%d %H:%M:%S')
 
-    if request.method == 'POST':
+            # Make both datetimes naive for comparison
+            reset_expires_naive = reset_expires.replace(tzinfo=None) if reset_expires.tzinfo else reset_expires
+            current_time_naive = datetime.utcnow()
+
+            print(f"⏰ Reset expires: {reset_expires_naive}")
+            print(f"⏰ Current time: {current_time_naive}")
+            print(f"⏰ Is expired: {reset_expires_naive < current_time_naive}")
+
+            if reset_expires_naive < current_time_naive:
+                flash('Reset token has expired', 'error')
+                return render_template('auth/reset_password.html',
+                                     error='Reset token has expired. Please request a new one.')
+
+        except (ValueError, TypeError, AttributeError) as e:
+            print(f"❌ Error parsing reset expiration: {e}")
+            flash('Invalid reset token format', 'error')
+            return render_template('auth/reset_password.html',
+                                 error='Invalid reset token. Please request a new password reset link.')
+
+        # Token is valid, show the reset form
+        return render_template('auth/reset_password.html', token=token)
+
+    # Handle POST requests
+    elif request.method == 'POST':
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
+        
+        # Get token from form or URL
+        token = request.form.get('token') or request.args.get('token')
 
-        print(f"Password reset form submitted")
-        print(f"Email from session: {session.get('reset_email')}")
+        print(f"🔄 Password reset form submitted")
+        print(f"📧 Email from session: {session.get('reset_email')}")
+        print(f"🔑 Token from form: {token}")
+
+        if not token:
+            return render_template('auth/reset_password.html',
+                                 error='Invalid reset token',
+                                 token=token)
+
+        # Validate token again for POST request
+        session_token = session.get('reset_token')
+        if not session_token or session_token != token:
+            return render_template('auth/reset_password.html',
+                                 error='Invalid reset token. Please request a new password reset link.',
+                                 token=token)
 
         if not password or not confirm_password:
             return render_template('auth/reset_password.html',
@@ -746,13 +784,10 @@ def reset_password():
 
         except Exception as e:
             db.session.rollback()
-            print(f"Error resetting password: {str(e)}")
+            print(f"❌ Error resetting password: {str(e)}")
             return render_template('auth/reset_password.html',
                                  error='Error updating password. Please try again.',
                                  token=token)
-
-    # For GET request, show the reset form with token
-    return render_template('auth/reset_password.html', token=token)
 
 @app.route('/profile-setup', methods=['GET', 'POST'])
 @login_required
@@ -802,34 +837,170 @@ def profile():
 
     return render_template('profile.html', connections=connection_users)
 
-@app.route('/update-profile', methods=['POST'])
+@app.route('/update_profile', methods=['POST'])
 @login_required
 def update_profile():
-    if request.method == 'POST':
-        current_user.display_name = request.form.get('display_name')
-        current_user.username = request.form.get('username')
-        current_user.age = request.form.get('age')
-        current_user.gender = request.form.get('gender')
-        current_user.bio = request.form.get('bio')
-
+    try:
+        print("Updating profile for user:", current_user.id)
+        
+        # Ensure avatars directory exists
+        avatars_dir = os.path.join(current_app.root_path, 'static', 'avatars')
+        os.makedirs(avatars_dir, exist_ok=True)
+        
+        # Handle avatar removal first
+        remove_avatar = request.form.get('remove_avatar') == 'true'
+        if remove_avatar:
+            print("Removing avatar for user:", current_user.id)
+            # Remove existing avatar file if it exists
+            if current_user.avatar_url and current_user.avatar_url.startswith('/static/avatars/'):
+                old_filename = current_user.avatar_url.split('/')[-1]
+                old_path = os.path.join(avatars_dir, old_filename)
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+                    print("Removed old avatar file:", old_filename)
+            current_user.avatar_url = None
+        
+        # Handle avatar data URL (AI avatars)
+        avatar_data = request.form.get('avatar_data')
+        if avatar_data and avatar_data.startswith('data:image') and not remove_avatar:
+            print("Processing avatar data URL")
+            try:
+                import base64
+                # Extract the base64 data
+                header, encoded = avatar_data.split(',', 1)
+                file_extension = header.split('/')[1].split(';')[0]
+                
+                # Generate unique filename
+                unique_filename = f"{current_user.id}_{int(time.time())}_ai_avatar.{file_extension}"
+                file_path = os.path.join(avatars_dir, unique_filename)
+                
+                # Decode and save the image
+                image_data = base64.b64decode(encoded)
+                with open(file_path, 'wb') as f:
+                    f.write(image_data)
+                
+                # Update user's avatar URL
+                current_user.avatar_url = f"/static/avatars/{unique_filename}"
+                print("Saved AI avatar:", unique_filename)
+                
+            except Exception as e:
+                print(f"Error processing avatar data URL: {e}")
+                # Don't fail the entire update if avatar processing fails
+                if not current_user.avatar_url:
+                    current_user.avatar_url = None
+        
+        # Handle file upload
+        if 'avatar' in request.files and not remove_avatar:
+            file = request.files['avatar']
+            if file and file.filename != '':
+                print("Processing uploaded avatar file")
+                # Secure the filename and create unique name
+                filename = secure_filename(file.filename)
+                unique_filename = f"{current_user.id}_{int(time.time())}_{filename}"
+                file_path = os.path.join(avatars_dir, unique_filename)
+                
+                # Remove old avatar if exists
+                if current_user.avatar_url and current_user.avatar_url.startswith('/static/avatars/'):
+                    old_filename = current_user.avatar_url.split('/')[-1]
+                    old_path = os.path.join(avatars_dir, old_filename)
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+                        print("Removed old avatar file:", old_filename)
+                
+                # Save the new file
+                file.save(file_path)
+                
+                # Update user's avatar URL
+                current_user.avatar_url = f"/static/avatars/{unique_filename}"
+                print("Saved uploaded avatar:", unique_filename)
+        
+        # Update other profile fields
+        current_user.display_name = request.form.get('display_name', current_user.display_name)
+        current_user.username = request.form.get('username', current_user.username)
+        current_user.bio = request.form.get('bio', current_user.bio)
+        
+        # Handle age (can be empty)
+        age = request.form.get('age')
+        current_user.age = int(age) if age and age.isdigit() and 13 <= int(age) <= 100 else None
+        
+        current_user.gender = request.form.get('gender', current_user.gender)
+        
+        # Handle interests
         interests = request.form.getlist('interests')
-        current_user.interests = json.dumps(interests)
-
-        # Handle avatar upload
-        if 'avatar' in request.files:
-            avatar_file = request.files['avatar']
-            if avatar_file and avatar_file.filename:
-                # Save avatar file and update user's avatar_url
-                filename = secure_filename(avatar_file.filename)
-                avatar_path = os.path.join('static/avatars', filename)
-                avatar_file.save(avatar_path)
-                current_user.avatar_url = url_for('static', filename=f'avatars/{filename}')
-
+        current_user.interests = ','.join(interests) if interests else None
+        
+        # Ensure profile is marked as complete
+        current_user.is_profile_complete = True
+        
         db.session.commit()
-        flash('Profile updated successfully!', 'success')
+        print("Profile updated successfully for user:", current_user.id)
+        
+        if remove_avatar:
+            flash('Avatar removed successfully!', 'success')
+        elif avatar_data or 'avatar' in request.files:
+            flash('Profile updated with new avatar!', 'success')
+        else:
+            flash('Profile updated successfully!', 'success')
+            
         return redirect(url_for('profile'))
-
-    return redirect(url_for('profile'))
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f'Error updating profile: {str(e)}')
+        flash(f'Error updating profile: {str(e)}', 'error')
+        return redirect(url_for('profile'))
+    
+@app.route('/api/check-username')
+@login_required
+def check_username():
+    try:
+        # Try multiple ways to get the username parameter
+        username = request.args.get('username', '').strip()
+        
+        # If empty, try form data
+        if not username:
+            username = request.form.get('username', '').strip()
+        
+        # If still empty, try JSON data
+        if not username and request.is_json:
+            data = request.get_json()
+            username = data.get('username', '').strip()
+        
+        print(f"🔍 Checking username: '{username}'")
+        print(f"🔍 Request args: {dict(request.args)}")
+        print(f"🔍 Request form: {dict(request.form)}")
+        print(f"🔍 Request JSON: {request.get_json() if request.is_json else 'Not JSON'}")
+        
+        if not username:
+            print("❌ Username is empty after all attempts")
+            return jsonify({'available': False, 'error': 'Username is required'}), 400
+        
+        if len(username) < 3:
+            return jsonify({'available': False, 'error': 'Username must be at least 3 characters'}), 400
+        
+        import re
+        if not re.match(r'^[a-zA-Z0-9_]+$', username):
+            return jsonify({'available': False, 'error': 'Username can only contain letters, numbers, and underscores'}), 400
+        
+        # Check if username is the same as current user (allowed)
+        if username.lower() == current_user.username.lower():
+            return jsonify({'available': True})
+        
+        # Check if username exists (case-insensitive)
+        existing_user = User.query.filter(
+            db.func.lower(User.username) == username.lower()
+        ).first()
+        
+        if existing_user:
+            return jsonify({'available': False, 'error': 'Username already taken'}), 400
+        
+        return jsonify({'available': True})
+        
+    except Exception as e:
+        print(f"🔥 Error in check_username: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'available': False, 'error': 'Server error checking username'}), 500
 
 @app.route('/dashboard')
 @login_required
@@ -1030,14 +1201,12 @@ def ban_user():
 
         db.session.commit()
 
-        # Send ban notification email
         try:
-            from email_utils import send_ban_notification_email
             send_ban_notification_email(
-                user.email,
-                ban_reason,
-                ban_duration,
-                user.ban_expires_at
+                email=user.email,
+                ban_reason=ban_reason,
+                ban_duration=ban_duration,
+                ban_expires_at=user.ban_expires_at
             )
         except Exception as e:
             print(f"Error sending ban notification: {e}")
@@ -2551,6 +2720,592 @@ def update_database_schema():
     except Exception as e:
         print(f"Error updating database schema: {e}")
 
+@app.route('/admin/export/reports')
+@login_required
+def export_reports():
+    """Export reports in PDF or CSV format"""
+    if current_user.email != 'admin@shadowtalk.com':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    format_type = request.args.get('format', 'pdf')
+    reports = Report.query.filter_by(status='pending').order_by(Report.created_at.desc()).all()
+
+    if format_type == 'pdf':
+        return export_reports_pdf(reports)
+    elif format_type == 'csv':
+        return export_reports_csv(reports)
+    else:
+        return jsonify({'error': 'Invalid format'}), 400
+
+def export_reports_pdf(reports):
+    """Export reports as styled PDF using WeasyPrint"""
+    try:
+        # Calculate report type distribution
+        report_types = {
+            'inappropriate_behavior': 0,
+            'spam': 0,
+            'harassment': 0,
+            'other': 0
+        }
+        
+        for report in reports:
+            if report.report_type in report_types:
+                report_types[report.report_type] += 1
+
+        # Prepare template data
+        template_data = {
+            'report_title': 'Pending Reports',
+            'generated_date': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+            'reports': reports,
+            'report_types': report_types,
+            'time_period': 'All Time',
+            'summary_stats': [
+                {'label': 'Total Reports', 'value': len(reports)},
+                {'label': 'Pending', 'value': len(reports)},
+                {'label': 'Inappropriate', 'value': report_types['inappropriate_behavior']},
+                {'label': 'Spam', 'value': report_types['spam']}
+            ]
+        }
+
+        # Render HTML template
+        html_content = render_template('export/reports_pdf.html', **template_data)
+        
+        # Generate PDF using WeasyPrint
+        pdf_file = HTML(string=html_content, base_url=request.base_url).write_pdf()
+        
+        return send_file(
+            io.BytesIO(pdf_file),
+            as_attachment=True,
+            download_name=f'shadowtalk_reports_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        print(f"Error generating PDF with WeasyPrint: {e}")
+        # Return error response instead of falling back to CSV
+        return jsonify({'error': f'Failed to generate PDF: {str(e)}'}), 500
+
+def export_users_pdf(users):
+    """Export users as styled PDF using WeasyPrint"""
+    try:
+        # Calculate user statistics
+        verified_count = sum(1 for user in users if user.is_verified)
+        banned_count = sum(1 for user in users if user.is_banned)
+        active_count = len(users) - banned_count
+
+        template_data = {
+            'report_title': 'Users Management Report',
+            'generated_date': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+            'users': users,
+            'verified_count': verified_count,
+            'banned_count': banned_count,
+            'active_count': active_count,
+            'summary_stats': [
+                {'label': 'Total Users', 'value': len(users)},
+                {'label': 'Verified', 'value': verified_count},
+                {'label': 'Banned', 'value': banned_count},
+                {'label': 'Active', 'value': active_count}
+            ]
+        }
+
+        html_content = render_template('export/users_pdf.html', **template_data)
+        
+        # Generate PDF using WeasyPrint
+        pdf_file = HTML(string=html_content, base_url=request.base_url).write_pdf()
+        
+        return send_file(
+            io.BytesIO(pdf_file),
+            as_attachment=True,
+            download_name=f'shadowtalk_users_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        print(f"Error generating users PDF: {e}")
+        return jsonify({'error': f'Failed to generate PDF: {str(e)}'}), 500
+
+def export_banned_users_pdf(banned_users):
+    """Export banned users as styled PDF using WeasyPrint"""
+    try:
+        # Calculate ban statistics
+        permanent_bans = sum(1 for user in banned_users if not user.ban_expires_at)
+        temporary_bans = len(banned_users) - permanent_bans
+        active_bans = sum(1 for user in banned_users if user.ban_expires_at is None or user.ban_expires_at > datetime.utcnow())
+
+        template_data = {
+            'report_title': 'Banned Users Report',
+            'generated_date': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+            'banned_users': banned_users,
+            'permanent_bans': permanent_bans,
+            'temporary_bans': temporary_bans,
+            'active_bans': active_bans,
+            'datetime': datetime,
+            'summary_stats': [
+                {'label': 'Total Banned', 'value': len(banned_users)},
+                {'label': 'Permanent', 'value': permanent_bans},
+                {'label': 'Temporary', 'value': temporary_bans},
+                {'label': 'Active', 'value': active_bans}
+            ]
+        }
+
+        html_content = render_template('export/banned_users_pdf.html', **template_data)
+        
+        # Generate PDF using WeasyPrint
+        pdf_file = HTML(string=html_content, base_url=request.base_url).write_pdf()
+        
+        return send_file(
+            io.BytesIO(pdf_file),
+            as_attachment=True,
+            download_name=f'shadowtalk_banned_users_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        print(f"Error generating banned users PDF: {e}")
+        return jsonify({'error': f'Failed to generate PDF: {str(e)}'}), 500
+
+def export_chats_pdf(chat_sessions):
+    """Export chat sessions as styled PDF using WeasyPrint"""
+    try:
+        # Calculate chat statistics
+        active_sessions = sum(1 for session in chat_sessions if not session.ended_at)
+        text_sessions = sum(1 for session in chat_sessions if session.session_type == 'text')
+        video_sessions = sum(1 for session in chat_sessions if session.session_type == 'video')
+        total_messages = sum(len(session.messages) for session in chat_sessions)
+
+        template_data = {
+            'report_title': 'Chat Sessions Report',
+            'generated_date': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+            'chat_sessions': chat_sessions,
+            'active_sessions': active_sessions,
+            'text_sessions': text_sessions,
+            'video_sessions': video_sessions,
+            'total_messages': total_messages,
+            'summary_stats': [
+                {'label': 'Total Sessions', 'value': len(chat_sessions)},
+                {'label': 'Active', 'value': active_sessions},
+                {'label': 'Text Chats', 'value': text_sessions},
+                {'label': 'Video Chats', 'value': video_sessions}
+            ]
+        }
+
+        html_content = render_template('export/chats_pdf.html', **template_data)
+        
+        # Generate PDF using WeasyPrint
+        pdf_file = HTML(string=html_content, base_url=request.base_url).write_pdf()
+        
+        return send_file(
+            io.BytesIO(pdf_file),
+            as_attachment=True,
+            download_name=f'shadowtalk_chats_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        print(f"Error generating chats PDF: {e}")
+        return jsonify({'error': f'Failed to generate PDF: {str(e)}'}), 500
+
+def export_reports_csv(reports):
+    """Export reports as CSV"""
+    try:
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow(['ID', 'Reporter', 'Reported User', 'Reason', 'Report Type', 'Status', 'Created At'])
+        
+        # Write data
+        for report in reports:
+            reporter_name = report.reporter.display_name if report.reporter else 'Anonymous'
+            reported_name = report.reported_user.display_name if report.reported_user else 'Anonymous'
+            
+            writer.writerow([
+                report.id,
+                reporter_name,
+                reported_name,
+                report.reason,
+                report.report_type,
+                report.status,
+                report.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            ])
+        
+        output.seek(0)
+        
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8')),
+            as_attachment=True,
+            download_name=f'reports_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.csv',
+            mimetype='text/csv'
+        )
+        
+    except Exception as e:
+        print(f"Error generating CSV: {e}")
+        return jsonify({'error': 'Failed to generate CSV'}), 500
+
+@app.route('/admin/export/users')
+@login_required
+def export_users():
+    """Export users data"""
+    if current_user.email != 'admin@shadowtalk.com':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    users = User.query.order_by(User.created_at.desc()).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['ID', 'Email', 'Display Name', 'Username', 'Status', 'Verified', 'Banned', 'Created At', 'Last Login'])
+    
+    # Write data
+    for user in users:
+        status = 'Banned' if user.is_banned else 'Active'
+        
+        writer.writerow([
+            user.id[:8] + '...',
+            user.email,
+            user.display_name or 'N/A',
+            user.username or 'N/A',
+            status,
+            'Yes' if user.is_verified else 'No',
+            'Yes' if user.is_banned else 'No',
+            user.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else 'Never'
+        ])
+    
+    output.seek(0)
+    
+    return send_file(
+        io.BytesIO(output.getvalue().encode('utf-8')),
+        as_attachment=True,
+        download_name=f'users_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.csv',
+        mimetype='text/csv'
+    )
+
+@app.route('/admin/export/banned-users')
+@login_required
+def export_banned_users():
+    """Export banned users data"""
+    if current_user.email != 'admin@shadowtalk.com':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    banned_users = User.query.filter_by(is_banned=True).order_by(User.banned_at.desc()).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['ID', 'Email', 'Display Name', 'Ban Reason', 'Banned At', 'Ban Expires', 'Banned By'])
+    
+    # Write data
+    for user in banned_users:
+        banned_by_admin = User.query.get(user.banned_by) if user.banned_by else None
+        banned_by_name = banned_by_admin.display_name if banned_by_admin else 'System'
+        
+        writer.writerow([
+            user.id[:8] + '...',
+            user.email,
+            user.display_name or 'N/A',
+            user.ban_reason or 'No reason provided',
+            user.banned_at.strftime('%Y-%m-%d %H:%M:%S') if user.banned_at else 'N/A',
+            user.ban_expires_at.strftime('%Y-%m-%d %H:%M:%S') if user.ban_expires_at else 'Permanent',
+            banned_by_name
+        ])
+    
+    output.seek(0)
+    
+    return send_file(
+        io.BytesIO(output.getvalue().encode('utf-8')),
+        as_attachment=True,
+        download_name=f'banned_users_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.csv',
+        mimetype='text/csv'
+    )
+
+@app.route('/admin/export/chats')
+@login_required
+def export_chats():
+    """Export chat sessions data"""
+    if current_user.email != 'admin@shadowtalk.com':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    chat_sessions = ChatSession.query.order_by(ChatSession.started_at.desc()).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['Session ID', 'User 1', 'User 2', 'Type', 'Start Time', 'End Time', 'Duration', 'Status', 'Message Count'])
+    
+    # Write data
+    for session in chat_sessions:
+        user1_name = session.user1.display_name if session.user1 else 'Unknown'
+        user2_name = session.user2.display_name if session.user2 else 'Unknown'
+        status = 'Ended' if session.ended_at else 'Active'
+        message_count = len(session.messages)
+        
+        writer.writerow([
+            session.id[:8] + '...',
+            user1_name,
+            user2_name,
+            session.session_type,
+            session.started_at.strftime('%Y-%m-%d %H:%M:%S') if session.started_at else 'N/A',
+            session.ended_at.strftime('%Y-%m-%d %H:%M:%S') if session.ended_at else 'Ongoing',
+            f"{session.duration}s" if session.duration else 'N/A',
+            status,
+            message_count
+        ])
+    
+    output.seek(0)
+    
+    return send_file(
+        io.BytesIO(output.getvalue().encode('utf-8')),
+        as_attachment=True,
+        download_name=f'chat_sessions_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.csv',
+        mimetype='text/csv'
+    )
+
+@app.route('/admin/export/moderation')
+@login_required
+def export_moderation_queue():
+    """Export moderation queue data"""
+    if current_user.email != 'admin@shadowtalk.com':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    moderation_items = []  # This would be your actual moderation queue data
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['ID', 'Chat Session', 'Message Preview', 'Reason', 'Confidence', 'Status', 'Created At'])
+    
+    # Write data
+    for item in moderation_items:
+        writer.writerow([
+            item.id,
+            item.chat_session_id[:8] + '...' if item.chat_session_id else 'N/A',
+            item.message.content[:50] + '...' if item.message and item.message.content else 'N/A',
+            item.reason,
+            f"{item.confidence_score * 100:.1f}%" if item.confidence_score else 'N/A',
+            item.status,
+            item.created_at.strftime('%Y-%m-%d %H:%M:%S') if item.created_at else 'N/A'
+        ])
+    
+    output.seek(0)
+    
+    return send_file(
+        io.BytesIO(output.getvalue().encode('utf-8')),
+        as_attachment=True,
+        download_name=f'moderation_queue_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.csv',
+        mimetype='text/csv'
+    )
+
+@app.route('/admin/export/audit-logs')
+@login_required
+def export_audit_logs():
+    """Export audit logs data"""
+    if current_user.email != 'admin@shadowtalk.com':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    audit_logs = AuditLog.query.order_by(AuditLog.created_at.desc()).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['Timestamp', 'Admin', 'Action', 'Target Type', 'Target ID', 'Details', 'IP Address'])
+    
+    # Write data
+    for log in audit_logs:
+        admin_name = log.admin.username if log.admin else 'System'
+        
+        writer.writerow([
+            log.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            admin_name,
+            log.action,
+            log.target_type or 'N/A',
+            log.target_id or 'N/A',
+            log.details or 'N/A',
+            log.ip_address or 'N/A'
+        ])
+    
+    output.seek(0)
+    
+    return send_file(
+        io.BytesIO(output.getvalue().encode('utf-8')),
+        as_attachment=True,
+        download_name=f'audit_logs_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.csv',
+        mimetype='text/csv'
+    )
+
+def export_reports_pdf(reports):
+    """Export reports as styled PDF using WeasyPrint"""
+    try:
+        # Calculate report type distribution
+        report_types = {
+            'inappropriate_behavior': 0,
+            'spam': 0,
+            'harassment': 0,
+            'other': 0
+        }
+        
+        for report in reports:
+            if report.report_type in report_types:
+                report_types[report.report_type] += 1
+
+        # Prepare template data
+        template_data = {
+            'report_title': 'Pending Reports',
+            'generated_date': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+            'reports': reports,
+            'report_types': report_types,
+            'time_period': 'All Time',
+            'summary_stats': [
+                {'label': 'Total Reports', 'value': len(reports)},
+                {'label': 'Pending', 'value': len(reports)},
+                {'label': 'Inappropriate', 'value': report_types['inappropriate_behavior']},
+                {'label': 'Spam', 'value': report_types['spam']}
+            ]
+        }
+
+        # Render HTML template
+        html_content = render_template('export/reports_pdf.html', **template_data)
+        
+        # Generate PDF using WeasyPrint
+        pdf_file = HTML(string=html_content, base_url=request.base_url).write_pdf()
+        
+        return send_file(
+            io.BytesIO(pdf_file),
+            as_attachment=True,
+            download_name=f'shadowtalk_reports_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        print(f"Error generating PDF with WeasyPrint: {e}")
+        # Fallback to CSV
+        return export_reports_csv(reports)
+
+def export_users_pdf(users):
+    """Export users as styled PDF using WeasyPrint"""
+    try:
+        # Calculate user statistics
+        verified_count = sum(1 for user in users if user.is_verified)
+        banned_count = sum(1 for user in users if user.is_banned)
+        active_count = len(users) - banned_count
+
+        template_data = {
+            'report_title': 'Users Management Report',
+            'generated_date': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+            'users': users,
+            'verified_count': verified_count,
+            'banned_count': banned_count,
+            'active_count': active_count,
+            'summary_stats': [
+                {'label': 'Total Users', 'value': len(users)},
+                {'label': 'Verified', 'value': verified_count},
+                {'label': 'Banned', 'value': banned_count},
+                {'label': 'Active', 'value': active_count}
+            ]
+        }
+
+        html_content = render_template('export/users_pdf.html', **template_data)
+        
+        # Generate PDF using WeasyPrint
+        pdf_file = HTML(string=html_content, base_url=request.base_url).write_pdf()
+        
+        return send_file(
+            io.BytesIO(pdf_file),
+            as_attachment=True,
+            download_name=f'shadowtalk_users_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        print(f"Error generating users PDF: {e}")
+        return export_users_pdf(users)
+
+def export_banned_users_pdf(banned_users):
+    """Export banned users as styled PDF using WeasyPrint"""
+    try:
+        # Calculate ban statistics
+        permanent_bans = sum(1 for user in banned_users if not user.ban_expires_at)
+        temporary_bans = len(banned_users) - permanent_bans
+        active_bans = sum(1 for user in banned_users if user.ban_expires_at is None or user.ban_expires_at > datetime.utcnow())
+
+        template_data = {
+            'report_title': 'Banned Users Report',
+            'generated_date': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+            'banned_users': banned_users,
+            'permanent_bans': permanent_bans,
+            'temporary_bans': temporary_bans,
+            'active_bans': active_bans,
+            'datetime': datetime,
+            'summary_stats': [
+                {'label': 'Total Banned', 'value': len(banned_users)},
+                {'label': 'Permanent', 'value': permanent_bans},
+                {'label': 'Temporary', 'value': temporary_bans},
+                {'label': 'Active', 'value': active_bans}
+            ]
+        }
+
+        html_content = render_template('export/banned_users_pdf.html', **template_data)
+        
+        # Generate PDF using WeasyPrint
+        pdf_file = HTML(string=html_content, base_url=request.base_url).write_pdf()
+        
+        return send_file(
+            io.BytesIO(pdf_file),
+            as_attachment=True,
+            download_name=f'shadowtalk_banned_users_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        print(f"Error generating banned users PDF: {e}")
+        return export_banned_users_pdf(banned_users)
+
+def export_chats_pdf(chat_sessions):
+    """Export chat sessions as styled PDF using WeasyPrint"""
+    try:
+        # Calculate chat statistics
+        active_sessions = sum(1 for session in chat_sessions if not session.ended_at)
+        text_sessions = sum(1 for session in chat_sessions if session.session_type == 'text')
+        video_sessions = sum(1 for session in chat_sessions if session.session_type == 'video')
+        total_messages = sum(len(session.messages) for session in chat_sessions)
+
+        template_data = {
+            'report_title': 'Chat Sessions Report',
+            'generated_date': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+            'chat_sessions': chat_sessions,
+            'active_sessions': active_sessions,
+            'text_sessions': text_sessions,
+            'video_sessions': video_sessions,
+            'total_messages': total_messages,
+            'summary_stats': [
+                {'label': 'Total Sessions', 'value': len(chat_sessions)},
+                {'label': 'Active', 'value': active_sessions},
+                {'label': 'Text Chats', 'value': text_sessions},
+                {'label': 'Video Chats', 'value': video_sessions}
+            ]
+        }
+
+        html_content = render_template('export/chats_pdf.html', **template_data)
+        
+        # Generate PDF using WeasyPrint
+        pdf_file = HTML(string=html_content, base_url=request.base_url).write_pdf()
+        
+        return send_file(
+            io.BytesIO(pdf_file),
+            as_attachment=True,
+            download_name=f'shadowtalk_chats_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        print(f"Error generating chats PDF: {e}")
+        return export_chats_pdf(chat_sessions)
+    
 if __name__ == '__main__':
     with app.app_context():
         try:
