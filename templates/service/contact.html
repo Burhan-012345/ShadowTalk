@@ -16,15 +16,21 @@
       }
 
       :root {
-        --primary: #8b5cf6;
-        --primary-dark: #7c3aed;
-        --secondary: #1a1a1a;
-        --accent: #10b981;
+        --primary: #7c83fd;
+        --primary-dark: #6a72e9;
+        --secondary: #2a2d3e;
+        --accent: #ff6b8b;
         --text: #e2e8f0;
         --text-secondary: #94a3b8;
-        --background: #0f0f0f;
-        --card-bg: #1e1e1e;
-        --gradient: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+        --background: #1e2030;
+        --card-bg: #2a2d3e;
+        --gradient: linear-gradient(
+          135deg,
+          #7c83fd 0%,
+          #ff6b8b 50%,
+          #4fd1c7 100%
+        );
+        --shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
       }
 
       body {
@@ -40,7 +46,8 @@
         justify-content: space-between;
         align-items: center;
         background: var(--card-bg);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid rgba(124, 131, 253, 0.2);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
       }
 
       .logo {
@@ -73,7 +80,7 @@
       }
 
       .nav-links a:hover {
-        color: var(--text);
+        color: var(--primary);
       }
 
       .service-container {
@@ -110,25 +117,30 @@
       .contact-card {
         background: var(--card-bg);
         padding: 2rem;
-        border-radius: 15px;
+        border-radius: 20px;
         text-align: center;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: transform 0.3s ease;
+        border: 1px solid rgba(124, 131, 253, 0.3);
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow);
       }
 
       .contact-card:hover {
         transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
       }
 
       .contact-icon {
         font-size: 3rem;
-        color: var(--primary);
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         margin-bottom: 1rem;
       }
 
       .contact-card h3 {
         margin-bottom: 1rem;
         font-size: 1.4rem;
+        color: var(--text);
       }
 
       .contact-card p {
@@ -140,17 +152,20 @@
         color: var(--primary);
         text-decoration: none;
         font-weight: 600;
+        transition: color 0.3s ease;
       }
 
       .contact-link:hover {
+        color: var(--accent);
         text-decoration: underline;
       }
 
       .contact-form {
         background: var(--card-bg);
         padding: 2rem;
-        border-radius: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        border: 1px solid rgba(124, 131, 253, 0.3);
+        box-shadow: var(--shadow);
       }
 
       .form-group {
@@ -169,12 +184,12 @@
       .form-group textarea {
         width: 100%;
         padding: 1rem;
-        background: #2d2d2d;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
+        background: #34374c;
+        border: 1px solid rgba(124, 131, 253, 0.4);
+        border-radius: 12px;
         color: var(--text);
         font-size: 1rem;
-        transition: border-color 0.3s ease;
+        transition: all 0.3s ease;
       }
 
       .form-group input:focus,
@@ -182,6 +197,7 @@
       .form-group textarea:focus {
         outline: none;
         border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(124, 131, 253, 0.2);
       }
 
       .form-group textarea {
@@ -200,11 +216,12 @@
         cursor: pointer;
         transition: all 0.3s ease;
         width: 100%;
+        box-shadow: 0 4px 15px rgba(124, 131, 253, 0.3);
       }
 
       .submit-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+        box-shadow: 0 8px 25px rgba(124, 131, 253, 0.4);
       }
 
       .faq-section {
@@ -214,10 +231,16 @@
       .faq-item {
         background: var(--card-bg);
         padding: 1.5rem;
-        border-radius: 10px;
+        border-radius: 15px;
         margin-bottom: 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(124, 131, 253, 0.3);
         cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow);
+      }
+
+      .faq-item:hover {
+        border-color: var(--primary);
       }
 
       .faq-question {
@@ -225,12 +248,18 @@
         justify-content: space-between;
         align-items: center;
         font-weight: 600;
+        color: var(--text);
       }
 
       .faq-answer {
         margin-top: 1rem;
         color: var(--text-secondary);
         display: none;
+      }
+
+      .faq-item.active {
+        background: #34374c;
+        border-color: var(--primary);
       }
 
       .faq-item.active .faq-answer {
@@ -242,7 +271,8 @@
         padding: 3rem 2rem;
         text-align: center;
         margin-top: 4rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: 1px solid rgba(124, 131, 253, 0.3);
+        box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.2);
       }
 
       .footer-content {
@@ -265,7 +295,7 @@
       }
 
       .footer-links a:hover {
-        color: var(--text);
+        color: var(--primary);
       }
 
       .copyright {
