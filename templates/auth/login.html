@@ -4,7 +4,15 @@
     <h2 class="auth-title">Login to ShadowTalk</h2>
 
     {% if error %}
-    <div class="alert alert-error">{{ error }}</div>
+    <div class="alert alert-error">
+      {{ error }} {% if show_contact_link %}
+      <div style="margin-top: 10px">
+        <a href="{{ url_for('contact') }}" class="contact-support-link">
+          Contact Support
+        </a>
+      </div>
+      {% endif %}
+    </div>
     {% endif %}
 
     <form method="POST" class="auth-form">
@@ -59,7 +67,264 @@
     </div>
   </div>
 </div>
-{% endblock %} {% block extra_js %}
+
+<style>
+  /* Mobile-First Responsive Styles */
+  .auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: #0a0a0f;
+  }
+
+  .auth-card {
+    background: #1a1a2e;
+    border-radius: 16px;
+    padding: 30px 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .auth-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #6366f1, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #e0e0e0;
+    font-size: 0.95rem;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: #2d2d42;
+    border: 2px solid #555;
+    border-radius: 10px;
+    color: white;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+  }
+
+  .form-input:focus {
+    border-color: #6366f1;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  .password-input-container {
+    position: relative;
+  }
+
+  .toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toggle-password:hover {
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.1);
+  }
+
+  .remember-forgot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .form-checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid #555;
+    background: #2d2d42;
+    cursor: pointer;
+  }
+
+  .forgot-password {
+    color: #6366f1;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+  }
+
+  .forgot-password:hover {
+    color: #8b5cf6;
+    text-decoration: underline;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #6366f1, #3b82f6);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 50px;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+
+  .auth-links {
+    text-align: center;
+    margin-top: 25px;
+  }
+
+  .auth-links a {
+    color: #6366f1;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+  }
+
+  .auth-links a:hover {
+    color: #8b5cf6;
+    text-decoration: underline;
+  }
+
+  .alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    animation: slideIn 0.3s ease-out;
+  }
+
+  .alert-error {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .contact-support-link {
+    color: #6366f1;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+  }
+
+  .contact-support-link:hover {
+    color: #8b5cf6;
+    text-decoration: underline;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .auth-card {
+    animation: fadeInUp 0.5s ease-out;
+  }
+
+  /* Mobile Optimizations */
+  @media (max-width: 480px) {
+    .auth-container {
+      padding: 15px;
+    }
+
+    .auth-card {
+      padding: 25px 20px;
+    }
+
+    .auth-title {
+      font-size: 1.5rem;
+    }
+
+    .remember-forgot {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 15px;
+    }
+
+    .form-input {
+      padding: 12px 14px;
+    }
+
+    .btn-primary {
+      padding: 12px 16px;
+      font-size: 0.95rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .auth-card {
+      padding: 40px 35px;
+    }
+
+    .auth-title {
+      font-size: 2rem;
+    }
+  }
+</style>
+
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     // Toggle password visibility
@@ -80,6 +345,13 @@
           icon.classList.add("fa-eye");
           this.setAttribute("aria-label", "Show password");
         }
+      });
+    });
+
+    // Prevent zoom on iOS
+    document.querySelectorAll("input").forEach((input) => {
+      input.addEventListener("focus", function () {
+        this.style.fontSize = "16px";
       });
     });
   });
