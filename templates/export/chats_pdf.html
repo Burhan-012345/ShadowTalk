@@ -1,0 +1,84 @@
+{% extends "export/pdf_template.html" %} {% block content %}
+<div class="section-title">Chat Sessions Report</div>
+
+<div class="info-grid">
+  <div class="info-item">
+    <div class="info-label">Total Sessions</div>
+    <div class="info-value">{{ chat_sessions|length }}</div>
+  </div>
+  <div class="info-item">
+    <div class="info-label">Active Sessions</div>
+    <div class="info-value">{{ active_sessions }}</div>
+  </div>
+  <div class="info-item">
+    <div class="info-label">Text Chats</div>
+    <div class="info-value">{{ text_sessions }}</div>
+  </div>
+  <div class="info-item">
+    <div class="info-label">Video Chats</div>
+    <div class="info-value">{{ video_sessions }}</div>
+  </div>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Session ID</th>
+        <th>User 1</th>
+        <th>User 2</th>
+        <th>Type</th>
+        <th>Start Time</th>
+        <th>Duration</th>
+        <th>Messages</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for session in chat_sessions %}
+      <tr>
+        <td>{{ session.id[:8] }}...</td>
+        <td>
+          {{ session.user1.display_name if session.user1 else 'Unknown' }}
+        </td>
+        <td>
+          {{ session.user2.display_name if session.user2 else 'Unknown' }}
+        </td>
+        <td>{{ session.session_type|title }}</td>
+        <td>
+          {{ session.started_at.strftime('%Y-%m-%d %H:%M') if session.started_at
+          else 'N/A' }}
+        </td>
+        <td>{{ session.duration }}s</td>
+        <td>{{ session.messages|length }}</td>
+        <td>
+          {% if session.ended_at %}
+          <span class="status-badge status-resolved">Ended</span>
+          {% else %}
+          <span class="status-badge status-active">Active</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="chart-placeholder">
+  <div class="chart-title">Chat Statistics</div>
+  <div class="chart-stats">
+    <div class="chart-stat">
+      <span class="stat-label">Total Messages</span>
+      <span class="stat-value">{{ total_messages }}</span>
+    </div>
+    <div class="chart-stat">
+      <span class="stat-label">Avg. Duration</span>
+      <span class="stat-value">
+        {% set total_duration = chat_sessions|sum(attribute='duration') or 0 %}
+        {% set avg_duration = total_duration / chat_sessions|length if
+        chat_sessions|length > 0 else 0 %} {{ "%.1f"|format(avg_duration) }}s
+      </span>
+    </div>
+  </div>
+</div>
+{% endblock %}

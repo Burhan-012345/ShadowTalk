@@ -1,0 +1,64 @@
+{% extends "export/pdf_template.html" %} {% block content %}
+<div class="section-title">Pending Reports Summary</div>
+
+<div class="info-grid">
+  <div class="info-item">
+    <div class="info-label">Total Reports</div>
+    <div class="info-value">{{ reports|length }}</div>
+  </div>
+  <div class="info-item">
+    <div class="info-label">Time Period</div>
+    <div class="info-value">{{ time_period }}</div>
+  </div>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Reporter</th>
+        <th>Reported User</th>
+        <th>Reason</th>
+        <th>Type</th>
+        <th>Date</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for report in reports %}
+      <tr>
+        <td>#{{ report.id }}</td>
+        <td>
+          {{ report.reporter.display_name if report.reporter else 'Anonymous' }}
+        </td>
+        <td>
+          {{ report.reported_user.display_name if report.reported_user else
+          'Anonymous' }}
+        </td>
+        <td>
+          {{ report.reason[:50] }}{% if report.reason|length > 50 %}...{% endif
+          %}
+        </td>
+        <td>{{ report.report_type|replace('_', ' ')|title }}</td>
+        <td>{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>
+          <span class="status-badge status-{{ report.status }}">
+            {{ report.status|title }}
+          </span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if reports %}
+<div class="chart-placeholder">
+  <div class="chart-title">Report Type Distribution</div>
+  <p>Inappropriate Behavior: {{ report_types.inappropriate_behavior }}</p>
+  <p>Spam: {{ report_types.spam }}</p>
+  <p>Harassment: {{ report_types.harassment }}</p>
+  <p>Other: {{ report_types.other }}</p>
+</div>
+{% endif %} {% endblock %}

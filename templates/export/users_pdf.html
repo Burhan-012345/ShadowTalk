@@ -1,0 +1,62 @@
+{% extends "export/pdf_template.html" %} {% block content %}
+<div class="section-title">Users Management Report</div>
+
+<div class="info-grid">
+  <div class="info-item">
+    <div class="info-label">Total Users</div>
+    <div class="info-value">{{ users|length }}</div>
+  </div>
+  <div class="info-item">
+    <div class="info-label">Verified Users</div>
+    <div class="info-value">{{ verified_count }}</div>
+  </div>
+  <div class="info-item">
+    <div class="info-label">Banned Users</div>
+    <div class="info-value">{{ banned_count }}</div>
+  </div>
+  <div class="info-item">
+    <div class="info-label">Active Users</div>
+    <div class="info-value">{{ active_count }}</div>
+  </div>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Email</th>
+        <th>Display Name</th>
+        <th>Username</th>
+        <th>Status</th>
+        <th>Joined</th>
+        <th>Last Login</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.id[:8] }}...</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.display_name or 'N/A' }}</td>
+        <td>{{ user.username or 'N/A' }}</td>
+        <td>
+          {% if user.is_banned %}
+          <span class="status-badge status-banned">Banned</span>
+          {% elif user.is_verified %}
+          <span class="status-badge status-verified">Verified</span>
+          {% else %}
+          <span class="status-badge status-pending">Pending</span>
+          {% endif %}
+        </td>
+        <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+        <td>
+          {{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else
+          'Never' }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

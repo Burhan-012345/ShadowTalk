@@ -1,0 +1,69 @@
+{% extends "export/pdf_template.html" %} {% block content %}
+<div class="section-title">Banned Users Report</div>
+
+<div class="info-grid">
+  <div class="info-item">
+    <div class="info-label">Total Banned</div>
+    <div class="info-value">{{ banned_users|length }}</div>
+  </div>
+  <div class="info-item">
+    <div class="info-label">Permanent Bans</div>
+    <div class="info-value">{{ permanent_bans }}</div>
+  </div>
+  <div class="info-item">
+    <div class="info-label">Temporary Bans</div>
+    <div class="info-value">{{ temporary_bans }}</div>
+  </div>
+  <div class="info-item">
+    <div class="info-label">Active Bans</div>
+    <div class="info-value">{{ active_bans }}</div>
+  </div>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Email</th>
+        <th>Display Name</th>
+        <th>Ban Reason</th>
+        <th>Banned At</th>
+        <th>Expires At</th>
+        <th>Banned By</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in banned_users %}
+      <tr>
+        <td>{{ user.id[:8] }}...</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.display_name or 'N/A' }}</td>
+        <td>
+          {{ user.ban_reason[:50] if user.ban_reason else 'No reason provided'
+          }}{% if user.ban_reason and user.ban_reason|length > 50 %}...{% endif
+          %}
+        </td>
+        <td>
+          {{ user.banned_at.strftime('%Y-%m-%d %H:%M') if user.banned_at else
+          'N/A' }}
+        </td>
+        <td>
+          {% if user.ban_expires_at %} {% if user.ban_expires_at >
+          datetime.utcnow() %} {{ user.ban_expires_at.strftime('%Y-%m-%d %H:%M')
+          }} {% else %}
+          <span class="status-badge status-pending">Expired</span>
+          {% endif %} {% else %}
+          <span class="status-badge status-banned">Permanent</span>
+          {% endif %}
+        </td>
+        <td>
+          {{ user.banned_by_admin_rel.username if user.banned_by_admin_rel else
+          'System' }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
