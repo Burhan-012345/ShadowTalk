@@ -54,8 +54,14 @@ class User(UserMixin, db.Model):
     def interests_list(self):
         if self.interests:
             try:
-                return json.loads(self.interests)
-            except (json.JSONDecodeError, TypeError):
+                # Handle both string JSON and already parsed lists
+                if isinstance(self.interests, str):
+                    return json.loads(self.interests)
+                elif isinstance(self.interests, list):
+                    return self.interests
+                else:
+                    return []
+            except (json.JSONDecodeError, TypeError, ValueError):
                 return []
         return []
 
