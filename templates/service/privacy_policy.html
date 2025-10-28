@@ -16,15 +16,15 @@
       }
 
       :root {
-        --primary: #8b5cf6;
-        --primary-dark: #7c3aed;
-        --secondary: #1a1a1a;
-        --accent: #10b981;
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --secondary: #0a0a0a;
+        --accent: #06d6a0;
         --text: #e2e8f0;
         --text-secondary: #94a3b8;
-        --background: #0f0f0f;
-        --card-bg: #1e1e1e;
-        --gradient: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+        --background: #0a0a0f;
+        --card-bg: #151522;
+        --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
       }
 
       body {
@@ -39,8 +39,9 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: var(--card-bg);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(10, 10, 15, 0.95);
+        border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+        backdrop-filter: blur(10px);
       }
 
       .logo {
@@ -112,7 +113,12 @@
         padding: 2rem;
         border-radius: 15px;
         margin-bottom: 2rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        transition: border-color 0.3s ease;
+      }
+
+      .content-section:hover {
+        border-color: var(--primary);
       }
 
       .content-section h2 {
@@ -144,7 +150,7 @@
       }
 
       .highlight-box {
-        background: rgba(139, 92, 246, 0.1);
+        background: rgba(99, 102, 241, 0.1);
         border-left: 4px solid var(--primary);
         padding: 1.5rem;
         margin: 1.5rem 0;
@@ -156,7 +162,7 @@
         padding: 3rem 2rem;
         text-align: center;
         margin-top: 4rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: 1px solid rgba(99, 102, 241, 0.2);
       }
 
       .footer-content {
