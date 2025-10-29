@@ -868,7 +868,6 @@
         <div class="nav-links">
           <a href="#features">Features</a>
           <a href="#how-it-works">How It Works</a>
-          <a href="#about">About</a>
           <a href="{{ url_for('login') }}">Login</a>
         </div>
       </nav>
@@ -888,6 +887,10 @@
           >
             <i class="fas fa-rocket"></i>
             Get Started Free
+          </a>
+          <a href="{{ url_for('login') }}" class="btn btn-secondary">
+            <i class="fas fa-sign-in-alt"></i>
+            Login
           </a>
           <button id="demoBtn" class="btn btn-secondary slide-in-right">
             <i class="fas fa-play-circle"></i>
@@ -1033,6 +1036,10 @@
           <a href="{{ url_for('register') }}" class="btn btn-primary">
             <i class="fas fa-user-plus"></i>
             Sign Up Now
+          </a>
+          <a href="{{ url_for('login') }}" class="btn btn-secondary">
+            <i class="fas fa-sign-in-alt"></i>
+            Login
           </a>
           <button id="demoBtn2" class="btn btn-secondary">
             <i class="fas fa-play-circle"></i>
