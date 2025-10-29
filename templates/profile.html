@@ -741,7 +741,7 @@
   .notification-bell {
     position: fixed;
     top: 20px;
-    right: 20px;
+    right: 80px;
     background: #6366f1;
     color: white;
     width: 50px;
@@ -865,8 +865,25 @@
     z-index: 1;
   }
 
-  /* Responsive Design */
+  /* Mobile Responsive for Notification Bell */
   @media (max-width: 768px) {
+    .notification-bell {
+      position: fixed !important;
+      top: 20px !important;
+      right: 80px !important;
+      z-index: 9999 !important;
+      background: #6366f1 !important;
+      width: 50px !important;
+      height: 50px !important;
+      font-size: 20px !important;
+    }
+
+    .notification-count {
+      width: 20px !important;
+      height: 20px !important;
+      font-size: 12px !important;
+    }
+
     .profile-modal {
       margin: 20px;
       max-height: 95vh;
@@ -911,24 +928,6 @@
       width: 95%;
     }
 
-    /* Notification Bell Mobile */
-    .notification-bell {
-      top: 15px;
-      right: 15px;
-      width: 45px;
-      height: 45px;
-      font-size: 18px;
-      z-index: 1001;
-    }
-
-    .notification-count {
-      width: 18px;
-      height: 18px;
-      font-size: 11px;
-      top: -3px;
-      right: -3px;
-    }
-
     /* Ensure navbar doesn't overlap */
     .navbar {
       z-index: 1000;
@@ -938,6 +937,20 @@
 
   /* Mobile Responsive Fixes for Profile Page */
   @media (max-width: 480px) {
+    .notification-bell {
+      top: 15px !important;
+      right: 70px !important;
+      width: 45px !important;
+      height: 45px !important;
+      font-size: 18px !important;
+    }
+
+    .notification-count {
+      width: 18px !important;
+      height: 18px !important;
+      font-size: 11px !important;
+    }
+
     .profile-container {
       padding: 10px;
       margin-top: 0;
@@ -1041,22 +1054,6 @@
       justify-content: center;
     }
     
-    /* Notification bell positioning */
-    .notification-bell {
-      top: 10px;
-      right: 10px;
-      width: 44px;
-      height: 44px;
-      font-size: 17px;
-      z-index: 1001;
-    }
-    
-    .notification-count {
-      width: 16px;
-      height: 16px;
-      font-size: 10px;
-    }
-    
     /* Notifications panel full screen on mobile */
     .notifications-panel {
       width: 100%;
@@ -1098,6 +1095,20 @@
 
   /* Additional fixes for very small screens */
   @media (max-width: 360px) {
+    .notification-bell {
+      top: 12px !important;
+      right: 60px !important;
+      width: 42px !important;
+      height: 42px !important;
+      font-size: 16px !important;
+    }
+
+    .notification-count {
+      width: 16px !important;
+      height: 16px !important;
+      font-size: 10px !important;
+    }
+
     .profile-container {
       padding: 5px;
     }
@@ -1120,14 +1131,6 @@
     
     .stat-label {
       font-size: 0.8rem;
-    }
-
-    .notification-bell {
-      top: 8px;
-      right: 8px;
-      width: 42px;
-      height: 42px;
-      font-size: 16px;
     }
   }
 
