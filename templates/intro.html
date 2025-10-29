@@ -378,6 +378,39 @@
         margin-top: 2rem;
       }
 
+      /* Theme Switcher Styles */
+      .theme-switcher {
+        background: transparent;
+        border: 2px solid var(--skyline-light);
+        color: var(--text);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+      }
+
+      .theme-switcher:hover {
+        border-color: var(--primary-light);
+        color: var(--primary-light);
+        transform: translateY(-2px);
+      }
+
+      .mobile-nav-actions {
+        display: none;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .mobile-nav-actions .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+      }
+
       /* Demo Modal Styles */
       .demo-modal {
         display: none;
@@ -688,6 +721,10 @@
           display: none;
         }
 
+        .mobile-nav-actions {
+          display: flex;
+        }
+
         .features {
           grid-template-columns: 1fr;
         }
@@ -745,6 +782,25 @@
       }
 
       @media (max-width: 480px) {
+        .navbar {
+          padding: 1rem 1.25rem;
+        }
+
+        .mobile-nav-actions {
+          gap: 0.75rem;
+        }
+
+        .mobile-nav-actions .btn {
+          padding: 0.4rem 0.8rem;
+          font-size: 0.8rem;
+        }
+
+        .theme-switcher {
+          width: 35px;
+          height: 35px;
+          font-size: 1rem;
+        }
+
         .demo-modal {
           padding: 0.25rem;
           padding-top: 1rem;
