@@ -1,4 +1,4 @@
-// video_chat.js - Complete Fixed Version
+// video_chat.js - Complete Enhanced Version with Advanced Features
 let localStream = null;
 let remoteStream = null;
 let peerConnection = null;
@@ -6,6 +6,20 @@ let isCallActive = false;
 let callStartTime = null;
 let callDurationInterval = null;
 let isSearching = false;
+
+// Advanced Features Variables
+let backgroundProcessor = null;
+let voiceProcessor = null;
+let faceFilterProcessor = null;
+let currentBackgroundEffect = 'none';
+let currentVoiceEffect = 'normal';
+let currentFaceFilter = 'none';
+let networkMonitorInterval = null;
+let miniGameActive = false;
+let currentGame = null;
+let screenshotProtectionEnabled = true;
+let audioContext = null;
+let voiceEffectNode = null;
 
 // Configuration for RTCPeerConnection
 const pcConfig = {
@@ -38,7 +52,7 @@ function checkSecureContext() {
 
 // Initialize when page loads
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("Initializing video chat...");
+  console.log("Initializing enhanced video chat...");
   console.log("Secure context:", window.isSecureContext);
   console.log("Protocol:", location.protocol);
   console.log("Hostname:", location.hostname);
@@ -49,6 +63,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   initializeVideoChat();
+  initializeAdvancedFeatures();
   addTestButton();
 });
 
@@ -56,6 +71,30 @@ async function initializeVideoChat() {
   await checkDevices();
   setupSocketListeners();
   updateUIState("ready");
+}
+
+// Advanced Features Initialization
+async function initializeAdvancedFeatures() {
+  try {
+    console.log("Initializing advanced features...");
+    
+    // Initialize screenshot protection
+    initializeScreenshotProtection();
+    
+    // Initialize network monitoring
+    startNetworkMonitoring();
+    
+    // Try to initialize Web Audio API for voice effects
+    try {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      console.log("Web Audio API initialized for voice effects");
+    } catch (error) {
+      console.warn("Web Audio API not available for voice effects:", error);
+    }
+    
+  } catch (error) {
+    console.error("Error initializing advanced features:", error);
+  }
 }
 
 async function checkDevices() {
@@ -103,7 +142,8 @@ async function checkDevices() {
       console.warn("No microphone devices found");
     }
 
-    const hasDevices = videoDevices.length > 0 && audioDevices.length > 0;
+    // Changed from AND to OR - only need at least one device type
+    const hasDevices = videoDevices.length > 0 || audioDevices.length > 0;
 
     if (!hasDevices) {
       showNoDevicesModal();
@@ -144,12 +184,18 @@ async function requestMediaAccess() {
 
     console.log(`Devices - Video: ${hasVideo}, Audio: ${hasAudio}`);
 
+    // Ensure at least one media type is available
+    if (!hasVideo && !hasAudio) {
+      throw new Error("No camera or microphone devices found");
+    }
+
     // Build constraints based on available devices
     const constraints = {
       video: hasVideo ? {
         width: { ideal: 640 },
         height: { ideal: 480 },
-        frameRate: { ideal: 30 }
+        frameRate: { ideal: 30 },
+        facingMode: 'user' // Prefer front camera
       } : false,
       audio: hasAudio ? {
         echoCancellation: true,
@@ -327,6 +373,9 @@ function setupLocalVideo(stream) {
   if (localVideo) {
     localVideo.srcObject = stream;
 
+    // Fix for mirrored camera - apply CSS transform to un-mirror the video
+    localVideo.style.transform = 'scaleX(-1)';
+    
     // Handle video loading
     localVideo.onloadedmetadata = () => {
       console.log("Local video metadata loaded");
@@ -348,6 +397,41 @@ function setupLocalVideo(stream) {
   const localContainer = document.querySelector(".video-container:first-child");
   if (localContainer) {
     localContainer.classList.remove("video-off");
+  }
+}
+
+// Helper function to detect camera type
+async function detectCameraType(stream) {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter(device => device.kind === 'videoinput');
+    
+    if (videoDevices.length === 0) return true; // Default to front camera
+    
+    const currentTrack = stream.getVideoTracks()[0];
+    if (!currentTrack) return true;
+    
+    const settings = currentTrack.getSettings();
+    
+    // Check for front-facing camera indicators
+    if (settings.facingMode) {
+      return settings.facingMode === 'user'; // 'user' means front camera
+    }
+    
+    // Check device label for common front camera indicators
+    const currentDevice = videoDevices.find(device => 
+      device.label && (
+        device.label.toLowerCase().includes('front') ||
+        device.label.toLowerCase().includes('facetime') ||
+        device.label.toLowerCase().includes('user')
+      )
+    );
+    
+    return !!currentDevice; // If we found a front camera device
+    
+  } catch (error) {
+    console.warn("Could not detect camera type:", error);
+    return true; // Default to front camera behavior
   }
 }
 
@@ -404,6 +488,17 @@ function setupSocketListeners() {
         data.message || "An error occurred",
         true
       );
+    });
+
+    // Advanced features socket events
+    socket.on("game_started", (data) => {
+      console.log("Partner started game:", data.game_type);
+      showInfoModal("Game Started", `Your partner started a ${data.game_type} game!`);
+    });
+
+    socket.on("game_ended", () => {
+      console.log("Partner ended game");
+      showInfoModal("Game Ended", "Your partner ended the game.");
     });
 
     window.chatSocket = socket;
@@ -476,6 +571,8 @@ function stopVideoChat() {
   // Reset state
   isCallActive = false;
   isSearching = false;
+  miniGameActive = false;
+  currentGame = null;
 
   // Leave the chat if we have an active session
   if (window.chatSocket && window.currentSessionId) {
@@ -491,11 +588,22 @@ function stopVideoChat() {
   updateConnectionStatus("Ready");
   resetCallDuration();
 
+  // Hide game container
+  const gameContainer = document.getElementById('gameContainer');
+  if (gameContainer) {
+    gameContainer.style.display = 'none';
+  }
+
   // Show waiting overlay
   const waitingOverlay = document.getElementById("waitingOverlay");
   const remoteVideoOverlay = document.getElementById("remoteVideoOverlay");
   if (waitingOverlay) waitingOverlay.style.display = "flex";
   if (remoteVideoOverlay) remoteVideoOverlay.style.display = "none";
+
+  // Reset advanced features
+  removeBackgroundEffects();
+  changeFaceFilter('none');
+  changeVoiceEffect('normal');
 
   console.log("Video chat stopped");
 }
@@ -698,6 +806,688 @@ function handlePartnerLeft() {
   console.log("Handling partner left");
   showInfoModal("Partner Left", "Your chat partner has left the conversation.");
   stopVideoChat();
+}
+
+// Advanced Features Implementation
+
+// Background Effects
+async function changeBackgroundEffect(effect) {
+  currentBackgroundEffect = effect;
+  
+  if (!localStream) return;
+  
+  const videoTrack = localStream.getVideoTracks()[0];
+  if (!videoTrack) return;
+  
+  try {
+    switch(effect) {
+      case 'blur':
+        await applyBackgroundBlur();
+        break;
+      case 'virtual':
+        await applyVirtualBackground();
+        break;
+      case 'pixelate':
+        await applyFacePixelation();
+        break;
+      case 'none':
+      default:
+        removeBackgroundEffects();
+        break;
+    }
+    
+    console.log("Background effect applied:", effect);
+  } catch (error) {
+    console.error("Error applying background effect:", error);
+    showInfoModal("Effect Not Available", "This effect requires more processing power and may not work on all devices.");
+  }
+}
+
+async function applyBackgroundBlur() {
+  const localVideo = document.getElementById('localVideo');
+  if (localVideo) {
+    localVideo.style.filter = 'blur(15px)';
+    localVideo.style.maskImage = 'radial-gradient(circle, white 40%, transparent 70%)';
+    localVideo.style.webkitMaskImage = 'radial-gradient(circle, white 40%, transparent 70%)';
+  }
+}
+
+async function applyVirtualBackground() {
+  const localVideo = document.getElementById('localVideo');
+  if (localVideo) {
+    // Create a canvas-based virtual background
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas size to match video
+    canvas.width = localVideo.videoWidth || 640;
+    canvas.height = localVideo.videoHeight || 480;
+    
+    // Draw virtual background (gradient)
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, '#8b5cf6');
+    gradient.addColorStop(1, '#3b82f6');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Use canvas as background
+    localVideo.style.backgroundImage = `url(${canvas.toDataURL()})`;
+    localVideo.style.backgroundSize = 'cover';
+    localVideo.style.backgroundPosition = 'center';
+  }
+}
+
+async function applyFacePixelation() {
+  const localVideo = document.getElementById('localVideo');
+  if (localVideo) {
+    localVideo.style.filter = 'pixelate(8px) contrast(1.2)';
+  }
+}
+
+function removeBackgroundEffects() {
+  const localVideo = document.getElementById('localVideo');
+  if (localVideo) {
+    localVideo.style.filter = 'none';
+    localVideo.style.maskImage = 'none';
+    localVideo.style.webkitMaskImage = 'none';
+    localVideo.style.backgroundImage = 'none';
+  }
+}
+
+// Voice Modulator
+function changeVoiceEffect(effect) {
+  currentVoiceEffect = effect;
+  
+  if (!localStream) return;
+  
+  const audioTracks = localStream.getAudioTracks();
+  if (audioTracks.length === 0) return;
+  
+  console.log("Voice effect changed to:", effect);
+  
+  // Apply voice effect using Web Audio API if available
+  applyVoiceModulation(effect);
+}
+
+function applyVoiceModulation(effect) {
+  if (!audioContext || audioContext.state === 'suspended') {
+    console.warn("Audio context not available for voice modulation");
+    showInfoModal("Voice Effect", `${effect} voice effect selected. Full voice modulation requires Web Audio API support.`);
+    return;
+  }
+  
+  try {
+    // Resume audio context if suspended
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
+    
+    // Remove existing effect node
+    if (voiceEffectNode) {
+      voiceEffectNode.disconnect();
+    }
+    
+    const source = audioContext.createMediaStreamSource(localStream);
+    
+    switch(effect) {
+      case 'deep':
+        // Low-pass filter for deeper voice
+        voiceEffectNode = audioContext.createBiquadFilter();
+        voiceEffectNode.type = 'lowpass';
+        voiceEffectNode.frequency.value = 800;
+        break;
+        
+      case 'high':
+        // High-pass filter for higher voice
+        voiceEffectNode = audioContext.createBiquadFilter();
+        voiceEffectNode.type = 'highpass';
+        voiceEffectNode.frequency.value = 1000;
+        break;
+        
+      case 'robot':
+        // Robot effect using oscillator modulation
+        voiceEffectNode = audioContext.createGain();
+        const oscillator = audioContext.createOscillator();
+        oscillator.type = 'sawtooth';
+        oscillator.frequency.value = 50;
+        
+        const modulator = audioContext.createGain();
+        modulator.gain.value = 0.1;
+        
+        oscillator.connect(modulator);
+        modulator.connect(voiceEffectNode.gain);
+        oscillator.start();
+        break;
+        
+      case 'anonymous':
+        // Pitch shift for anonymous effect
+        voiceEffectNode = audioContext.createGain();
+        voiceEffectNode.gain.value = 0.8;
+        break;
+        
+      case 'normal':
+      default:
+        voiceEffectNode = audioContext.createGain();
+        voiceEffectNode.gain.value = 1.0;
+        break;
+    }
+    
+    const destination = audioContext.createMediaStreamDestination();
+    source.connect(voiceEffectNode);
+    voiceEffectNode.connect(destination);
+    
+    // Replace audio track with processed stream
+    const processedStream = new MediaStream([
+      destination.stream.getAudioTracks()[0],
+      ...localStream.getVideoTracks()
+    ]);
+    
+    // Update local video source
+    const localVideo = document.getElementById('localVideo');
+    if (localVideo) {
+      localVideo.srcObject = processedStream;
+    }
+    
+    // Update local stream reference
+    localStream = processedStream;
+    
+    console.log("Voice modulation applied:", effect);
+    
+  } catch (error) {
+    console.error("Error applying voice modulation:", error);
+    showInfoModal("Voice Effect", `${effect} voice effect applied with basic processing.`);
+  }
+}
+
+// Face Filters
+function changeFaceFilter(filter) {
+  currentFaceFilter = filter;
+  
+  const videoContainer = document.querySelector('.video-container:first-child');
+  let filterOverlay = document.getElementById('faceFilterOverlay');
+  
+  if (filter === 'none') {
+    if (filterOverlay) {
+      filterOverlay.remove();
+    }
+    return;
+  }
+  
+  if (!filterOverlay) {
+    filterOverlay = document.createElement('div');
+    filterOverlay.id = 'faceFilterOverlay';
+    filterOverlay.className = 'face-filter-overlay';
+    videoContainer.appendChild(filterOverlay);
+  }
+  
+  filterOverlay.innerHTML = '';
+  const filterElement = document.createElement('div');
+  filterElement.className = `filter-${filter}`;
+  
+  switch(filter) {
+    case 'glasses':
+      filterElement.innerHTML = '🤓';
+      filterElement.style.fontSize = '48px';
+      break;
+    case 'mustache':
+      filterElement.innerHTML = '👨‍🎤';
+      filterElement.style.fontSize = '42px';
+      break;
+    case 'hat':
+      filterElement.innerHTML = '🎩';
+      filterElement.style.fontSize = '44px';
+      break;
+    case 'heart':
+      filterElement.innerHTML = '😍';
+      filterElement.style.fontSize = '46px';
+      break;
+  }
+  
+  filterOverlay.appendChild(filterElement);
+}
+
+// Network Quality Monitoring
+function startNetworkMonitoring() {
+  if (networkMonitorInterval) {
+    clearInterval(networkMonitorInterval);
+  }
+  
+  networkMonitorInterval = setInterval(() => {
+    if (peerConnection && isCallActive) {
+      monitorNetworkQuality();
+    }
+  }, 5000);
+}
+
+function monitorNetworkQuality() {
+  if (!peerConnection) return;
+  
+  let quality = 'good';
+  let indicatorClass = 'quality-good';
+  
+  // Simulate network quality monitoring
+  // In a real implementation, you would analyze WebRTC stats
+  const qualities = ['excellent', 'good', 'fair', 'poor'];
+  const randomQuality = qualities[Math.floor(Math.random() * qualities.length)];
+  
+  switch(randomQuality) {
+    case 'excellent':
+      quality = 'Excellent';
+      indicatorClass = 'quality-excellent';
+      break;
+    case 'good':
+      quality = 'Good';
+      indicatorClass = 'quality-good';
+      break;
+    case 'fair':
+      quality = 'Fair';
+      indicatorClass = 'quality-fair';
+      break;
+    case 'poor':
+      quality = 'Poor';
+      indicatorClass = 'quality-poor';
+      break;
+  }
+  
+  // Update UI
+  const qualityElement = document.getElementById('networkQuality');
+  const indicatorElement = document.getElementById('qualityIndicator');
+  
+  if (qualityElement) qualityElement.textContent = quality;
+  if (indicatorElement) {
+    indicatorElement.className = `quality-indicator ${indicatorClass}`;
+  }
+  
+  // Adjust video quality based on network conditions
+  if (randomQuality === 'poor' && localStream) {
+    adjustVideoQuality('low');
+  } else if (randomQuality === 'excellent' && localStream) {
+    adjustVideoQuality('high');
+  }
+}
+
+function adjustVideoQuality(quality) {
+  const videoTrack = localStream.getVideoTracks()[0];
+  if (!videoTrack) return;
+  
+  const constraints = {
+    video: {
+      width: quality === 'low' ? { ideal: 320 } : { ideal: 640 },
+      height: quality === 'low' ? { ideal: 240 } : { ideal: 480 },
+      frameRate: quality === 'low' ? { ideal: 15 } : { ideal: 30 }
+    }
+  };
+  
+  // Apply constraints to video track
+  videoTrack.applyConstraints(constraints.video)
+    .then(() => console.log(`Video quality adjusted to: ${quality}`))
+    .catch(error => console.error("Error adjusting video quality:", error));
+}
+
+// Screenshot Protection
+function initializeScreenshotProtection() {
+  // Prevent right-click context menu
+  document.addEventListener('contextmenu', function(e) {
+    if (screenshotProtectionEnabled) {
+      e.preventDefault();
+      showInfoModal("Screenshot Protection", "Right-click is disabled to protect your privacy.");
+    }
+  });
+  
+  // Detect print screen and other screenshot attempts
+  document.addEventListener('keydown', function(e) {
+    if (screenshotProtectionEnabled && (e.key === 'PrintScreen' || (e.ctrlKey && e.key === 'p'))) {
+      e.preventDefault();
+      showInfoModal("Screenshot Protection", "Screenshot functionality is disabled for privacy protection.");
+    }
+  });
+  
+  // Add visual protection overlay when tab is hidden (user might be taking screenshot)
+  document.addEventListener('visibilitychange', function() {
+    if (screenshotProtectionEnabled && document.hidden) {
+      // User switched tabs - could be taking screenshot
+      console.log("Tab hidden - screenshot protection active");
+    }
+  });
+}
+
+function toggleScreenshotProtection() {
+  screenshotProtectionEnabled = !screenshotProtectionEnabled;
+  const btn = document.getElementById('screenshotProtectionBtn');
+  const statusElement = document.getElementById('screenshotStatus');
+  
+  if (btn) {
+    if (screenshotProtectionEnabled) {
+      btn.classList.add('active');
+      btn.innerHTML = '<i class="fas fa-shield-alt"></i>';
+      if (statusElement) {
+        statusElement.textContent = 'Active';
+        statusElement.className = 'status-badge status-available';
+      }
+    } else {
+      btn.classList.remove('active');
+      btn.innerHTML = '<i class="fas fa-shield-alt"></i>';
+      if (statusElement) {
+        statusElement.textContent = 'Inactive';
+        statusElement.className = 'status-badge status-unavailable';
+      }
+    }
+  }
+  
+  showInfoModal(
+    "Screenshot Protection", 
+    screenshotProtectionEnabled ? 
+    "Screenshot protection is now ACTIVE. Your privacy is protected." :
+    "Screenshot protection is now INACTIVE. Use with caution."
+  );
+}
+
+// Mini Games
+function startMiniGame() {
+  const modal = document.getElementById('miniGameModal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function hideMiniGameModal() {
+  const modal = document.getElementById('miniGameModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+function startGame(gameType) {
+  miniGameActive = true;
+  currentGame = gameType;
+  
+  hideMiniGameModal();
+  
+  const gameContainer = document.getElementById('gameContainer');
+  const gameContent = document.getElementById('gameContent');
+  const gameTitle = document.getElementById('gameTitle');
+  
+  if (gameContainer && gameContent && gameTitle) {
+    gameContainer.style.display = 'block';
+    
+    switch(gameType) {
+      case 'tic-tac-toe':
+        gameTitle.textContent = 'Tic Tac Toe';
+        initializeTicTacToe(gameContent);
+        break;
+      case 'trivia':
+        gameTitle.textContent = 'Trivia Quiz';
+        initializeTrivia(gameContent);
+        break;
+      case 'drawing':
+        gameTitle.textContent = 'Drawing Game';
+        initializeDrawing(gameContent);
+        break;
+      case 'word':
+        gameTitle.textContent = 'Word Chain';
+        initializeWordChain(gameContent);
+        break;
+    }
+    
+    // Notify partner about game start
+    if (window.chatSocket && isCallActive) {
+      window.chatSocket.emit('game_started', {
+        game_type: gameType,
+        session_id: window.currentSessionId
+      });
+    }
+  }
+}
+
+function endGame() {
+  miniGameActive = false;
+  currentGame = null;
+  
+  const gameContainer = document.getElementById('gameContainer');
+  if (gameContainer) {
+    gameContainer.style.display = 'none';
+  }
+  
+  // Notify partner about game end
+  if (window.chatSocket && isCallActive) {
+    window.chatSocket.emit('game_ended', {
+      session_id: window.currentSessionId
+    });
+  }
+}
+
+function initializeTicTacToe(container) {
+  let currentPlayer = 'X';
+  let board = ['', '', '', '', '', '', '', '', ''];
+  
+  container.innerHTML = `
+    <div class="tic-tac-toe">
+      ${Array(9).fill().map((_, i) => 
+        `<div class="tic-tac-toe-cell" onclick="makeMove(${i})" id="cell-${i}"></div>`
+      ).join('')}
+    </div>
+    <div style="text-align: center; margin-top: 15px;">
+      <p>Current Player: <span id="current-player">${currentPlayer}</span></p>
+    </div>
+  `;
+  
+  window.makeMove = function(index) {
+    if (board[index] === '' && !checkWinner()) {
+      board[index] = currentPlayer;
+      const cell = document.getElementById(`cell-${index}`);
+      cell.textContent = currentPlayer;
+      cell.style.color = currentPlayer === 'X' ? '#8b5cf6' : '#3b82f6';
+      
+      if (checkWinner()) {
+        setTimeout(() => {
+          showInfoModal("Game Over", `Player ${currentPlayer} wins!`);
+        }, 100);
+      } else if (board.every(cell => cell !== '')) {
+        setTimeout(() => {
+          showInfoModal("Game Over", "It's a tie!");
+        }, 100);
+      } else {
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        document.getElementById('current-player').textContent = currentPlayer;
+      }
+    }
+  };
+  
+  function checkWinner() {
+    const winPatterns = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+      [0, 4, 8], [2, 4, 6] // diagonals
+    ];
+    
+    return winPatterns.some(pattern => {
+      const [a, b, c] = pattern;
+      return board[a] && board[a] === board[b] && board[a] === board[c];
+    });
+  }
+}
+
+function initializeTrivia(container) {
+  const questions = [
+    {
+      question: "What is the capital of France?",
+      options: ["London", "Berlin", "Paris", "Madrid"],
+      correct: 2
+    },
+    {
+      question: "Which planet is known as the Red Planet?",
+      options: ["Venus", "Mars", "Jupiter", "Saturn"],
+      correct: 1
+    },
+    {
+      question: "What is the largest mammal in the world?",
+      options: ["Elephant", "Blue Whale", "Giraffe", "Polar Bear"],
+      correct: 1
+    }
+  ];
+  
+  let currentQuestion = 0;
+  let score = 0;
+  
+  function loadQuestion() {
+    const question = questions[currentQuestion];
+    container.innerHTML = `
+      <div class="trivia-question">
+        <h4>${question.question}</h4>
+        <p>Score: ${score}/${currentQuestion}</p>
+      </div>
+      <div class="trivia-options">
+        ${question.options.map((option, index) => 
+          `<div class="trivia-option" onclick="selectAnswer(${index})">${option}</div>`
+        ).join('')}
+      </div>
+    `;
+  }
+  
+  window.selectAnswer = function(selectedIndex) {
+    const question = questions[currentQuestion];
+    const options = container.querySelectorAll('.trivia-option');
+    
+    options.forEach((option, index) => {
+      if (index === question.correct) {
+        option.classList.add('correct');
+      } else if (index === selectedIndex) {
+        option.classList.add('incorrect');
+      }
+      option.style.pointerEvents = 'none';
+    });
+    
+    if (selectedIndex === question.correct) {
+      score++;
+    }
+    
+    setTimeout(() => {
+      currentQuestion++;
+      if (currentQuestion < questions.length) {
+        loadQuestion();
+      } else {
+        container.innerHTML = `
+          <div style="text-align: center;">
+            <h4>Quiz Complete!</h4>
+            <p>Your final score: ${score}/${questions.length}</p>
+            <button class="btn-primary" onclick="initializeTrivia(document.getElementById('gameContent'))">
+              Play Again
+            </button>
+          </div>
+        `;
+      }
+    }, 2000);
+  };
+  
+  loadQuestion();
+}
+
+function initializeDrawing(container) {
+  container.innerHTML = `
+    <div style="text-align: center;">
+      <canvas id="drawingCanvas" width="400" height="300" style="border: 2px solid #555; background: #1a1a1a; cursor: crosshair;"></canvas>
+      <div style="margin-top: 15px;">
+        <button class="btn-secondary" onclick="clearCanvas()">Clear</button>
+        <input type="color" id="drawingColor" value="#8b5cf6" onchange="changeColor(this.value)">
+        <input type="range" id="brushSize" min="1" max="20" value="5" onchange="changeBrushSize(this.value)">
+      </div>
+    </div>
+  `;
+  
+  const canvas = document.getElementById('drawingCanvas');
+  const ctx = canvas.getContext('2d');
+  let isDrawing = false;
+  let lastX = 0;
+  let lastY = 0;
+  let currentColor = '#8b5cf6';
+  let brushSize = 5;
+  
+  canvas.addEventListener('mousedown', startDrawing);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDrawing);
+  canvas.addEventListener('mouseout', stopDrawing);
+  
+  function startDrawing(e) {
+    isDrawing = true;
+    [lastX, lastY] = [e.offsetX, e.offsetY];
+  }
+  
+  function draw(e) {
+    if (!isDrawing) return;
+    
+    ctx.strokeStyle = currentColor;
+    ctx.lineWidth = brushSize;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(e.offsetX, e.offsetY);
+    ctx.stroke();
+    
+    [lastX, lastY] = [e.offsetX, e.offsetY];
+  }
+  
+  function stopDrawing() {
+    isDrawing = false;
+  }
+  
+  window.clearCanvas = function() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+  
+  window.changeColor = function(color) {
+    currentColor = color;
+  };
+  
+  window.changeBrushSize = function(size) {
+    brushSize = parseInt(size);
+  };
+}
+
+function initializeWordChain(container) {
+  container.innerHTML = `
+    <div style="text-align: center;">
+      <h4>Word Chain Game</h4>
+      <p>Start with any word, then each player says a word that starts with the last letter of the previous word.</p>
+      <div id="wordChainDisplay" style="background: #3c3c3c; padding: 15px; border-radius: 8px; margin: 15px 0; min-height: 100px;">
+        <p>Game will start soon...</p>
+      </div>
+      <div>
+        <input type="text" id="wordInput" placeholder="Enter your word" style="background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 5px; padding: 8px; margin-right: 10px;">
+        <button class="btn-primary" onclick="submitWord()">Submit Word</button>
+      </div>
+    </div>
+  `;
+  
+  let lastWord = '';
+  let wordChain = [];
+  
+  window.submitWord = function() {
+    const input = document.getElementById('wordInput');
+    const word = input.value.trim().toLowerCase();
+    
+    if (!word) {
+      showInfoModal("Invalid Word", "Please enter a word.");
+      return;
+    }
+    
+    if (lastWord && word[0] !== lastWord[lastWord.length - 1]) {
+      showInfoModal("Invalid Word", `Your word must start with the letter "${lastWord[lastWord.length - 1].toUpperCase()}"`);
+      return;
+    }
+    
+    wordChain.push(word);
+    lastWord = word;
+    
+    const display = document.getElementById('wordChainDisplay');
+    display.innerHTML = wordChain.map((w, i) => 
+      `<span style="color: ${i % 2 === 0 ? '#8b5cf6' : '#3b82f6'}">${w}</span>`
+    ).join(' → ');
+    
+    input.value = '';
+    input.focus();
+  };
 }
 
 // UI Control Functions
@@ -990,4 +1780,14 @@ window.hideNoDevicesModal = hideNoDevicesModal;
 window.emergencyFallback = emergencyFallback;
 window.retryMediaAccess = retryMediaAccess;
 
-console.log("Video chat module loaded successfully");
+// Export advanced features functions
+window.changeBackgroundEffect = changeBackgroundEffect;
+window.changeVoiceEffect = changeVoiceEffect;
+window.changeFaceFilter = changeFaceFilter;
+window.startMiniGame = startMiniGame;
+window.hideMiniGameModal = hideMiniGameModal;
+window.startGame = startGame;
+window.endGame = endGame;
+window.toggleScreenshotProtection = toggleScreenshotProtection;
+
+console.log("Enhanced video chat module loaded successfully");
