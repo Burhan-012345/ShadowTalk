@@ -1,4 +1,14 @@
 {% extends "base.html" %} {% block content %}
+<!-- Theme Toggle Switch -->
+<div class="theme-toggle">
+  <button class="theme-toggle-btn" data-theme="skyline-blue" data-theme-toggle>
+    <i class="fas fa-sun theme-icon"></i>
+  </button>
+  <button class="theme-toggle-btn active" data-theme="dark" data-theme-toggle>
+    <i class="fas fa-moon theme-icon"></i>
+  </button>
+</div>
+
 <div class="hero-section">
   <div class="hero-content">
     <h1 class="hero-title">Welcome to ShadowTalk</h1>
@@ -61,6 +71,180 @@
     } else {
       window.location.href = "{{ url_for('video_chat') }}";
     }
+  }
+
+  // Force dark theme on index page load
+  document.addEventListener("DOMContentLoaded", function () {
+    // Immediately set dark theme before any other processing
+    document.documentElement.setAttribute("data-theme", "dark");
+
+    // Update meta theme color for mobile browsers
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute("content", "#0f172a");
+    }
+
+    // Update button states to show dark theme as active
+    document.querySelectorAll("[data-theme]").forEach((button) => {
+      if (button.dataset.theme === "dark") {
+        button.classList.add("active");
+      } else {
+        button.classList.remove("active");
+      }
+    });
+
+    // Update icons
+    const sunIcons = document.querySelectorAll(".fa-sun");
+    const moonIcons = document.querySelectorAll(".fa-moon");
+    sunIcons.forEach((icon) => (icon.style.opacity = "0.5"));
+    moonIcons.forEach((icon) => (icon.style.opacity = "1"));
+
+    // Initialize theme manager after forcing dark theme
+    initializeThemeManager();
+  });
+
+  function initializeThemeManager() {
+    // Theme Management Class
+    class ThemeManager {
+      constructor() {
+        // For index page, always start with dark theme
+        // but respect user's choice for future interactions
+        this.currentTheme = "dark";
+        this.init();
+      }
+
+      init() {
+        this.setupEventListeners();
+      }
+
+      setupEventListeners() {
+        // Theme toggle buttons
+        document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
+          button.addEventListener("click", (e) => {
+            const theme = e.currentTarget.dataset.theme;
+            this.switchTheme(theme);
+          });
+        });
+      }
+
+      switchTheme(theme) {
+        this.currentTheme = theme;
+        localStorage.setItem("theme", theme);
+        this.applyTheme(theme);
+        this.updateActiveButtons(theme);
+      }
+
+      applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+
+        // Update meta theme color for mobile browsers
+        const metaThemeColor = document.querySelector(
+          'meta[name="theme-color"]'
+        );
+        if (metaThemeColor) {
+          metaThemeColor.setAttribute(
+            "content",
+            theme === "dark" ? "#0f172a" : "#e0f2fe"
+          );
+        }
+
+        // Update Font Awesome icons visibility
+        this.updateThemeIcons(theme);
+      }
+
+      updateActiveButtons(theme) {
+        document.querySelectorAll("[data-theme]").forEach((button) => {
+          if (button.dataset.theme === theme) {
+            button.classList.add("active");
+          } else {
+            button.classList.remove("active");
+          }
+        });
+      }
+
+      updateThemeIcons(theme) {
+        const sunIcons = document.querySelectorAll(".fa-sun");
+        const moonIcons = document.querySelectorAll(".fa-moon");
+
+        if (theme === "dark") {
+          sunIcons.forEach((icon) => (icon.style.opacity = "0.5"));
+          moonIcons.forEach((icon) => (icon.style.opacity = "1"));
+        } else {
+          sunIcons.forEach((icon) => (icon.style.opacity = "1"));
+          moonIcons.forEach((icon) => (icon.style.opacity = "0.5"));
+        }
+      }
+    }
+
+    new ThemeManager();
+
+    // Add smooth transitions after page load to prevent flash
+    setTimeout(() => {
+      document.body.style.transition = "all 0.3s ease";
+    }, 100);
+  }
+
+  // Fallback theme initialization for index page
+  function initThemeFallback() {
+    // Force dark theme immediately
+    document.documentElement.setAttribute("data-theme", "dark");
+
+    // Update meta theme color
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute("content", "#0f172a");
+    }
+
+    const themeToggle = document.querySelector(".theme-toggle");
+
+    // Update button states
+    updateButtonStates();
+
+    // Toggle theme on button click
+    themeToggle?.addEventListener("click", (e) => {
+      const button = e.target.closest("[data-theme]");
+      if (button) {
+        const theme = button.dataset.theme;
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+        updateButtonStates();
+        updateThemeIcons(theme);
+      }
+    });
+
+    function updateButtonStates() {
+      const currentTheme = document.documentElement.getAttribute("data-theme");
+      document.querySelectorAll("[data-theme]").forEach((btn) => {
+        if (btn.dataset.theme === currentTheme) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+    }
+
+    function updateThemeIcons(theme) {
+      const sunIcons = document.querySelectorAll(".fa-sun");
+      const moonIcons = document.querySelectorAll(".fa-moon");
+
+      if (theme === "dark") {
+        sunIcons.forEach((icon) => (icon.style.opacity = "0.5"));
+        moonIcons.forEach((icon) => (icon.style.opacity = "1"));
+      } else {
+        sunIcons.forEach((icon) => (icon.style.opacity = "1"));
+        moonIcons.forEach((icon) => (icon.style.opacity = "0.5"));
+      }
+    }
+
+    // Initialize icons
+    updateThemeIcons("dark");
+  }
+
+  // Fallback initialization if class-based approach fails
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initThemeFallback);
+  } else {
+    initThemeFallback();
   }
 </script>
 {% endblock %}
