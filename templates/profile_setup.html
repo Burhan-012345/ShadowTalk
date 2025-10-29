@@ -1,5 +1,60 @@
 {% extends "base.html" %} {% block content %}
-<div class="setup-container">
+<!-- Guided Tour Modal - Show First -->
+<div id="guidedTour" class="modal" style="display: flex;">
+  <div class="modal-content tour-modal">
+    <div class="tour-content">
+      <div class="tour-step active" id="tourStep1">
+        <h3>Welcome to Profile Setup! 🎯</h3>
+        <p>
+          We'll guide you through creating an amazing profile that helps you
+          find great matches.
+        </p>
+        <div class="tour-actions">
+          <button class="btn-primary" onclick="nextTourStep()">
+            Let's Start!
+          </button>
+          <button class="btn-secondary" onclick="skipTour()">Skip Tour</button>
+        </div>
+      </div>
+      <div class="tour-step" id="tourStep2">
+        <h3>Your Display Identity 👤</h3>
+        <p>
+          Choose a display name and username that represent you. This is how
+          others will see you.
+        </p>
+        <div class="tour-actions">
+          <button class="btn-secondary" onclick="prevTourStep()">Back</button>
+          <button class="btn-primary" onclick="nextTourStep()">Next</button>
+        </div>
+      </div>
+      <div class="tour-step" id="tourStep3">
+        <h3>Create Your Avatar 🎨</h3>
+        <p>
+          Use our AI avatar generator or upload a photo. Your avatar helps
+          others recognize you.
+        </p>
+        <div class="tour-actions">
+          <button class="btn-secondary" onclick="prevTourStep()">Back</button>
+          <button class="btn-primary" onclick="nextTourStep()">Next</button>
+        </div>
+      </div>
+      <div class="tour-step" id="tourStep4">
+        <h3>Share Your Interests 🌟</h3>
+        <p>
+          Select interests to get matched with like-minded people. Choose at
+          least 3 for best results.
+        </p>
+        <div class="tour-actions">
+          <button class="btn-secondary" onclick="prevTourStep()">Back</button>
+          <button class="btn-primary" onclick="completeTour()">Got It!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Profile Setup Content - Hidden Initially -->
+<div class="setup-container" id="mainSetupContent" style="display: none;">
   <!-- Progress Bar -->
   <div class="setup-progress">
     <div class="progress-bar">
@@ -94,7 +149,6 @@
               <option value="">Prefer not to say</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
-              <option value="non-binary">Non-binary</option>
               <option value="other">Other</option>
             </select>
           </div>
@@ -402,68 +456,14 @@
   </div>
 </div>
 
-<!-- Guided Tour Modal -->
-<div id="guidedTour" class="modal">
-  <div class="modal-content tour-modal">
-    <div class="tour-content">
-      <div class="tour-step active" id="tourStep1">
-        <h3>Welcome to Profile Setup! 🎯</h3>
-        <p>
-          We'll guide you through creating an amazing profile that helps you
-          find great matches.
-        </p>
-        <div class="tour-actions">
-          <button class="btn-primary" onclick="nextTourStep()">
-            Let's Start!
-          </button>
-          <button class="btn-secondary" onclick="skipTour()">Skip Tour</button>
-        </div>
-      </div>
-      <div class="tour-step" id="tourStep2">
-        <h3>Your Display Identity 👤</h3>
-        <p>
-          Choose a display name and username that represent you. This is how
-          others will see you.
-        </p>
-        <div class="tour-actions">
-          <button class="btn-secondary" onclick="prevTourStep()">Back</button>
-          <button class="btn-primary" onclick="nextTourStep()">Next</button>
-        </div>
-      </div>
-      <div class="tour-step" id="tourStep3">
-        <h3>Create Your Avatar 🎨</h3>
-        <p>
-          Use our AI avatar generator or upload a photo. Your avatar helps
-          others recognize you.
-        </p>
-        <div class="tour-actions">
-          <button class="btn-secondary" onclick="prevTourStep()">Back</button>
-          <button class="btn-primary" onclick="nextTourStep()">Next</button>
-        </div>
-      </div>
-      <div class="tour-step" id="tourStep4">
-        <h3>Share Your Interests 🌟</h3>
-        <p>
-          Select interests to get matched with like-minded people. Choose at
-          least 3 for best results.
-        </p>
-        <div class="tour-actions">
-          <button class="btn-secondary" onclick="prevTourStep()">Back</button>
-          <button class="btn-primary" onclick="completeTour()">Got It!</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <style>
-  /* Enhanced Setup Styles - Mobile First Approach */
+  /* Enhanced Setup Styles - Mobile First Approach - Dark Skyline Blue Theme */
   .setup-container {
     max-width: 1000px;
     margin: 0 auto;
     padding: 15px;
     min-height: 100vh;
-    background: #0a0a0f;
+    background: #0a0f1c;
   }
 
   /* Progress Bar - Mobile Optimized */
@@ -473,7 +473,7 @@
 
   .progress-bar {
     height: 6px;
-    background: #2d2d42;
+    background: #1e2a44;
     border-radius: 3px;
     margin-bottom: 15px;
     overflow: hidden;
@@ -481,7 +481,7 @@
 
   .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #6366f1, #3b82f6);
+    background: linear-gradient(90deg, #38bdf8, #0ea5e9);
     border-radius: 3px;
     transition: width 0.5s ease;
     width: 25%;
@@ -502,20 +502,20 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: #2d2d42;
+    background: #1e2a44;
     z-index: 1;
   }
 
   .step {
     position: relative;
     z-index: 2;
-    background: #1a1a2e;
+    background: #152238;
     padding: 8px 12px;
     border-radius: 20px;
-    color: #888;
+    color: #88a0c7;
     font-weight: 500;
     transition: all 0.3s ease;
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.2);
     font-size: 0.85rem;
     flex: 1;
     text-align: center;
@@ -526,16 +526,16 @@
   }
 
   .step.active {
-    background: #6366f1;
-    color: white;
+    background: #38bdf8;
+    color: #0a0f1c;
   }
 
   /* Setup Steps */
   .setup-content {
-    background: #1a1a2e;
+    background: #152238;
     border-radius: 15px;
     padding: 20px;
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.2);
   }
 
   .setup-step {
@@ -555,14 +555,14 @@
   .setup-title {
     font-size: 1.8rem;
     margin-bottom: 10px;
-    background: linear-gradient(135deg, #6366f1, #3b82f6);
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     line-height: 1.2;
   }
 
   .setup-subtitle {
-    color: #ccc;
+    color: #88a0c7;
     font-size: 1rem;
     line-height: 1.4;
   }
@@ -585,7 +585,7 @@
     gap: 8px;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #e0e0e0;
+    color: #cbd5e1;
     font-size: 0.95rem;
   }
 
@@ -601,33 +601,33 @@
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background: #2d2d42;
-    color: white;
+    background: #1e2a44;
+    color: #e2e8f0;
     padding: 8px 12px;
     border-radius: 6px;
     font-size: 12px;
     white-space: nowrap;
     z-index: 1000;
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.2);
   }
 
   .form-input {
     width: 100%;
     padding: 14px 16px;
-    background: #2d2d42;
-    border: 2px solid #555;
+    background: #1e2a44;
+    border: 2px solid #334155;
     border-radius: 10px;
-    color: white;
-    font-size: 16px; /* Prevents zoom on iOS */
+    color: #e2e8f0;
+    font-size: 16px;
     transition: all 0.3s ease;
     box-sizing: border-box;
-    -webkit-appearance: none; /* Remove default styling on iOS */
+    -webkit-appearance: none;
   }
 
   .form-input:focus {
-    border-color: #6366f1;
+    border-color: #38bdf8;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
   }
 
   .input-feedback {
@@ -639,7 +639,7 @@
   .char-counter {
     text-align: right;
     font-size: 12px;
-    color: #888;
+    color: #88a0c7;
     margin-top: 5px;
   }
 
@@ -652,16 +652,16 @@
   }
 
   .avatar-option {
-    background: #2d2d42;
-    border: 2px solid #555;
+    background: #1e2a44;
+    border: 2px solid #334155;
     border-radius: 12px;
     padding: 20px;
     transition: all 0.3s ease;
   }
 
   .avatar-option.active {
-    border-color: #6366f1;
-    background: rgba(99, 102, 241, 0.05);
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.05);
   }
 
   .option-header {
@@ -672,8 +672,8 @@
   }
 
   .badge {
-    background: #06d6a0;
-    color: white;
+    background: #0ea5e9;
+    color: #0a0f1c;
     padding: 4px 8px;
     border-radius: 12px;
     font-size: 12px;
@@ -692,8 +692,8 @@
     margin: 0 auto 15px;
     border-radius: 50%;
     overflow: hidden;
-    border: 4px solid #6366f1;
-    background: #0a0a0f;
+    border: 4px solid #38bdf8;
+    background: #0a0f1c;
   }
 
   .avatar-preview canvas {
@@ -708,11 +708,11 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #3b82f6);
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: #0a0f1c;
     font-size: 3em;
     font-weight: bold;
     text-transform: uppercase;
@@ -736,37 +736,37 @@
   }
 
   .control-group label {
-    color: #e0e0e0;
+    color: #cbd5e1;
     font-weight: 500;
     font-size: 0.9rem;
   }
 
   .upload-area {
-    border: 2px dashed #555;
+    border: 2px dashed #334155;
     border-radius: 10px;
     padding: 30px 15px;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
     margin-bottom: 15px;
-    background: #2d2d42;
+    background: #1e2a44;
   }
 
   .upload-area:hover {
-    border-color: #6366f1;
-    background: rgba(99, 102, 241, 0.05);
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.05);
   }
 
   .upload-area i {
     font-size: 36px;
-    color: #6366f1;
+    color: #38bdf8;
     margin-bottom: 10px;
   }
 
   .ai-suggestion {
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px solid #555;
+    border-top: 1px solid #334155;
   }
 
   .suggestion-grid {
@@ -781,14 +781,14 @@
     border-radius: 8px;
     overflow: hidden;
     transition: transform 0.3s ease;
-    background: #2d2d42;
+    background: #1e2a44;
     padding: 8px;
     text-align: center;
   }
 
   .suggestion-item:hover {
     transform: scale(1.05);
-    border: 1px solid #6366f1;
+    border: 1px solid #38bdf8;
   }
 
   /* Interests Section - Mobile Optimized */
@@ -796,7 +796,7 @@
     text-align: center;
     margin: 12px 0;
     font-size: 1rem;
-    color: #6366f1;
+    color: #38bdf8;
     font-weight: bold;
   }
 
@@ -804,15 +804,15 @@
   .trending-interests {
     margin-bottom: 20px;
     padding: 15px;
-    background: #2d2d42;
+    background: #1e2a44;
     border-radius: 10px;
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.2);
   }
 
   .smart-suggestions h4,
   .trending-interests h4 {
     margin-bottom: 12px;
-    color: #6366f1;
+    color: #38bdf8;
     font-size: 1.1rem;
   }
 
@@ -824,10 +824,10 @@
   }
 
   .interests-grid-container {
-    background: #2d2d42;
+    background: #1e2a44;
     border-radius: 10px;
     padding: 15px;
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.2);
   }
 
   .search-box {
@@ -840,16 +840,16 @@
     left: 15px;
     top: 50%;
     transform: translateY(-50%);
-    color: #888;
+    color: #88a0c7;
   }
 
   .search-box input {
     width: 100%;
     padding: 12px 12px 12px 45px;
-    background: #1a1a2e;
-    border: 2px solid #555;
+    background: #152238;
+    border: 2px solid #334155;
     border-radius: 8px;
-    color: white;
+    color: #e2e8f0;
     font-size: 16px;
     box-sizing: border-box;
   }
@@ -861,7 +861,7 @@
     max-height: 300px;
     overflow-y: auto;
     padding: 10px;
-    background: #1a1a2e;
+    background: #152238;
     border-radius: 8px;
   }
 
@@ -876,23 +876,23 @@
   .interest-tag {
     display: block;
     padding: 12px 15px;
-    background: #1a1a2e;
-    border: 2px solid #555;
+    background: #152238;
+    border: 2px solid #334155;
     border-radius: 25px;
     text-align: center;
     transition: all 0.3s ease;
-    color: #ccc;
+    color: #88a0c7;
     font-size: 0.9rem;
-    min-height: 44px; /* Minimum touch target size */
+    min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .interest-checkbox input:checked + .interest-tag {
-    background: #6366f1;
-    border-color: #6366f1;
-    color: white;
+    background: #38bdf8;
+    border-color: #38bdf8;
+    color: #0a0f1c;
     transform: scale(1.05);
   }
 
@@ -904,10 +904,10 @@
   }
 
   .profile-preview {
-    background: #2d2d42;
+    background: #1e2a44;
     border-radius: 12px;
     padding: 20px;
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.2);
   }
 
   .preview-header {
@@ -930,22 +930,22 @@
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid #6366f1;
+    border: 3px solid #38bdf8;
   }
 
   .preview-info h3 {
     margin: 0 0 5px 0;
-    color: #e0e0e0;
+    color: #e2e8f0;
     font-size: 1.3rem;
   }
 
   .preview-username {
-    color: #6366f1;
+    color: #38bdf8;
     margin: 0 0 8px 0;
   }
 
   .preview-bio {
-    color: #ccc;
+    color: #88a0c7;
     margin: 10px 0;
     line-height: 1.5;
     font-size: 0.95rem;
@@ -968,16 +968,16 @@
   .compatibility-preview {
     text-align: center;
     padding: 15px;
-    background: #1a1a2e;
+    background: #152238;
     border-radius: 10px;
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.2);
   }
 
   .score-circle {
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: conic-gradient(#6366f1 0% 85%, #2d2d42 85% 100%);
+    background: conic-gradient(#38bdf8 0% 85%, #1e2a44 85% 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -990,7 +990,7 @@
     position: absolute;
     width: 64px;
     height: 64px;
-    background: #2d2d42;
+    background: #1e2a44;
     border-radius: 50%;
   }
 
@@ -998,21 +998,21 @@
     position: relative;
     z-index: 1;
     font-weight: bold;
-    color: white;
+    color: #e2e8f0;
     font-size: 1rem;
   }
 
   .setup-complete {
     text-align: center;
     padding: 30px 15px;
-    background: linear-gradient(135deg, #1a1a2e, #0a0a0f);
+    background: linear-gradient(135deg, #152238, #0a0f1c);
     border-radius: 12px;
-    border: 2px solid #06d6a0;
+    border: 2px solid #0ea5e9;
   }
 
   .completion-animation i {
     font-size: 48px;
-    color: #06d6a0;
+    color: #0ea5e9;
     margin-bottom: 15px;
     animation: bounce 1s ease infinite;
   }
@@ -1024,7 +1024,7 @@
     gap: 12px;
     margin-top: 30px;
     padding-top: 20px;
-    border-top: 1px solid rgba(99, 102, 241, 0.2);
+    border-top: 1px solid rgba(56, 189, 248, 0.2);
   }
 
   /* Button Styles - Mobile Optimized */
@@ -1041,43 +1041,58 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    min-height: 50px; /* Minimum touch target size */
+    min-height: 50px;
     text-align: center;
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, #6366f1, #3b82f6);
-    color: white;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    color: #0a0f1c;
   }
 
   .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
   }
 
   .btn-secondary {
-    background: #2d2d42;
-    color: #e0e0e0;
-    border: 2px solid #555;
+    background: #1e2a44;
+    color: #cbd5e1;
+    border: 2px solid #334155;
   }
 
   .btn-secondary:hover {
-    border-color: #6366f1;
-    color: white;
+    border-color: #38bdf8;
+    color: #e2e8f0;
   }
 
-  /* Guided Tour */
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 15, 28, 0.95);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
   .tour-modal {
     max-width: 90%;
-    background: #1a1a2e;
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    background: #152238;
+    border: 1px solid rgba(56, 189, 248, 0.2);
     border-radius: 15px;
+    padding: 0;
+    overflow: hidden;
   }
 
   .tour-step {
     display: none;
     text-align: center;
-    padding: 25px 20px;
+    padding: 30px 25px;
   }
 
   .tour-step.active {
@@ -1085,11 +1100,26 @@
     animation: fadeIn 0.5s ease;
   }
 
+  .tour-step h3 {
+    color: #38bdf8;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+  }
+
+  .tour-step p {
+    color: #88a0c7;
+    line-height: 1.6;
+    margin-bottom: 25px;
+  }
+
   .tour-actions {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     justify-content: center;
-    margin-top: 20px;
+  }
+
+  .tour-actions button {
+    min-width: 100px;
   }
 
   /* Animations */
@@ -1202,6 +1232,10 @@
     .tour-modal {
       max-width: 500px;
     }
+
+    .tour-step {
+      padding: 40px 35px;
+    }
   }
 
   @media (min-width: 1024px) {
@@ -1239,69 +1273,86 @@
 </style>
 
 <script>
-  // Mobile-optimized JavaScript
-  document.addEventListener("DOMContentLoaded", function () {
-    // Initialize the setup
-    generateAvatar();
-    updateProgressBar();
-    loadTrendingInterests();
-    startGuidedTour();
-    setupMobileOptimizations();
+  // Current step tracking
+  let currentStep = 1;
+  const totalSteps = 4;
+  let currentTourStep = 1;
 
-    // Add form submission handler
-    setupFormSubmission();
+  // Initialize the setup
+  document.addEventListener("DOMContentLoaded", function () {
+    // Show guided tour immediately
+    document.getElementById("guidedTour").style.display = "flex";
+    
+    // Initialize the main setup (but keep it hidden until tour completes)
+    initializeSetup();
   });
 
-  // Setup mobile-specific optimizations
-  function setupMobileOptimizations() {
-    // Prevent zoom on input focus for iOS
-    document.querySelectorAll("input, select, textarea").forEach((el) => {
-      el.addEventListener("focus", function () {
-        this.style.fontSize = "16px";
-      });
+  function initializeSetup() {
+    // Generate initial avatar
+    generateAvatar();
+
+    // Load trending interests
+    loadTrendingInterests();
+
+    // Initialize character counter
+    const bioTextarea = document.getElementById("bio");
+    const charCount = document.getElementById("charCount");
+    bioTextarea.addEventListener("input", function () {
+      charCount.textContent = this.value.length;
     });
 
-    // Handle touch events for better mobile interaction
-    document.querySelectorAll(".interest-tag").forEach((tag) => {
-      tag.addEventListener("touchstart", function () {
-        this.style.transform = "scale(0.95)";
-      });
-
-      tag.addEventListener("touchend", function () {
-        this.style.transform = "";
-      });
-    });
-
-    // Adjust layout for mobile orientation changes
-    window.addEventListener("orientationchange", function () {
-      setTimeout(() => {
-        updateProgressBar();
-      }, 300);
-    });
+    // Initialize interest search
+    const interestSearch = document.getElementById("interestSearch");
+    interestSearch.addEventListener("input", filterInterests);
   }
 
-  // Setup form submission
-  function setupFormSubmission() {
-    const form = document.getElementById("profileForm");
-    const submitBtn = form.querySelector(".btn-complete");
+  // Guided Tour Functions
+  function nextTourStep() {
+    document.getElementById(`tourStep${currentTourStep}`).classList.remove("active");
+    currentTourStep++;
+    document.getElementById(`tourStep${currentTourStep}`).classList.add("active");
+  }
 
-    submitBtn.addEventListener("click", function (e) {
-      e.preventDefault();
-      handleFormSubmission();
-    });
+  function prevTourStep() {
+    document.getElementById(`tourStep${currentTourStep}`).classList.remove("active");
+    currentTourStep--;
+    document.getElementById(`tourStep${currentTourStep}`).classList.add("active");
+  }
+
+  function completeTour() {
+    // Hide the tour modal
+    document.getElementById("guidedTour").style.display = "none";
+    
+    // Show the main setup content with animation
+    const mainContent = document.getElementById("mainSetupContent");
+    mainContent.style.display = "block";
+    mainContent.style.animation = "fadeIn 0.5s ease";
+    
+    // Mark tour as completed
+    localStorage.setItem("profileSetupTourCompleted", "true");
+  }
+
+  function skipTour() {
+    // Hide the tour modal
+    document.getElementById("guidedTour").style.display = "none";
+    
+    // Show the main setup content immediately
+    document.getElementById("mainSetupContent").style.display = "block";
+    
+    // Mark tour as completed
+    localStorage.setItem("profileSetupTourCompleted", "true");
   }
 
   // Step Navigation
-  let currentStep = 1;
-  const totalSteps = 4;
-
   function nextStep() {
     if (currentStep < totalSteps) {
-      document.getElementById(`step${currentStep}`).classList.remove("active");
-      currentStep++;
-      document.getElementById(`step${currentStep}`).classList.add("active");
-      updateProgressBar();
-      updatePreview();
+      // Validate current step before proceeding
+      if (validateStep(currentStep)) {
+        document.getElementById(`step${currentStep}`).classList.remove("active");
+        currentStep++;
+        document.getElementById(`step${currentStep}`).classList.add("active");
+        updateProgressBar();
+      }
     }
   }
 
@@ -1315,8 +1366,9 @@
   }
 
   function updateProgressBar() {
-    const progress = (currentStep / totalSteps) * 100;
-    document.getElementById("progressFill").style.width = `${progress}%`;
+    const progressFill = document.getElementById("progressFill");
+    const progressPercentage = (currentStep / totalSteps) * 100;
+    progressFill.style.width = `${progressPercentage}%`;
 
     // Update step indicators
     document.querySelectorAll(".step").forEach((step, index) => {
@@ -1328,15 +1380,91 @@
     });
   }
 
+  // Step Validation
+  function validateStep(step) {
+    switch (step) {
+      case 1:
+        return validateBasicInfo();
+      case 2:
+        return validateAvatar();
+      case 3:
+        return validateInterests();
+      default:
+        return true;
+    }
+  }
+
+  function validateBasicInfo() {
+    const displayName = document.getElementById("display_name").value.trim();
+    const username = document.getElementById("username").value.trim();
+
+    if (!displayName) {
+      showFeedback("nameFeedback", "Please enter a display name", "error");
+      return false;
+    }
+
+    if (!username) {
+      showFeedback("usernameFeedback", "Please enter a username", "error");
+      return false;
+    }
+
+    return true;
+  }
+
+  function validateAvatar() {
+    // Avatar validation logic
+    return true;
+  }
+
+  function validateInterests() {
+    const selectedInterests = document.querySelectorAll(
+      'input[name="interests"]:checked'
+    ).length;
+    const continueButton = document.getElementById("continueToPreview");
+
+    if (selectedInterests >= 3) {
+      continueButton.disabled = false;
+      return true;
+    } else {
+      continueButton.disabled = true;
+      return false;
+    }
+  }
+
+  // Username Availability Check
+  function checkUsernameAvailability() {
+    const username = document.getElementById("username").value.trim();
+    const feedback = document.getElementById("usernameFeedback");
+
+    if (username.length < 3) {
+      showFeedback(
+        "usernameFeedback",
+        "Username must be at least 3 characters",
+        "error"
+      );
+      return;
+    }
+
+    // Simulate API call
+    setTimeout(() => {
+      const available = Math.random() > 0.3; // 70% chance of being available
+      if (available) {
+        showFeedback("usernameFeedback", "Username is available!", "success");
+      } else {
+        showFeedback(
+          "usernameFeedback",
+          "Username is already taken",
+          "error"
+        );
+      }
+    }, 500);
+  }
+
   // Avatar Generation
   function generateAvatar() {
     const style = document.getElementById("avatarStyle").value;
     const bgColor = document.getElementById("avatarBgColor").value;
     const mood = document.getElementById("avatarMood").value;
-
-    // Show the canvas and hide initials fallback
-    document.getElementById("avatarCanvas").style.display = "block";
-    document.getElementById("avatarInitialsFallback").style.display = "none";
 
     const canvas = document.getElementById("avatarCanvas");
     const ctx = canvas.getContext("2d");
@@ -1346,860 +1474,320 @@
 
     // Draw background
     ctx.fillStyle = bgColor;
-    ctx.beginPath();
-    ctx.arc(
-      canvas.width / 2,
-      canvas.height / 2,
-      canvas.width / 2,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Generate avatar based on style and mood
-    generateAvatarArt(ctx, canvas, style, mood);
+    // Simple avatar generation based on style
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 2;
+
+    switch (style) {
+      case "adventurer":
+        drawAdventurerAvatar(ctx, mood);
+        break;
+      case "pixel":
+        drawPixelAvatar(ctx, mood);
+        break;
+      case "bottts":
+        drawRobotAvatar(ctx, mood);
+        break;
+      case "identicon":
+        drawAbstractAvatar(ctx, mood);
+        break;
+      case "avataaars":
+        drawCartoonAvatar(ctx, mood);
+        break;
+    }
 
     // Update preview
     updatePreview();
   }
 
-  function generateAvatarArt(ctx, canvas, style, mood) {
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = canvas.width / 2;
+  function drawAdventurerAvatar(ctx, mood) {
+    // Simple adventurer avatar
+    ctx.fillStyle = "#8B4513"; // Brown hair
+    ctx.fillRect(50, 30, 100, 80);
 
-    ctx.fillStyle = "#ffffff";
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2;
+    ctx.fillStyle = "#FFE0BD"; // Skin
+    ctx.fillRect(60, 50, 80, 60);
 
-    switch (style) {
-      case "adventurer":
-        drawAdventurerAvatar(ctx, centerX, centerY, radius, mood);
-        break;
-      case "pixel":
-        drawPixelAvatar(ctx, centerX, centerY, radius, mood);
-        break;
-      case "bottts":
-        drawRobotAvatar(ctx, centerX, centerY, radius, mood);
-        break;
-      case "identicon":
-        drawAbstractAvatar(ctx, centerX, centerY, radius, mood);
-        break;
-      case "avataaars":
-        drawCartoonAvatar(ctx, centerX, centerY, radius, mood);
-        break;
-      default:
-        drawDefaultAvatar(ctx, centerX, centerY, radius, mood);
-    }
-  }
-
-  function drawAdventurerAvatar(ctx, centerX, centerY, radius, mood) {
-    // Face
-    ctx.fillStyle = "#ffdbac";
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius * 0.8, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Eyes
-    ctx.fillStyle = "#2c3e50";
-    const eyeY = centerY - radius * 0.1;
-    const eyeSpacing = radius * 0.3;
-
-    // Adjust eyes based on mood
-    let eyeSize = radius * 0.1;
+    // Eyes based on mood
+    ctx.fillStyle = "#000000";
     if (mood === "happy") {
-      // Smiling eyes
-      ctx.beginPath();
-      ctx.arc(centerX - eyeSpacing, eyeY, eyeSize, 0, Math.PI, true);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(centerX + eyeSpacing, eyeY, eyeSize, 0, Math.PI, true);
-      ctx.stroke();
+      ctx.fillRect(75, 70, 10, 5); // Happy eyes
+      ctx.fillRect(115, 70, 10, 5);
+    } else if (mood === "serious") {
+      ctx.fillRect(75, 70, 10, 10); // Serious eyes
+      ctx.fillRect(115, 70, 10, 10);
     } else {
-      // Normal eyes
-      ctx.beginPath();
-      ctx.arc(centerX - eyeSpacing, eyeY, eyeSize, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(centerX + eyeSpacing, eyeY, eyeSize, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillRect(75, 70, 10, 10); // Normal eyes
+      ctx.fillRect(115, 70, 10, 10);
     }
 
     // Mouth based on mood
-    ctx.strokeStyle = "#2c3e50";
-    ctx.lineWidth = 2;
-    const mouthY = centerY + radius * 0.2;
-
-    switch (mood) {
-      case "happy":
-        // Smile
-        ctx.beginPath();
-        ctx.arc(centerX, mouthY, radius * 0.3, 0, Math.PI, false);
-        ctx.stroke();
-        break;
-      case "serious":
-        // Straight line
-        ctx.beginPath();
-        ctx.moveTo(centerX - radius * 0.2, mouthY);
-        ctx.lineTo(centerX + radius * 0.2, mouthY);
-        ctx.stroke();
-        break;
-      case "fun":
-        // Winky face
-        ctx.beginPath();
-        ctx.arc(centerX - eyeSpacing, eyeY, eyeSize, 0, Math.PI * 2);
-        ctx.fill();
-        // Winking eye
-        ctx.beginPath();
-        ctx.moveTo(centerX + eyeSpacing - eyeSize, eyeY);
-        ctx.lineTo(centerX + eyeSpacing + eyeSize, eyeY);
-        ctx.stroke();
-        // Smile
-        ctx.beginPath();
-        ctx.arc(centerX, mouthY, radius * 0.3, 0, Math.PI, false);
-        ctx.stroke();
-        break;
-      default: // neutral
-        // Small neutral mouth
-        ctx.beginPath();
-        ctx.arc(centerX, mouthY, radius * 0.15, 0, Math.PI, false);
-        ctx.stroke();
+    if (mood === "happy") {
+      ctx.beginPath();
+      ctx.arc(100, 90, 15, 0, Math.PI);
+      ctx.stroke();
+    } else if (mood === "serious") {
+      ctx.fillRect(90, 90, 20, 2);
+    } else {
+      ctx.fillRect(90, 90, 20, 5);
     }
   }
 
-  function drawPixelAvatar(ctx, centerX, centerY, radius, mood) {
-    const pixelSize = radius * 0.2;
+  function drawPixelAvatar(ctx, mood) {
+    // Simple pixel art avatar
+    const pixelSize = 10;
+    ctx.fillStyle = "#FF6B6B";
 
     // Face
-    ctx.fillStyle = "#ffdbac";
-    for (let i = -2; i <= 2; i++) {
-      for (let j = -2; j <= 2; j++) {
-        if (Math.abs(i) <= 2 && Math.abs(j) <= 2) {
-          ctx.fillRect(
-            centerX + i * pixelSize - pixelSize / 2,
-            centerY + j * pixelSize - pixelSize / 2,
-            pixelSize,
-            pixelSize
-          );
+    for (let i = 0; i < 8; i++) {
+      for (let j = 0; j < 8; j++) {
+        if ((i > 1 && i < 6 && j > 1 && j < 6) || (i === 1 && j === 3)) {
+          ctx.fillRect(60 + i * pixelSize, 40 + j * pixelSize, pixelSize, pixelSize);
         }
       }
     }
+  }
 
-    // Eyes
-    ctx.fillStyle = "#2c3e50";
-    ctx.fillRect(
-      centerX - pixelSize * 1.5,
-      centerY - pixelSize,
-      pixelSize,
-      pixelSize
-    );
-    ctx.fillRect(
-      centerX + pixelSize * 0.5,
-      centerY - pixelSize,
-      pixelSize,
-      pixelSize
-    );
+  function drawRobotAvatar(ctx, mood) {
+    // Simple robot avatar
+    ctx.fillStyle = "#666666";
+    ctx.fillRect(50, 40, 100, 80);
+
+    ctx.fillStyle = "#00FF00"; // Green eyes
+    ctx.fillRect(70, 60, 20, 20);
+    ctx.fillRect(110, 60, 20, 20);
 
     // Mouth
-    ctx.fillStyle = "#2c3e50";
-    if (mood === "happy") {
-      ctx.fillRect(
-        centerX - pixelSize,
-        centerY + pixelSize,
-        pixelSize,
-        pixelSize
-      );
-      ctx.fillRect(centerX, centerY + pixelSize * 1.5, pixelSize, pixelSize);
-      ctx.fillRect(
-        centerX + pixelSize,
-        centerY + pixelSize,
-        pixelSize,
-        pixelSize
-      );
-    } else {
-      ctx.fillRect(
-        centerX - pixelSize,
-        centerY + pixelSize,
-        pixelSize * 3,
-        pixelSize
-      );
-    }
+    ctx.fillStyle = "#FF0000";
+    ctx.fillRect(80, 90, 40, 5);
   }
 
-  function drawRobotAvatar(ctx, centerX, centerY, radius, mood) {
-    // Head
-    ctx.fillStyle = "#95a5a6";
-    ctx.fillRect(
-      centerX - radius * 0.6,
-      centerY - radius * 0.6,
-      radius * 1.2,
-      radius * 1.2
-    );
+  function drawAbstractAvatar(ctx, mood) {
+    // Abstract geometric avatar
+    ctx.fillStyle = "#FFD700";
+    ctx.beginPath();
+    ctx.arc(100, 80, 40, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#FF4500";
+    ctx.beginPath();
+    ctx.moveTo(100, 40);
+    ctx.lineTo(140, 120);
+    ctx.lineTo(60, 120);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawCartoonAvatar(ctx, mood) {
+    // Simple cartoon avatar
+    ctx.fillStyle = "#87CEEB"; // Blue face
+    ctx.beginPath();
+    ctx.arc(100, 80, 40, 0, Math.PI * 2);
+    ctx.fill();
 
     // Eyes
-    ctx.fillStyle = "#e74c3c";
-    const eyeSize = radius * 0.15;
-    ctx.fillRect(
-      centerX - radius * 0.3,
-      centerY - radius * 0.1,
-      eyeSize,
-      eyeSize
-    );
-    ctx.fillRect(
-      centerX + radius * 0.15,
-      centerY - radius * 0.1,
-      eyeSize,
-      eyeSize
-    );
-
-    // Mouth - antenna for fun mood
-    if (mood === "fun") {
-      ctx.fillStyle = "#e74c3c";
-      ctx.fillRect(
-        centerX - radius * 0.05,
-        centerY,
-        radius * 0.1,
-        radius * 0.3
-      );
-      // Antenna ball
-      ctx.beginPath();
-      ctx.arc(centerX, centerY - radius * 0.8, radius * 0.1, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      ctx.fillStyle = "#34495e";
-      ctx.fillRect(
-        centerX - radius * 0.2,
-        centerY + radius * 0.2,
-        radius * 0.4,
-        radius * 0.1
-      );
-    }
-  }
-
-  function drawAbstractAvatar(ctx, centerX, centerY, radius, mood) {
-    // Abstract geometric pattern
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 3;
-
-    const shapes = Math.random() > 0.5 ? 4 : 6;
-    const angleStep = (Math.PI * 2) / shapes;
-
-    for (let i = 0; i < shapes; i++) {
-      const angle = i * angleStep;
-      const x1 = centerX + Math.cos(angle) * radius * 0.3;
-      const y1 = centerY + Math.sin(angle) * radius * 0.3;
-      const x2 = centerX + Math.cos(angle) * radius * 0.7;
-      const y2 = centerY + Math.sin(angle) * radius * 0.7;
-
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-
-      // Add circles at endpoints for some moods
-      if (mood === "happy" || mood === "fun") {
-        ctx.beginPath();
-        ctx.arc(x2, y2, radius * 0.1, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-  }
-
-  function drawCartoonAvatar(ctx, centerX, centerY, radius, mood) {
-    // Simple cartoon face
-    ctx.fillStyle = "#ffdbac";
+    ctx.fillStyle = "#FFFFFF";
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radius * 0.8, 0, Math.PI * 2);
+    ctx.arc(85, 70, 8, 0, Math.PI * 2);
+    ctx.arc(115, 70, 8, 0, Math.PI * 2);
     ctx.fill();
 
-    // Big cartoon eyes
-    ctx.fillStyle = "white";
+    ctx.fillStyle = "#000000";
     ctx.beginPath();
-    ctx.arc(
-      centerX - radius * 0.25,
-      centerY - radius * 0.1,
-      radius * 0.15,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(
-      centerX + radius * 0.25,
-      centerY - radius * 0.1,
-      radius * 0.15,
-      0,
-      Math.PI * 2
-    );
+    ctx.arc(85, 70, 4, 0, Math.PI * 2);
+    ctx.arc(115, 70, 4, 0, Math.PI * 2);
     ctx.fill();
 
-    // Pupils
-    ctx.fillStyle = "#2c3e50";
+    // Mouth
+    ctx.strokeStyle = "#000000";
     ctx.beginPath();
-    ctx.arc(
-      centerX - radius * 0.25,
-      centerY - radius * 0.1,
-      radius * 0.07,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(
-      centerX + radius * 0.25,
-      centerY - radius * 0.1,
-      radius * 0.07,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-
-    // Mouth based on mood
-    ctx.strokeStyle = "#e74c3c";
-    ctx.lineWidth = 3;
-    const mouthY = centerY + radius * 0.3;
-
-    if (mood === "happy") {
-      ctx.beginPath();
-      ctx.arc(centerX, mouthY, radius * 0.2, 0.1, Math.PI - 0.1, false);
-      ctx.stroke();
-    } else if (mood === "serious") {
-      ctx.beginPath();
-      ctx.moveTo(centerX - radius * 0.15, mouthY);
-      ctx.lineTo(centerX + radius * 0.15, mouthY);
-      ctx.stroke();
-    } else {
-      ctx.beginPath();
-      ctx.arc(centerX, mouthY, radius * 0.15, 0, Math.PI, false);
-      ctx.stroke();
-    }
-  }
-
-  function drawDefaultAvatar(ctx, centerX, centerY, radius, mood) {
-    // Simple fallback avatar
-    ctx.fillStyle = "#3498db";
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius * 0.7, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "white";
-    ctx.font = "bold 24px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("AI", centerX, centerY);
+    ctx.arc(100, 90, 15, 0.1 * Math.PI, 0.9 * Math.PI);
+    ctx.stroke();
   }
 
   function useInitialsAvatar() {
-    // Hide canvas and show initials fallback
     document.getElementById("avatarCanvas").style.display = "none";
     document.getElementById("avatarInitialsFallback").style.display = "flex";
-
-    // Get display name for initials
-    const displayName = document.getElementById("display_name").value || "User";
-    const initials = displayName
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
-
+    
+    const displayName = document.getElementById("display_name").value.trim();
+    const initials = displayName ? displayName.charAt(0).toUpperCase() : "U";
     document.getElementById("avatarInitials").textContent = initials;
+    
     updatePreview();
   }
 
   // Interests Management
   function updateInterestsCount() {
-    const selectedInterests = document.querySelectorAll(
+    const selectedCount = document.querySelectorAll(
       'input[name="interests"]:checked'
     ).length;
-    document.getElementById("selectedCount").textContent = selectedInterests;
+    document.getElementById("selectedCount").textContent = selectedCount;
+    document.getElementById("previewInterestsCount").textContent = selectedCount;
 
+    // Update continue button state
     const continueButton = document.getElementById("continueToPreview");
-    continueButton.disabled = selectedInterests < 3;
+    continueButton.disabled = selectedCount < 3;
 
+    // Update preview
     updatePreview();
   }
 
+  function filterInterests() {
+    const searchTerm = document
+      .getElementById("interestSearch")
+      .value.toLowerCase();
+    const interests = document.querySelectorAll(".interest-checkbox");
+
+    interests.forEach((interest) => {
+      const interestText = interest
+        .querySelector(".interest-tag")
+        .textContent.toLowerCase();
+      if (interestText.includes(searchTerm)) {
+        interest.style.display = "block";
+      } else {
+        interest.style.display = "none";
+      }
+    });
+  }
+
   function loadTrendingInterests() {
-    // In a real app, this would fetch trending interests from an API
+    const trendingTags = document.getElementById("trendingTags");
     const trendingInterests = [
       "AI",
-      "Web3",
-      "Crypto",
-      "VR",
-      "Gaming",
+      "Blockchain",
+      "VR/AR",
+      "Cryptocurrency",
+      "Digital Art",
+      "Podcasts",
       "Startups",
-      "Programming",
-      "Design",
     ];
 
-    const trendingTagsContainer = document.getElementById("trendingTags");
-    trendingTagsContainer.innerHTML = "";
-
+    trendingTags.innerHTML = "";
     trendingInterests.forEach((interest) => {
       const tag = document.createElement("span");
       tag.className = "interest-tag";
       tag.textContent = interest;
       tag.style.cursor = "pointer";
       tag.onclick = function () {
-        // Find and check the corresponding checkbox
-        const checkbox = document.querySelector(`input[value="${interest}"]`);
+        const checkbox = document.querySelector(
+          `input[value="${interest}"]`
+        );
         if (checkbox) {
           checkbox.checked = true;
           updateInterestsCount();
         }
       };
-      trendingTagsContainer.appendChild(tag);
+      trendingTags.appendChild(tag);
     });
   }
 
-  // Preview Updates
+  // Preview Update
   function updatePreview() {
     // Update name and username
-    const displayName =
-      document.getElementById("display_name").value || "Display Name";
-    const username = document.getElementById("username").value || "username";
-    document.getElementById("previewName").textContent = displayName;
-    document.getElementById("previewUsername").textContent = `@${username}`;
-
-    // Update bio
-    const bio =
-      document.getElementById("bio").value || "Bio will appear here...";
-    document.getElementById("previewBio").textContent = bio;
-
-    // Update age
+    const displayName = document.getElementById("display_name").value.trim();
+    const username = document.getElementById("username").value.trim();
+    const bio = document.getElementById("bio").value.trim();
     const age = document.getElementById("age").value;
+    const gender = document.getElementById("gender").value;
+
+    document.getElementById("previewName").textContent =
+      displayName || "Display Name";
+    document.getElementById("previewUsername").textContent =
+      username ? `@${username}` : "@username";
+    document.getElementById("previewBio").textContent =
+      bio || "Bio will appear here...";
     document.getElementById("previewAge").textContent = age || "--";
 
-    // Update interests count
-    const selectedInterests = document.querySelectorAll(
-      'input[name="interests"]:checked'
-    ).length;
-    document.getElementById("previewInterestsCount").textContent =
-      selectedInterests;
-
     // Update avatar preview
-    const avatarCanvas = document.getElementById("avatarCanvas");
-    const avatarInitials = document.getElementById("avatarInitialsFallback");
-
-    if (avatarCanvas.style.display !== "none") {
-      // Using AI avatar - convert canvas to image for preview
-      const canvas = document.getElementById("avatarCanvas");
-      const dataURL = canvas.toDataURL();
-      const previewAvatar = document.getElementById("previewAvatar");
-
-      previewAvatar.src = dataURL;
-      previewAvatar.style.display = "block";
-      document.getElementById("previewAvatarInitials").style.display = "none";
-    } else {
-      // Using initials avatar
+    const canvas = document.getElementById("avatarCanvas");
+    const initialsFallback = document.getElementById("avatarInitialsFallback");
+    
+    if (canvas.style.display !== "none") {
       document.getElementById("previewAvatar").style.display = "none";
       document.getElementById("previewAvatarInitials").style.display = "flex";
-      document.getElementById("previewAvatarInitialsText").textContent =
-        document.getElementById("avatarInitials").textContent;
+      // In a real implementation, you would convert canvas to image
+    } else {
+      document.getElementById("previewAvatar").style.display = "none";
+      document.getElementById("previewAvatarInitials").style.display = "flex";
+      const initials = displayName ? displayName.charAt(0).toUpperCase() : "U";
+      document.getElementById("previewAvatarInitialsText").textContent = initials;
     }
 
-    // Update selected interests in preview
-    updatePreviewInterests();
-
-    // Update character count
-    const bioText = document.getElementById("bio").value;
-    document.getElementById("charCount").textContent = bioText.length;
-
-    // Update compatibility score based on profile completeness
-    updateCompatibilityScore();
-  }
-
-  function updatePreviewInterests() {
+    // Update interests preview
     const selectedInterests = Array.from(
       document.querySelectorAll('input[name="interests"]:checked')
-    ).map((checkbox) => checkbox.value);
+    ).map((input) => input.value);
 
-    const previewInterestsContainer =
-      document.getElementById("previewInterests");
-    previewInterestsContainer.innerHTML = "";
+    const previewInterests = document.getElementById("previewInterests");
+    previewInterests.innerHTML = "";
 
     selectedInterests.slice(0, 8).forEach((interest) => {
       const tag = document.createElement("span");
       tag.className = "interest-tag";
       tag.textContent = interest;
-      previewInterestsContainer.appendChild(tag);
+      previewInterests.appendChild(tag);
     });
 
     if (selectedInterests.length > 8) {
       const moreTag = document.createElement("span");
       moreTag.className = "interest-tag";
       moreTag.textContent = `+${selectedInterests.length - 8} more`;
-      previewInterestsContainer.appendChild(moreTag);
+      previewInterests.appendChild(moreTag);
     }
-  }
 
-  function updateCompatibilityScore() {
-    // Calculate a simple compatibility score based on profile completeness
-    let score = 50; // Base score
+    // Update compatibility score
+    const baseScore = 70;
+    const interestBonus = Math.min(selectedInterests.length * 3, 15);
+    const bioBonus = bio.length > 50 ? 10 : bio.length > 20 ? 5 : 0;
+    const totalScore = baseScore + interestBonus + bioBonus;
 
-    // Add points for filled fields
-    if (document.getElementById("display_name").value.length > 0) score += 10;
-    if (document.getElementById("username").value.length >= 3) score += 10;
-    if (document.getElementById("bio").value.length > 20) score += 10;
-    if (document.getElementById("age").value) score += 5;
+    document.getElementById("compatibilityScore").textContent = `${totalScore}%`;
 
-    // Add points for interests (max 15 points)
-    const interestCount = document.querySelectorAll(
-      'input[name="interests"]:checked'
-    ).length;
-    score += Math.min(interestCount * 5, 15);
-
-    // Ensure score doesn't exceed 100
-    score = Math.min(score, 100);
-
-    document.getElementById("compatibilityScore").textContent = `${score}%`;
-
-    // Update the score circle visual
     const scoreCircle = document.querySelector(".score-circle");
-    if (scoreCircle) {
-      scoreCircle.style.background = `conic-gradient(#6366f1 0% ${score}%, #2d2d42 ${score}% 100%)`;
-    }
+    scoreCircle.style.background = `conic-gradient(#38bdf8 0% ${totalScore}%, #1e2a44 ${totalScore}% 100%)`;
   }
 
-  // Username Availability Check
-  function checkUsernameAvailability() {
-    const username = document.getElementById("username").value;
-    const feedback = document.getElementById("usernameFeedback");
-
-    if (username.length < 3) {
-      feedback.textContent = "Username must be at least 3 characters";
-      feedback.style.color = "#f87171";
-      return;
-    }
-
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      feedback.textContent =
-        "Username can only contain letters, numbers, and underscores";
-      feedback.style.color = "#f87171";
-      return;
-    }
-
-    // Simulate API check
-    setTimeout(() => {
-      feedback.textContent = "✓ Username is available";
-      feedback.style.color = "#06d6a0";
-    }, 500);
-  }
-
-  // Guided Tour
-  let currentTourStep = 1;
-
-  function startGuidedTour() {
-    document.getElementById("guidedTour").style.display = "flex";
-  }
-
-  function nextTourStep() {
-    document
-      .getElementById(`tourStep${currentTourStep}`)
-      .classList.remove("active");
-    currentTourStep++;
-    document
-      .getElementById(`tourStep${currentTourStep}`)
-      .classList.add("active");
-  }
-
-  function prevTourStep() {
-    document
-      .getElementById(`tourStep${currentTourStep}`)
-      .classList.remove("active");
-    currentTourStep--;
-    document
-      .getElementById(`tourStep${currentTourStep}`)
-      .classList.add("active");
-  }
-
-  function skipTour() {
-    document.getElementById("guidedTour").style.display = "none";
-  }
-
-  function completeTour() {
-    document.getElementById("guidedTour").style.display = "none";
-  }
-
-  // File upload handling
+  // Form Submission
   document
-    .getElementById("photoUpload")
-    .addEventListener("change", function (e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          // Show AI suggestions when a photo is uploaded
-          document.getElementById("aiSuggestion").style.display = "block";
-          generateAISuggestions(e.target.result);
-        };
-        reader.readAsDataURL(file);
+    .getElementById("profileForm")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // Validate all steps
+      if (!validateStep(1) || !validateStep(2) || !validateStep(3)) {
+        alert("Please complete all required fields before submitting.");
+        return;
       }
-    });
 
-  function generateAISuggestions(photoData) {
-    // In a real implementation, this would call an AI service
-    // For demo, we'll generate some mock suggestions
-    const suggestionGrid = document.getElementById("suggestionGrid");
-    suggestionGrid.innerHTML = "";
+      // Show loading state
+      const submitButton = document.querySelector(".btn-complete");
+      const originalText = submitButton.innerHTML;
+      submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Setting up your profile...';
+      submitButton.disabled = true;
 
-    const styles = ["Cartoon", "Anime", "Pixel Art", "Cyberpunk", "Watercolor"];
-
-    styles.forEach((style) => {
-      const suggestionItem = document.createElement("div");
-      suggestionItem.className = "suggestion-item";
-      suggestionItem.innerHTML = `
-        <div style="width: 80px; height: 80px; background: #6366f1; border-radius: 8px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; text-align: center;">
-          ${style}
-        </div>
-        <span style="font-size: 12px;">${style}</span>
-      `;
-      suggestionItem.onclick = function () {
-        alert(`AI ${style} avatar would be generated here`);
-      };
-      suggestionGrid.appendChild(suggestionItem);
-    });
-  }
-
-  // Interest search functionality
-  document
-    .getElementById("interestSearch")
-    .addEventListener("input", function (e) {
-      const searchTerm = e.target.value.toLowerCase();
-      const interestTags = document.querySelectorAll(".interest-tag");
-
-      interestTags.forEach((tag) => {
-        const interestText = tag.textContent.toLowerCase();
-        const checkbox = tag.previousElementSibling;
-
-        if (interestText.includes(searchTerm)) {
-          tag.parentElement.style.display = "block";
-        } else {
-          tag.parentElement.style.display = "none";
-        }
-      });
-    });
-
-  // Form submission handler
-  function handleFormSubmission() {
-    // Validate minimum interests
-    const selectedInterests = document.querySelectorAll(
-      'input[name="interests"]:checked'
-    ).length;
-    if (selectedInterests < 3) {
-      alert(
-        "Please select at least 3 interests before completing your profile."
-      );
-      // Go back to interests step
-      document.getElementById(`step${currentStep}`).classList.remove("active");
-      currentStep = 3;
-      document.getElementById(`step${currentStep}`).classList.add("active");
-      updateProgressBar();
-      return;
-    }
-
-    // Show loading state
-    const submitBtn = document.querySelector(".btn-complete");
-    const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML =
-      '<i class="fas fa-spinner fa-spin"></i> Creating Profile...';
-    submitBtn.disabled = true;
-
-    // Collect form data
-    const formData = {
-      display_name: document.getElementById("display_name").value,
-      username: document.getElementById("username").value,
-      age: document.getElementById("age").value,
-      gender: document.getElementById("gender").value,
-      bio: document.getElementById("bio").value,
-      interests: Array.from(
-        document.querySelectorAll('input[name="interests"]:checked')
-      ).map((cb) => cb.value),
-      avatar_type:
-        document.getElementById("avatarCanvas").style.display !== "none"
-          ? "ai"
-          : "initials",
-      avatar_style: document.getElementById("avatarStyle").value,
-      avatar_bg_color: document.getElementById("avatarBgColor").value,
-      avatar_mood: document.getElementById("avatarMood").value,
-      avatar_initials: document.getElementById("avatarInitials").textContent,
-    };
-
-    console.log("Form data to be submitted:", formData);
-
-    // Simulate API call to save profile
-    setTimeout(() => {
-      showSuccessAnimation();
-
-      // Redirect to dashboard after success animation
+      // Simulate API call
       setTimeout(() => {
-        redirectToDashboard();
+        // Redirect to success page
+        window.location.href = "/success";
       }, 2000);
-    }, 1500);
+    });
+
+  // Utility Functions
+  function showFeedback(elementId, message, type) {
+    const element = document.getElementById(elementId);
+    element.textContent = message;
+    element.style.color = type === "error" ? "#ef4444" : "#10b981";
   }
 
-  function showSuccessAnimation() {
-    const completionSection = document.querySelector(".setup-complete");
-    if (!completionSection) return;
-
-    const completionIcon = completionSection.querySelector("i");
-
-    // Change to checkmark and animate
-    completionIcon.className = "fas fa-check-circle";
-    completionIcon.style.color = "#06d6a0";
-
-    // Add pulsing animation
-    completionSection.style.animation = "pulse 1s ease-in-out";
-
-    // Update text
-    const title = completionSection.querySelector("h3");
-    const subtitle = completionSection.querySelector("p");
-
-    if (title) title.textContent = "Profile Created Successfully!";
-    if (subtitle) subtitle.textContent = "Redirecting to your dashboard...";
-  }
-
-  function redirectToDashboard() {
-    // Option 1: Redirect to actual dashboard (uncomment below)
-    // window.location.href = '/dashboard';
-
-    // Option 2: Show success page (for demo)
-    showSuccessPage();
-  }
-
-  function showSuccessPage() {
-    const setupContainer = document.querySelector(".setup-container");
-    if (!setupContainer) return;
-
-    setupContainer.innerHTML = `
-      <div class="success-redirect">
-        <div class="success-animation">
-          <i class="fas fa-check-circle"></i>
-        </div>
-        <h2>Welcome to ShadowTalk! 🎉</h2>
-        <p>Your profile has been created successfully and you're all set to start chatting.</p>
-        <div class="redirect-message">
-          <p><strong>Next Steps:</strong></p>
-          <ul>
-            <li>Explore chat rooms</li>
-            <li>Find users with similar interests</li>
-            <li>Start conversations</li>
-            <li>Customize your settings</li>
-          </ul>
-        </div>
-        <div class="redirect-actions">
-          <button class="btn-primary" onclick="goToDashboard()">
-            Go to Dashboard <i class="fas fa-arrow-right"></i>
-          </button>
-          <button class="btn-secondary" onclick="editProfile()">
-            Edit Profile <i class="fas fa-edit"></i>
-          </button>
-        </div>
-      </div>
-    `;
-
-    // Add styles for success page
-    addSuccessPageStyles();
-  }
-
-  function addSuccessPageStyles() {
-    if (document.querySelector("#success-page-styles")) return;
-
-    const style = document.createElement("style");
-    style.id = "success-page-styles";
-    style.textContent = `
-      .success-redirect {
-        text-align: center;
-        padding: 40px 20px;
-        background: #1a1a2e;
-        border-radius: 15px;
-        border: 1px solid rgba(99, 102, 241, 0.2);
-        margin: 20px 0;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-      .success-animation i {
-        font-size: 80px;
-        color: #06d6a0;
-        margin-bottom: 20px;
-        animation: bounce 1s ease infinite;
-      }
-      .success-redirect h2 {
-        color: #6366f1;
-        margin-bottom: 15px;
-        font-size: 2rem;
-      }
-      .success-redirect p {
-        color: #ccc;
-        margin-bottom: 20px;
-        font-size: 1.1rem;
-        line-height: 1.5;
-      }
-      .redirect-message {
-        background: #2d2d42;
-        padding: 20px;
-        border-radius: 10px;
-        margin: 20px 0;
-        text-align: left;
-      }
-      .redirect-message p {
-        color: #e0e0e0;
-        font-weight: 600;
-        margin-bottom: 10px;
-      }
-      .redirect-message ul {
-        color: #ccc;
-        margin: 10px 0;
-        padding-left: 20px;
-      }
-      .redirect-message li {
-        margin: 8px 0;
-        line-height: 1.4;
-      }
-      .redirect-actions {
-        margin-top: 30px;
-        display: flex;
-        gap: 15px;
-        justify-content: center;
-        flex-wrap: wrap;
-      }
-      .redirect-actions .btn-primary,
-      .redirect-actions .btn-secondary {
-        min-width: 160px;
-      }
-      @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-      }
-      @keyframes bounce {
-        0%, 20%, 50%, 80%, 100% {
-          transform: translateY(0);
-        }
-        40% {
-          transform: translateY(-10px);
-        }
-        60% {
-          transform: translateY(-5px);
-        }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  function goToDashboard() {
-    // This would redirect to actual dashboard
-    alert(
-      'Redirecting to dashboard... In a real app, use: window.location.href = "/dashboard"'
-    );
-    // window.location.href = '/dashboard';
-  }
-
-  function editProfile() {
-    // Reload the page to show the form again
-    window.location.reload();
-  }
+  // Close modal when clicking outside
+  window.onclick = function (event) {
+    const modal = document.getElementById("guidedTour");
+    if (event.target === modal) {
+      skipTour();
+    }
+  };
 </script>
 {% endblock %}
