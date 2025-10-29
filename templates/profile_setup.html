@@ -1,6 +1,6 @@
 {% extends "base.html" %} {% block content %}
 <!-- Guided Tour Modal - Show First -->
-<div id="guidedTour" class="modal" style="display: flex;">
+<div id="guidedTour" class="modal" style="display: flex">
   <div class="modal-content tour-modal">
     <div class="tour-content">
       <div class="tour-step active" id="tourStep1">
@@ -54,7 +54,7 @@
 </div>
 
 <!-- Main Profile Setup Content - Hidden Initially -->
-<div class="setup-container" id="mainSetupContent" style="display: none;">
+<div class="setup-container" id="mainSetupContent" style="display: none">
   <!-- Progress Bar -->
   <div class="setup-progress">
     <div class="progress-bar">
@@ -1282,7 +1282,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     // Show guided tour immediately
     document.getElementById("guidedTour").style.display = "flex";
-    
+
     // Initialize the main setup (but keep it hidden until tour completes)
     initializeSetup();
   });
@@ -1308,26 +1308,34 @@
 
   // Guided Tour Functions
   function nextTourStep() {
-    document.getElementById(`tourStep${currentTourStep}`).classList.remove("active");
+    document
+      .getElementById(`tourStep${currentTourStep}`)
+      .classList.remove("active");
     currentTourStep++;
-    document.getElementById(`tourStep${currentTourStep}`).classList.add("active");
+    document
+      .getElementById(`tourStep${currentTourStep}`)
+      .classList.add("active");
   }
 
   function prevTourStep() {
-    document.getElementById(`tourStep${currentTourStep}`).classList.remove("active");
+    document
+      .getElementById(`tourStep${currentTourStep}`)
+      .classList.remove("active");
     currentTourStep--;
-    document.getElementById(`tourStep${currentTourStep}`).classList.add("active");
+    document
+      .getElementById(`tourStep${currentTourStep}`)
+      .classList.add("active");
   }
 
   function completeTour() {
     // Hide the tour modal
     document.getElementById("guidedTour").style.display = "none";
-    
+
     // Show the main setup content with animation
     const mainContent = document.getElementById("mainSetupContent");
     mainContent.style.display = "block";
     mainContent.style.animation = "fadeIn 0.5s ease";
-    
+
     // Mark tour as completed
     localStorage.setItem("profileSetupTourCompleted", "true");
   }
@@ -1335,10 +1343,10 @@
   function skipTour() {
     // Hide the tour modal
     document.getElementById("guidedTour").style.display = "none";
-    
+
     // Show the main setup content immediately
     document.getElementById("mainSetupContent").style.display = "block";
-    
+
     // Mark tour as completed
     localStorage.setItem("profileSetupTourCompleted", "true");
   }
@@ -1348,7 +1356,9 @@
     if (currentStep < totalSteps) {
       // Validate current step before proceeding
       if (validateStep(currentStep)) {
-        document.getElementById(`step${currentStep}`).classList.remove("active");
+        document
+          .getElementById(`step${currentStep}`)
+          .classList.remove("active");
         currentStep++;
         document.getElementById(`step${currentStep}`).classList.add("active");
         updateProgressBar();
@@ -1408,11 +1418,20 @@
       return false;
     }
 
+    if (username.length < 3) {
+      showFeedback(
+        "usernameFeedback",
+        "Username must be at least 3 characters",
+        "error"
+      );
+      return false;
+    }
+
     return true;
   }
 
   function validateAvatar() {
-    // Avatar validation logic
+    // Avatar validation logic - always valid for now
     return true;
   }
 
@@ -1445,17 +1464,27 @@
       return;
     }
 
+    // Check username format
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!usernameRegex.test(username)) {
+      showFeedback(
+        "usernameFeedback",
+        "Username can only contain letters, numbers, and underscores",
+        "error"
+      );
+      return;
+    }
+
+    // Show checking status
+    showFeedback("usernameFeedback", "Checking availability...", "info");
+
     // Simulate API call
     setTimeout(() => {
       const available = Math.random() > 0.3; // 70% chance of being available
       if (available) {
         showFeedback("usernameFeedback", "Username is available!", "success");
       } else {
-        showFeedback(
-          "usernameFeedback",
-          "Username is already taken",
-          "error"
-        );
+        showFeedback("usernameFeedback", "Username is already taken", "error");
       }
     }, 500);
   }
@@ -1545,7 +1574,12 @@
     for (let i = 0; i < 8; i++) {
       for (let j = 0; j < 8; j++) {
         if ((i > 1 && i < 6 && j > 1 && j < 6) || (i === 1 && j === 3)) {
-          ctx.fillRect(60 + i * pixelSize, 40 + j * pixelSize, pixelSize, pixelSize);
+          ctx.fillRect(
+            60 + i * pixelSize,
+            40 + j * pixelSize,
+            pixelSize,
+            pixelSize
+          );
         }
       }
     }
@@ -1611,11 +1645,11 @@
   function useInitialsAvatar() {
     document.getElementById("avatarCanvas").style.display = "none";
     document.getElementById("avatarInitialsFallback").style.display = "flex";
-    
+
     const displayName = document.getElementById("display_name").value.trim();
     const initials = displayName ? displayName.charAt(0).toUpperCase() : "U";
     document.getElementById("avatarInitials").textContent = initials;
-    
+
     updatePreview();
   }
 
@@ -1625,7 +1659,8 @@
       'input[name="interests"]:checked'
     ).length;
     document.getElementById("selectedCount").textContent = selectedCount;
-    document.getElementById("previewInterestsCount").textContent = selectedCount;
+    document.getElementById("previewInterestsCount").textContent =
+      selectedCount;
 
     // Update continue button state
     const continueButton = document.getElementById("continueToPreview");
@@ -1672,9 +1707,7 @@
       tag.textContent = interest;
       tag.style.cursor = "pointer";
       tag.onclick = function () {
-        const checkbox = document.querySelector(
-          `input[value="${interest}"]`
-        );
+        const checkbox = document.querySelector(`input[value="${interest}"]`);
         if (checkbox) {
           checkbox.checked = true;
           updateInterestsCount();
@@ -1695,8 +1728,9 @@
 
     document.getElementById("previewName").textContent =
       displayName || "Display Name";
-    document.getElementById("previewUsername").textContent =
-      username ? `@${username}` : "@username";
+    document.getElementById("previewUsername").textContent = username
+      ? `@${username}`
+      : "@username";
     document.getElementById("previewBio").textContent =
       bio || "Bio will appear here...";
     document.getElementById("previewAge").textContent = age || "--";
@@ -1704,16 +1738,20 @@
     // Update avatar preview
     const canvas = document.getElementById("avatarCanvas");
     const initialsFallback = document.getElementById("avatarInitialsFallback");
-    
+
     if (canvas.style.display !== "none") {
       document.getElementById("previewAvatar").style.display = "none";
       document.getElementById("previewAvatarInitials").style.display = "flex";
       // In a real implementation, you would convert canvas to image
+      const initials = displayName ? displayName.charAt(0).toUpperCase() : "U";
+      document.getElementById("previewAvatarInitialsText").textContent =
+        initials;
     } else {
       document.getElementById("previewAvatar").style.display = "none";
       document.getElementById("previewAvatarInitials").style.display = "flex";
       const initials = displayName ? displayName.charAt(0).toUpperCase() : "U";
-      document.getElementById("previewAvatarInitialsText").textContent = initials;
+      document.getElementById("previewAvatarInitialsText").textContent =
+        initials;
     }
 
     // Update interests preview
@@ -1744,13 +1782,15 @@
     const bioBonus = bio.length > 50 ? 10 : bio.length > 20 ? 5 : 0;
     const totalScore = baseScore + interestBonus + bioBonus;
 
-    document.getElementById("compatibilityScore").textContent = `${totalScore}%`;
+    document.getElementById(
+      "compatibilityScore"
+    ).textContent = `${totalScore}%`;
 
     const scoreCircle = document.querySelector(".score-circle");
     scoreCircle.style.background = `conic-gradient(#38bdf8 0% ${totalScore}%, #1e2a44 ${totalScore}% 100%)`;
   }
 
-  // Form Submission
+  // Form Submission - UPDATED VERSION
   document
     .getElementById("profileForm")
     .addEventListener("submit", function (e) {
@@ -1765,21 +1805,26 @@
       // Show loading state
       const submitButton = document.querySelector(".btn-complete");
       const originalText = submitButton.innerHTML;
-      submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Setting up your profile...';
+      submitButton.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> Setting up your profile...';
       submitButton.disabled = true;
 
-      // Simulate API call
-      setTimeout(() => {
-        // Redirect to success page
-        window.location.href = "/success";
-      }, 2000);
+      // Submit the form normally (no AJAX) - this will redirect to dashboard
+      this.submit();
     });
 
   // Utility Functions
   function showFeedback(elementId, message, type) {
     const element = document.getElementById(elementId);
     element.textContent = message;
-    element.style.color = type === "error" ? "#ef4444" : "#10b981";
+    element.style.color =
+      type === "error"
+        ? "#ef4444"
+        : type === "success"
+        ? "#10b981"
+        : type === "info"
+        ? "#38bdf8"
+        : "#e2e8f0";
   }
 
   // Close modal when clicking outside
@@ -1789,5 +1834,76 @@
       skipTour();
     }
   };
+
+  // Handle file upload for photo option
+  document
+    .getElementById("photoUpload")
+    .addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          // In a real implementation, you would handle the file upload here
+          console.log("File selected:", file.name);
+          // For now, just show a success message
+          const uploadArea = document.getElementById("uploadArea");
+          uploadArea.innerHTML = `
+          <i class="fas fa-check-circle" style="color: #10b981;"></i>
+          <p>Photo uploaded successfully!</p>
+          <span>${file.name}</span>
+          <button class="btn-secondary" onclick="document.getElementById('photoUpload').click()">
+            Change Photo
+          </button>
+        `;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+  // Drag and drop for file upload
+  const uploadArea = document.getElementById("uploadArea");
+  uploadArea.addEventListener("dragover", function (e) {
+    e.preventDefault();
+    uploadArea.style.borderColor = "#38bdf8";
+    uploadArea.style.background = "rgba(56, 189, 248, 0.1)";
+  });
+
+  uploadArea.addEventListener("dragleave", function (e) {
+    e.preventDefault();
+    uploadArea.style.borderColor = "#334155";
+    uploadArea.style.background = "#1e2a44";
+  });
+
+  uploadArea.addEventListener("drop", function (e) {
+    e.preventDefault();
+    uploadArea.style.borderColor = "#334155";
+    uploadArea.style.background = "#1e2a44";
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      document.getElementById("photoUpload").files = files;
+      // Trigger change event
+      const event = new Event("change");
+      document.getElementById("photoUpload").dispatchEvent(event);
+    }
+  });
+
+  // Initialize avatar options
+  document.addEventListener("DOMContentLoaded", function () {
+    // Set up avatar option switching
+    document
+      .getElementById("aiAvatarOption")
+      .addEventListener("click", function () {
+        document.getElementById("aiAvatarOption").classList.add("active");
+        document.getElementById("photoUploadOption").classList.remove("active");
+      });
+
+    document
+      .getElementById("photoUploadOption")
+      .addEventListener("click", function () {
+        document.getElementById("photoUploadOption").classList.add("active");
+        document.getElementById("aiAvatarOption").classList.remove("active");
+      });
+  });
 </script>
 {% endblock %}
