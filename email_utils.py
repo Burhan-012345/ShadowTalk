@@ -137,7 +137,7 @@ def send_otp_email(email):
 
         logger.info(f"Generated OTP for {email}: {otp_code}")
 
-        # Create enhanced email template
+        # Create enhanced email template with skyline blue theme
         html_content = f'''
         <!DOCTYPE html>
         <html>
@@ -147,7 +147,7 @@ def send_otp_email(email):
             <title>ShadowTalk - Email Verification</title>
             <style>
                 body {{
-                    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+                    background: linear-gradient(135deg, #0c1f3d 0%, #1a3a6c 100%);
                     color: #e0e0e0;
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     margin: 0;
@@ -157,15 +157,27 @@ def send_otp_email(email):
                 .container {{
                     max-width: 600px;
                     margin: 0 auto;
-                    background: #2c2c2c;
+                    background: #1e3a5f;
                     border-radius: 20px;
                     overflow: hidden;
                     box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+                    border: 1px solid #2d518b;
                 }}
                 .header {{
-                    background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+                    background: linear-gradient(135deg, #2d518b 0%, #3a6bc2 100%);
                     padding: 40px 30px;
                     text-align: center;
+                    position: relative;
+                    overflow: hidden;
+                }}
+                .header::before {{
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 4px;
+                    background: linear-gradient(90deg, #4fc3f7, #29b6f6, #0288d1);
                 }}
                 .header h1 {{
                     color: white;
@@ -173,6 +185,7 @@ def send_otp_email(email):
                     font-size: 32px;
                     font-weight: 700;
                     letter-spacing: 1px;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
                 }}
                 .header p {{
                     color: rgba(255,255,255,0.9);
@@ -184,7 +197,7 @@ def send_otp_email(email):
                     text-align: center;
                 }}
                 .otp-code {{
-                    background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+                    background: linear-gradient(135deg, #2d518b 0%, #3a6bc2 100%);
                     color: white;
                     font-size: 42px;
                     font-weight: 800;
@@ -193,59 +206,63 @@ def send_otp_email(email):
                     margin: 30px 0;
                     letter-spacing: 15px;
                     text-align: center;
-                    box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+                    box-shadow: 0 10px 25px rgba(45, 81, 139, 0.4);
                     animation: pulse 2s infinite ease-in-out;
                     font-family: 'Courier New', monospace;
+                    border: 2px solid #4fc3f7;
                 }}
                 .info-box {{
-                    background: #3c3c3c;
+                    background: #2d518b;
                     padding: 25px;
                     border-radius: 15px;
                     margin: 25px 0;
                     text-align: left;
-                    border-left: 5px solid #8b5cf6;
+                    border-left: 5px solid #4fc3f7;
                 }}
                 .warning {{
-                    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+                    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
                     color: white;
                     padding: 20px;
                     border-radius: 12px;
                     margin: 25px 0;
                     font-size: 15px;
                     text-align: center;
+                    border: 1px solid #ffb74d;
                 }}
                 .security-tip {{
-                    background: #34495e;
-                    color: #bdc3c7;
+                    background: #1565c0;
+                    color: #e3f2fd;
                     padding: 20px;
                     border-radius: 12px;
                     margin: 20px 0;
                     font-size: 14px;
-                    border-left: 5px solid #3498db;
+                    border-left: 5px solid #29b6f6;
                 }}
                 .footer {{
-                    background: #1a1a1a;
+                    background: #0c1f3d;
                     padding: 30px 20px;
                     text-align: center;
-                    color: #888;
+                    color: #90caf9;
                     font-size: 13px;
+                    border-top: 1px solid #1a3a6c;
                 }}
                 @keyframes pulse {{
-                    0% {{ transform: scale(1); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4); }}
-                    50% {{ transform: scale(1.03); box-shadow: 0 15px 35px rgba(139, 92, 246, 0.6); }}
-                    100% {{ transform: scale(1); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4); }}
+                    0% {{ transform: scale(1); box-shadow: 0 10px 25px rgba(45, 81, 139, 0.4); }}
+                    50% {{ transform: scale(1.03); box-shadow: 0 15px 35px rgba(45, 81, 139, 0.6); }}
+                    100% {{ transform: scale(1); box-shadow: 0 10px 25px rgba(45, 81, 139, 0.4); }}
                 }}
                 .step {{
                     display: flex;
                     align-items: center;
                     margin: 15px 0;
                     padding: 15px;
-                    background: #4c4c4c;
+                    background: #2d518b;
                     border-radius: 10px;
+                    border: 1px solid #3a6bc2;
                 }}
                 .step-number {{
-                    background: #8b5cf6;
-                    color: white;
+                    background: #4fc3f7;
+                    color: #0c1f3d;
                     width: 30px;
                     height: 30px;
                     border-radius: 50%;
@@ -255,18 +272,28 @@ def send_otp_email(email):
                     margin-right: 15px;
                     font-weight: bold;
                     font-size: 16px;
+                    box-shadow: 0 2px 8px rgba(79, 195, 247, 0.4);
+                }}
+                .skyline-pattern {{
+                    height: 20px;
+                    background: linear-gradient(90deg, 
+                        #0c1f3d 0%, #1a3a6c 20%, 
+                        #2d518b 40%, #3a6bc2 60%, 
+                        #4fc3f7 80%, #0c1f3d 100%);
+                    opacity: 0.8;
                 }}
             </style>
         </head>
         <body>
             <div class="container">
+                <div class="skyline-pattern"></div>
                 <div class="header">
                     <h1>🔒 ShadowTalk</h1>
                     <p>Secure Anonymous Chat Platform</p>
                 </div>
                 <div class="content">
-                    <h2 style="margin: 0 0 20px 0; color: #fff; font-size: 28px;">Email Verification Required</h2>
-                    <p style="font-size: 16px; color: #ccc; margin-bottom: 30px;">
+                    <h2 style="margin: 0 0 20px 0; color: #fff; font-size: 28px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Email Verification Required</h2>
+                    <p style="font-size: 16px; color: #e3f2fd; margin-bottom: 30px;">
                         Hello! To complete your registration and secure your account, please use the following One-Time Password:
                     </p>
 
@@ -279,7 +306,7 @@ def send_otp_email(email):
                     </div>
 
                     <div class="info-box">
-                        <h3 style="color: #8b5cf6; margin-top: 0;">📋 Verification Steps:</h3>
+                        <h3 style="color: #4fc3f7; margin-top: 0;">📋 Verification Steps:</h3>
                         <div class="step">
                             <div class="step-number">1</div>
                             <span>Copy the 6-digit code above</span>
@@ -302,7 +329,7 @@ def send_otp_email(email):
                         • Keep your account credentials secure
                     </div>
 
-                    <p style="color: #999; font-size: 14px; margin-top: 30px;">
+                    <p style="color: #90caf9; font-size: 14px; margin-top: 30px;">
                         Having trouble? The code might be in your spam folder.<br>
                         If issues persist, contact our support team.
                     </p>
@@ -310,7 +337,7 @@ def send_otp_email(email):
                 <div class="footer">
                     <p style="margin: 0 0 10px 0;">&copy; 2024 ShadowTalk. All rights reserved.</p>
                     <p style="margin: 0; font-size: 12px;">Protecting your privacy and security in digital conversations</p>
-                    <p style="margin: 10px 0 0 0; font-size: 11px; color: #666;">
+                    <p style="margin: 10px 0 0 0; font-size: 11px; color: #64b5f6;">
                         This is an automated security message. Please do not reply to this email.
                     </p>
                 </div>
@@ -373,7 +400,7 @@ def send_password_reset_email(email, reset_token):
             <title>Password Reset - ShadowTalk</title>
             <style>
                 body {{
-                    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+                    background: linear-gradient(135deg, #0c1f3d 0%, #1a3a6c 100%);
                     color: #e0e0e0;
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     margin: 0;
@@ -382,21 +409,33 @@ def send_password_reset_email(email, reset_token):
                 .container {{
                     max-width: 600px;
                     margin: 0 auto;
-                    background: #2c2c2c;
+                    background: #1e3a5f;
                     border-radius: 20px;
                     overflow: hidden;
                     box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+                    border: 1px solid #2d518b;
                 }}
                 .header {{
-                    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                    background: linear-gradient(135deg, #2d518b 0%, #3a6bc2 100%);
                     padding: 40px 30px;
                     text-align: center;
+                    position: relative;
+                }}
+                .header::before {{
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 4px;
+                    background: linear-gradient(90deg, #4fc3f7, #29b6f6, #0288d1);
                 }}
                 .header h1 {{
                     color: white;
                     margin: 0;
                     font-size: 32px;
                     font-weight: 700;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
                 }}
                 .content {{
                     padding: 50px 40px;
@@ -404,7 +443,7 @@ def send_password_reset_email(email, reset_token):
                 }}
                 .reset-button {{
                     display: inline-block;
-                    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                    background: linear-gradient(135deg, #2d518b 0%, #3a6bc2 100%);
                     color: white;
                     padding: 20px 50px;
                     text-decoration: none;
@@ -412,69 +451,82 @@ def send_password_reset_email(email, reset_token):
                     margin: 30px 0;
                     font-weight: bold;
                     font-size: 18px;
-                    box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+                    box-shadow: 0 8px 25px rgba(45, 81, 139, 0.4);
                     transition: all 0.3s ease;
-                    border: none;
-                    cursor: pointer;
+                    border: 2px solid #4fc3f7;
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
                 }}
                 .reset-button:hover {{
                     transform: translateY(-3px);
-                    box-shadow: 0 12px 35px rgba(231, 76, 60, 0.6);
+                    box-shadow: 0 12px 35px rgba(45, 81, 139, 0.6);
+                    background: linear-gradient(135deg, #3a6bc2 0%, #4fc3f7 100%);
                 }}
                 .url-box {{
-                    background: #3c3c3c;
+                    background: #2d518b;
                     padding: 20px;
                     border-radius: 12px;
                     margin: 25px 0;
                     word-break: break-all;
-                    border: 1px solid #4c4c4c;
+                    border: 1px solid #3a6bc2;
+                    font-family: 'Courier New', monospace;
                 }}
                 .warning {{
-                    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
                     color: white;
                     padding: 20px;
                     border-radius: 12px;
                     margin: 25px 0;
                     font-size: 15px;
                     text-align: center;
+                    border: 1px solid #ffb74d;
                 }}
                 .security-info {{
-                    background: #34495e;
-                    color: #bdc3c7;
+                    background: #1565c0;
+                    color: #e3f2fd;
                     padding: 25px;
                     border-radius: 12px;
                     margin: 20px 0;
                     font-size: 14px;
                     text-align: left;
-                    border-left: 5px solid #3498db;
+                    border-left: 5px solid #29b6f6;
                 }}
                 .footer {{
-                    background: #1a1a1a;
+                    background: #0c1f3d;
                     padding: 30px 20px;
                     text-align: center;
-                    color: #888;
+                    color: #90caf9;
                     font-size: 13px;
+                    border-top: 1px solid #1a3a6c;
+                }}
+                .skyline-pattern {{
+                    height: 20px;
+                    background: linear-gradient(90deg, 
+                        #0c1f3d 0%, #1a3a6c 20%, 
+                        #2d518b 40%, #3a6bc2 60%, 
+                        #4fc3f7 80%, #0c1f3d 100%);
+                    opacity: 0.8;
                 }}
             </style>
         </head>
         <body>
             <div class="container">
+                <div class="skyline-pattern"></div>
                 <div class="header">
                     <h1>🔐 ShadowTalk</h1>
                     <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Password Reset Request</p>
                 </div>
                 <div class="content">
-                    <h2 style="color: #fff; font-size: 28px; margin-bottom: 20px;">Reset Your Password</h2>
-                    <p style="font-size: 16px; color: #ccc; line-height: 1.6;">
+                    <h2 style="color: #fff; font-size: 28px; margin-bottom: 20px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Reset Your Password</h2>
+                    <p style="font-size: 16px; color: #e3f2fd; line-height: 1.6;">
                         You requested to reset your password for your ShadowTalk account. 
                         Click the button below to create a new secure password.
                     </p>
 
                     <a href="{reset_url}" class="reset-button">Reset Password Now</a>
 
-                    <p style="color: #ccc; margin: 20px 0;">Or copy and paste this link in your browser:</p>
+                    <p style="color: #e3f2fd; margin: 20px 0;">Or copy and paste this link in your browser:</p>
                     <div class="url-box">
-                        <code style="color: #e74c3c; font-size: 14px;">{reset_url}</code>
+                        <code style="color: #4fc3f7; font-size: 14px;">{reset_url}</code>
                     </div>
 
                     <div class="warning">
@@ -491,14 +543,14 @@ def send_password_reset_email(email, reset_token):
                         • Enable two-factor authentication for added security
                     </div>
 
-                    <p style="color: #999; font-size: 14px; margin-top: 30px;">
+                    <p style="color: #90caf9; font-size: 14px; margin-top: 30px;">
                         Need help? Contact our support team through the ShadowTalk app.
                     </p>
                 </div>
                 <div class="footer">
                     <p style="margin: 0 0 10px 0;">&copy; 2024 ShadowTalk. All rights reserved.</p>
                     <p style="margin: 0; font-size: 12px;">Protecting your digital identity and conversations</p>
-                    <p style="margin: 10px 0 0 0; font-size: 11px; color: #666;">
+                    <p style="margin: 10px 0 0 0; font-size: 11px; color: #64b5f6;">
                         This is an automated security message. Please do not reply.
                     </p>
                 </div>
@@ -549,7 +601,7 @@ def send_notification_email(user_email, title, message):
             <title>Notification - ShadowTalk</title>
             <style>
                 body {{
-                    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+                    background: linear-gradient(135deg, #0c1f3d 0%, #1a3a6c 100%);
                     color: #e0e0e0;
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     margin: 0;
@@ -558,35 +610,48 @@ def send_notification_email(user_email, title, message):
                 .container {{
                     max-width: 600px;
                     margin: 0 auto;
-                    background: #2c2c2c;
+                    background: #1e3a5f;
                     border-radius: 20px;
                     overflow: hidden;
                     box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+                    border: 1px solid #2d518b;
                 }}
                 .header {{
-                    background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+                    background: linear-gradient(135deg, #2d518b 0%, #3a6bc2 100%);
                     padding: 40px 30px;
                     text-align: center;
+                    position: relative;
+                }}
+                .header::before {{
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 4px;
+                    background: linear-gradient(90deg, #4fc3f7, #29b6f6, #0288d1);
                 }}
                 .header h1 {{
                     color: white;
                     margin: 0;
                     font-size: 32px;
                     font-weight: 700;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
                 }}
                 .content {{
                     padding: 50px 40px;
                 }}
                 .notification {{
-                    background: #3c3c3c;
+                    background: #2d518b;
                     padding: 30px;
                     border-radius: 15px;
                     margin: 25px 0;
-                    border-left: 5px solid #8b5cf6;
+                    border-left: 5px solid #4fc3f7;
+                    border: 1px solid #3a6bc2;
                 }}
                 .action-button {{
                     display: inline-block;
-                    background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+                    background: linear-gradient(135deg, #2d518b 0%, #3a6bc2 100%);
                     color: white;
                     padding: 15px 35px;
                     text-decoration: none;
@@ -595,33 +660,50 @@ def send_notification_email(user_email, title, message):
                     font-weight: bold;
                     font-size: 16px;
                     transition: all 0.3s ease;
+                    border: 2px solid #4fc3f7;
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                }}
+                .action-button:hover {{
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 20px rgba(45, 81, 139, 0.5);
+                    background: linear-gradient(135deg, #3a6bc2 0%, #4fc3f7 100%);
                 }}
                 .footer {{
-                    background: #1a1a1a;
+                    background: #0c1f3d;
                     padding: 30px 20px;
                     text-align: center;
-                    color: #888;
+                    color: #90caf9;
                     font-size: 13px;
+                    border-top: 1px solid #1a3a6c;
+                }}
+                .skyline-pattern {{
+                    height: 20px;
+                    background: linear-gradient(90deg, 
+                        #0c1f3d 0%, #1a3a6c 20%, 
+                        #2d518b 40%, #3a6bc2 60%, 
+                        #4fc3f7 80%, #0c1f3d 100%);
+                    opacity: 0.8;
                 }}
             </style>
         </head>
         <body>
             <div class="container">
+                <div class="skyline-pattern"></div>
                 <div class="header">
                     <h1>📢 ShadowTalk</h1>
                     <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">New Notification</p>
                 </div>
                 <div class="content">
-                    <h2 style="color: #fff; font-size: 26px; margin-bottom: 10px;">{title}</h2>
+                    <h2 style="color: #fff; font-size: 26px; margin-bottom: 10px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">{title}</h2>
                     <div class="notification">
-                        <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #e0e0e0;">{message}</p>
+                        <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #e3f2fd;">{message}</p>
                     </div>
                     <div style="text-align: center;">
                         <a href="https://shadow01.pythonanywhere.com/dashboard" class="action-button">
                             View in Dashboard
                         </a>
                     </div>
-                    <p style="color: #999; font-size: 14px; text-align: center; margin-top: 20px;">
+                    <p style="color: #90caf9; font-size: 14px; text-align: center; margin-top: 20px;">
                         Login to ShadowTalk to view more details and manage your notifications.
                     </p>
                 </div>
@@ -683,7 +765,7 @@ def send_ban_notification_email(email, ban_reason, ban_duration, ban_expires_at=
             <title>Account Suspension - ShadowTalk</title>
             <style>
                 body {{
-                    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+                    background: linear-gradient(135deg, #0c1f3d 0%, #1a3a6c 100%);
                     color: #e0e0e0;
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     margin: 0;
@@ -692,21 +774,32 @@ def send_ban_notification_email(email, ban_reason, ban_duration, ban_expires_at=
                 .container {{
                     max-width: 600px;
                     margin: 0 auto;
-                    background: #2c2c2c;
+                    background: #1e3a5f;
                     border-radius: 20px;
                     overflow: hidden;
                     box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+                    border: 1px solid #2d518b;
                 }}
                 .header {{
-                    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                    background: linear-gradient(135deg, #2d518b 0%, #3a6bc2 100%);
                     padding: 40px 30px;
                     text-align: center;
+                    position: relative;
+                }}
+                .header::before {{
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 4px;
+                    background: linear-gradient(90deg, #4fc3f7, #29b6f6, #0288d1);
                 }}
                 .content {{
                     padding: 50px 40px;
                 }}
                 .ban-notice {{
-                    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                    background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
                     color: white;
                     font-size: 26px;
                     font-weight: bold;
@@ -714,32 +807,46 @@ def send_ban_notification_email(email, ban_reason, ban_duration, ban_expires_at=
                     border-radius: 15px;
                     margin: 25px 0;
                     text-align: center;
+                    border: 2px solid #f44336;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
                 }}
                 .details-box {{
-                    background: #3c3c3c;
+                    background: #2d518b;
                     padding: 25px;
                     border-radius: 12px;
                     margin: 20px 0;
-                    border-left: 5px solid #e74c3c;
+                    border-left: 5px solid #4fc3f7;
+                    border: 1px solid #3a6bc2;
                 }}
                 .appeal-section {{
-                    background: #34495e;
+                    background: #1565c0;
                     padding: 25px;
                     border-radius: 12px;
                     margin: 25px 0;
-                    border-left: 5px solid #3498db;
+                    border-left: 5px solid #29b6f6;
+                    border: 1px solid #1976d2;
                 }}
                 .footer {{
-                    background: #1a1a1a;
+                    background: #0c1f3d;
                     padding: 30px 20px;
                     text-align: center;
-                    color: #888;
+                    color: #90caf9;
                     font-size: 13px;
+                    border-top: 1px solid #1a3a6c;
+                }}
+                .skyline-pattern {{
+                    height: 20px;
+                    background: linear-gradient(90deg, 
+                        #0c1f3d 0%, #1a3a6c 20%, 
+                        #2d518b 40%, #3a6bc2 60%, 
+                        #4fc3f7 80%, #0c1f3d 100%);
+                    opacity: 0.8;
                 }}
             </style>
         </head>
         <body>
             <div class="container">
+                <div class="skyline-pattern"></div>
                 <div class="header">
                     <h1>🚫 ShadowTalk</h1>
                     <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Account Status Notification</p>
@@ -749,30 +856,30 @@ def send_ban_notification_email(email, ban_reason, ban_duration, ban_expires_at=
                         ⚠️ ACCOUNT SUSPENDED
                     </div>
 
-                    <p style="font-size: 16px; color: #ccc; line-height: 1.6;">
+                    <p style="font-size: 16px; color: #e3f2fd; line-height: 1.6;">
                         We regret to inform you that your ShadowTalk account has been suspended due to a violation of our terms of service.
                     </p>
 
                     <div class="details-box">
-                        <h3 style="color: #e74c3c; margin-top: 0;">Suspension Details:</h3>
+                        <h3 style="color: #4fc3f7; margin-top: 0;">Suspension Details:</h3>
                         <p><strong>Reason:</strong> {ban_reason}</p>
                         <p><strong>Duration:</strong> {duration_display}</p>
                         <p><strong>Effective Date:</strong> {datetime.utcnow().strftime("%B %d, %Y at %H:%M UTC")}</p>
                     </div>
 
                     <div class="appeal-section">
-                        <h3 style="color: #3498db;">Appeal Process</h3>
+                        <h3 style="color: #29b6f6;">Appeal Process</h3>
                         <p>If you believe this suspension was made in error, you may contact our support team for review.</p>
                         <p><strong>Email:</strong> support@shadowtalk.com</p>
                     </div>
 
-                    <p style="color: #999; font-size: 14px;">
+                    <p style="color: #90caf9; font-size: 14px;">
                         Please review our Terms of Service and Community Guidelines for more information.
                     </p>
                 </div>
                 <div class="footer">
                     <p style="margin: 0 0 10px 0;">&copy; 2024 ShadowTalk. All rights reserved.</p>
-                    <p style="margin: 0; font-size: 12px;">Committed to maintaining a safe and respectful community</p>
+                    <p style="margin: 0; font-size: 12px;">Maintaining a safe and respectful community</p>
                 </div>
             </div>
         </body>
@@ -782,16 +889,17 @@ def send_ban_notification_email(email, ban_reason, ban_duration, ban_expires_at=
         plain_text = f'''
 ShadowTalk - Account Suspension Notice
 
-Your account has been suspended.
+Your ShadowTalk account has been suspended.
 
 Reason: {ban_reason}
 Duration: {duration_display}
-Effective: {datetime.utcnow().strftime("%B %d, %Y at %H:%M UTC")}
+Effective Date: {datetime.utcnow().strftime("%B %d, %Y at %H:%M UTC")}
 
 {duration_note}
 
-If you believe this was an error, you may appeal by contacting:
-support@shadowtalk.com
+If you believe this suspension was made in error, you may contact our support team for review at support@shadowtalk.com.
+
+Please review our Terms of Service and Community Guidelines.
 
 ---
 ShadowTalk - Secure Anonymous Chat Platform
@@ -799,7 +907,7 @@ ShadowTalk - Secure Anonymous Chat Platform
 
         return send_email_with_retry(
             email=email,
-            subject='ShadowTalk - Account Suspension Notice',
+            subject='ShadowTalk - Account Suspension Notice 🚫',
             html_content=html_content,
             plain_text=plain_text
         )
@@ -833,9 +941,12 @@ def send_security_alert_email(email, alert_type, details):
         <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Security Alert - ShadowTalk</title>
             <style>
                 body {{
-                    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+                    background: linear-gradient(135deg, #0c1f3d 0%, #1a3a6c 100%);
                     color: #e0e0e0;
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     margin: 0;
@@ -844,21 +955,32 @@ def send_security_alert_email(email, alert_type, details):
                 .container {{
                     max-width: 600px;
                     margin: 0 auto;
-                    background: #2c2c2c;
+                    background: #1e3a5f;
                     border-radius: 20px;
                     overflow: hidden;
                     box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+                    border: 1px solid #2d518b;
                 }}
                 .header {{
-                    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                    background: linear-gradient(135deg, #2d518b 0%, #3a6bc2 100%);
                     padding: 40px 30px;
                     text-align: center;
+                    position: relative;
+                }}
+                .header::before {{
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 4px;
+                    background: linear-gradient(90deg, #4fc3f7, #29b6f6, #0288d1);
                 }}
                 .content {{
                     padding: 50px 40px;
                 }}
                 .alert-box {{
-                    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
                     color: white;
                     padding: 25px;
                     border-radius: 15px;
@@ -866,18 +988,37 @@ def send_security_alert_email(email, alert_type, details):
                     text-align: center;
                     font-size: 20px;
                     font-weight: bold;
+                    border: 2px solid #ffb74d;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                }}
+                .details-box {{
+                    background: #2d518b;
+                    padding: 25px;
+                    border-radius: 12px;
+                    margin: 20px 0;
+                    border: 1px solid #3a6bc2;
                 }}
                 .footer {{
-                    background: #1a1a1a;
+                    background: #0c1f3d;
                     padding: 30px 20px;
                     text-align: center;
-                    color: #888;
+                    color: #90caf9;
                     font-size: 13px;
+                    border-top: 1px solid #1a3a6c;
+                }}
+                .skyline-pattern {{
+                    height: 20px;
+                    background: linear-gradient(90deg, 
+                        #0c1f3d 0%, #1a3a6c 20%, 
+                        #2d518b 40%, #3a6bc2 60%, 
+                        #4fc3f7 80%, #0c1f3d 100%);
+                    opacity: 0.8;
                 }}
             </style>
         </head>
         <body>
             <div class="container">
+                <div class="skyline-pattern"></div>
                 <div class="header">
                     <h1>🔒 ShadowTalk</h1>
                     <p style="color: rgba(255,255,255,0.9);">Security Alert</p>
@@ -886,14 +1027,22 @@ def send_security_alert_email(email, alert_type, details):
                     <div class="alert-box">
                         ⚠️ SECURITY ALERT: {subject}
                     </div>
-                    <p><strong>Details:</strong> {details}</p>
-                    <p><strong>Time:</strong> {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")}</p>
-                    <p><strong>Account:</strong> {email}</p>
-                    <p>If this wasn't you, please secure your account immediately.</p>
+                    <div class="details-box">
+                        <p><strong>Details:</strong> {details}</p>
+                        <p><strong>Time:</strong> {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")}</p>
+                        <p><strong>Account:</strong> {email}</p>
+                    </div>
+                    <p style="color: #e3f2fd; font-size: 15px; line-height: 1.6;">
+                        If this wasn't you, please secure your account immediately by changing your password 
+                        and reviewing your account activity.
+                    </p>
                 </div>
                 <div class="footer">
-                    <p>&copy; 2024 ShadowTalk. All rights reserved.</p>
-                    <p>Protecting your digital identity</p>
+                    <p style="margin: 0 0 10px 0;">&copy; 2024 ShadowTalk. All rights reserved.</p>
+                    <p style="margin: 0; font-size: 12px;">Protecting your digital identity</p>
+                    <p style="margin: 10px 0 0 0; font-size: 11px; color: #64b5f6;">
+                        This is an automated security message. Please do not reply.
+                    </p>
                 </div>
             </div>
         </body>
@@ -909,10 +1058,11 @@ Details: {details}
 Time: {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")}
 Account: {email}
 
-If this wasn't you, please secure your account immediately.
+If this wasn't you, please secure your account immediately by changing your password and reviewing your account activity.
 
 ---
 ShadowTalk - Secure Anonymous Chat Platform
+This is an automated security message.
 '''
 
         return send_email_with_retry(
