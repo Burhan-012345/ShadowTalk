@@ -114,22 +114,22 @@
 </div>
 
 <style>
-  /* Mobile-First Responsive Styles */
+  /* verify_otp.html - Skyline Blue Theme */
   .auth-container {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background: #0a0a0f;
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
   }
 
   .auth-card {
-    background: #1a1a2e;
+    background: #ffffff;
     border-radius: 16px;
     padding: 30px 25px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    box-shadow: 0 10px 30px rgba(14, 165, 233, 0.1);
+    border: 2px solid #e2e8f0;
     width: 100%;
     max-width: 400px;
     margin: 0 auto;
@@ -140,14 +140,14 @@
     font-weight: 700;
     text-align: center;
     margin-bottom: 10px;
-    background: linear-gradient(135deg, #6366f1, #3b82f6);
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .auth-subtitle {
     text-align: center;
-    color: #ccc;
+    color: #475569;
     margin-bottom: 25px;
     font-size: 0.95rem;
     line-height: 1.5;
@@ -161,12 +161,11 @@
     display: block;
     margin-bottom: 15px;
     font-weight: 600;
-    color: #e0e0e0;
+    color: #1e293b;
     font-size: 0.95rem;
     text-align: center;
   }
 
-  /* OTP Input Container */
   .otp-input-container {
     display: flex;
     justify-content: space-between;
@@ -183,33 +182,32 @@
     text-align: center;
     font-size: 1.25rem;
     font-weight: bold;
-    border: 2px solid #555;
+    border: 2px solid #e2e8f0;
     border-radius: 10px;
-    background: #2d2d42;
-    color: white;
+    background: #f8fafc;
+    color: #1e293b;
     transition: all 0.3s ease;
-    font-size: 18px; /* Prevent zoom on iOS */
+    font-size: 18px;
   }
 
   .otp-input:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
     transform: scale(1.05);
     outline: none;
   }
 
   .otp-input.filled {
-    border-color: #27ae60;
-    background-color: rgba(39, 174, 96, 0.05);
+    border-color: #10b981;
+    background-color: rgba(16, 185, 129, 0.05);
   }
 
   .otp-input.error {
-    border-color: #e74c3c;
-    background-color: rgba(231, 76, 60, 0.05);
+    border-color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.05);
     animation: shake 0.5s ease-in-out;
   }
 
-  /* OTP Status */
   .otp-status {
     margin-top: 20px;
     font-size: 0.85rem;
@@ -220,16 +218,16 @@
     align-items: center;
     justify-content: center;
     margin-bottom: 10px;
-    color: #888;
+    color: #64748b;
   }
 
   .otp-timer i {
     margin-right: 8px;
-    color: #8b5cf6;
+    color: #0ea5e9;
   }
 
   .otp-timer.expiring {
-    color: #e74c3c;
+    color: #ef4444;
     animation: pulse 1s infinite;
   }
 
@@ -237,7 +235,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #888;
+    color: #64748b;
     transition: all 0.3s ease;
   }
 
@@ -246,18 +244,17 @@
   }
 
   .otp-validity.valid {
-    color: #27ae60;
+    color: #10b981;
   }
 
   .otp-validity.invalid {
-    color: #e74c3c;
+    color: #ef4444;
   }
 
-  /* Buttons */
   .btn-primary {
     width: 100%;
     padding: 14px 20px;
-    background: linear-gradient(135deg, #6366f1, #3b82f6);
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8);
     color: white;
     border: none;
     border-radius: 10px;
@@ -272,11 +269,11 @@
 
   .btn-primary:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
   }
 
   .btn-primary:disabled {
-    background-color: #6b7280;
+    background-color: #94a3b8;
     cursor: not-allowed;
     transform: none !important;
   }
@@ -302,7 +299,6 @@
     margin-right: 8px;
   }
 
-  /* Auth Links */
   .auth-links {
     text-align: center;
     margin-top: 25px;
@@ -310,19 +306,20 @@
 
   .auth-links p {
     margin-bottom: 15px;
-    color: #888;
+    color: #64748b;
     font-size: 0.9rem;
   }
 
   .auth-links a {
-    color: #6366f1;
+    color: #0ea5e9;
     text-decoration: none;
     font-size: 0.95rem;
     transition: color 0.3s ease;
+    font-weight: 600;
   }
 
   .auth-links a:hover {
-    color: #8b5cf6;
+    color: #0284c7;
     text-decoration: underline;
   }
 
@@ -339,7 +336,7 @@
     left: 0;
     width: 100%;
     height: 1px;
-    background-color: #8b5cf6;
+    background-color: #0ea5e9;
     transform: scaleX(0);
     transform-origin: bottom right;
     transition: transform 0.3s ease;
@@ -351,30 +348,30 @@
   }
 
   .resend-disabled {
-    color: #95a5a6 !important;
+    color: #94a3b8 !important;
     pointer-events: none;
     cursor: not-allowed;
   }
 
-  /* Alert Styles */
   .alert {
     padding: 12px 16px;
     border-radius: 8px;
     margin-bottom: 20px;
     font-size: 0.9rem;
     animation: slideIn 0.3s ease-out;
+    border-left: 4px solid;
   }
 
   .alert-error {
     background-color: rgba(239, 68, 68, 0.1);
     color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-left-color: #ef4444;
   }
 
   .alert-success {
     background-color: rgba(16, 185, 129, 0.1);
     color: #10b981;
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-left-color: #10b981;
     display: flex;
     align-items: center;
   }
@@ -383,7 +380,6 @@
     margin-right: 8px;
   }
 
-  /* Animations */
   @keyframes spin {
     0% {
       transform: rotate(0deg);
@@ -448,36 +444,29 @@
     animation: slideIn 0.3s ease-out;
   }
 
-  /* Mobile Optimizations */
   @media (max-width: 480px) {
     .auth-container {
       padding: 15px;
     }
-
     .auth-card {
       padding: 25px 20px;
     }
-
     .auth-title {
       font-size: 1.5rem;
     }
-
     .otp-input-container {
       gap: 6px;
       max-width: 280px;
     }
-
     .otp-input {
       width: 40px;
       height: 50px;
       font-size: 16px;
     }
-
     .btn-primary {
       padding: 12px 16px;
       font-size: 0.95rem;
     }
-
     .otp-status {
       font-size: 0.8rem;
     }
@@ -487,16 +476,13 @@
     .auth-card {
       padding: 40px 35px;
     }
-
     .auth-title {
       font-size: 2rem;
     }
-
     .otp-input-container {
       gap: 10px;
       max-width: 340px;
     }
-
     .otp-input {
       width: 50px;
       height: 60px;
@@ -508,7 +494,6 @@
       gap: 4px;
       max-width: 260px;
     }
-
     .otp-input {
       width: 38px;
       height: 48px;
