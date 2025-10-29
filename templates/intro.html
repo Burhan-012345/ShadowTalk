@@ -92,7 +92,7 @@
         justify-content: space-between;
         align-items: center;
         position: relative;
-        z-index: 10;
+        z-index: 100;
         background: rgba(15, 23, 42, 0.95);
         border-bottom: 1px solid rgba(14, 165, 233, 0.3);
         backdrop-filter: blur(10px);
@@ -128,6 +128,52 @@
 
       .nav-links a:hover {
         color: var(--primary-light);
+      }
+
+      /* Theme Switcher positioned lower in the layout */
+      .theme-section {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .theme-switcher {
+        background: var(--card-bg);
+        border: 2px solid var(--primary-light);
+        color: var(--text);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1.3rem;
+        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+        z-index: 1001;
+      }
+
+      .theme-switcher:hover {
+        transform: translateY(-3px) scale(1.1);
+        box-shadow: 0 6px 20px rgba(14, 165, 233, 0.5);
+        background: var(--gradient);
+        color: white;
+      }
+
+      .theme-label {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        background: rgba(15, 23, 42, 0.8);
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(14, 165, 233, 0.2);
       }
 
       .hero {
@@ -198,6 +244,78 @@
         border-color: var(--primary-light);
         color: var(--primary-light);
         transform: translateY(-2px);
+      }
+
+      /* Chat Options Section */
+      .chat-options {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+      }
+
+      .chat-option-card {
+        background: var(--card-bg);
+        padding: 2.5rem;
+        border-radius: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .chat-option-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(14, 165, 233, 0.2);
+        border-color: var(--primary-light);
+      }
+
+      .chat-option-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: var(--gradient);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+      }
+
+      .chat-option-card h3 {
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+        color: var(--text);
+      }
+
+      .chat-option-card p {
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+      }
+
+      .chat-option-btn {
+        padding: 1rem 2rem;
+        background: var(--gradient);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        width: 100%;
+      }
+
+      .chat-option-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(14, 165, 233, 0.4);
       }
 
       .features {
@@ -376,39 +494,6 @@
       .copyright {
         color: var(--text-secondary);
         margin-top: 2rem;
-      }
-
-      /* Theme Switcher Styles */
-      .theme-switcher {
-        background: transparent;
-        border: 2px solid var(--skyline-light);
-        color: var(--text);
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 1.1rem;
-      }
-
-      .theme-switcher:hover {
-        border-color: var(--primary-light);
-        color: var(--primary-light);
-        transform: translateY(-2px);
-      }
-
-      .mobile-nav-actions {
-        display: none;
-        align-items: center;
-        gap: 1rem;
-      }
-
-      .mobile-nav-actions .btn {
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
       }
 
       /* Demo Modal Styles */
@@ -700,8 +785,95 @@
         margin-bottom: 0.25rem;
       }
 
+      /* Animation classes */
+      .fade-in {
+        animation: fadeIn 1s ease-in;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .slide-in-left {
+        animation: slideInLeft 1s ease-out;
+      }
+
+      @keyframes slideInLeft {
+        from {
+          opacity: 0;
+          transform: translateX(-50px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .slide-in-right {
+        animation: slideInRight 1s ease-out;
+      }
+
+      @keyframes slideInRight {
+        from {
+          opacity: 0;
+          transform: translateX(50px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      /* Mobile Navigation Actions */
+      .mobile-nav-actions {
+        display: none;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .mobile-nav-actions .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+      }
+
+      /* Mobile menu functionality */
+      .mobile-menu-btn {
+        display: none;
+        background: none;
+        border: none;
+        color: var(--text);
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0.5rem;
+      }
+
       /* Responsive Design */
       @media (max-width: 768px) {
+        .theme-section {
+          bottom: 1rem;
+          right: 1rem;
+          z-index: 1000;
+        }
+
+        .theme-switcher {
+          width: 45px;
+          height: 45px;
+          font-size: 1.1rem;
+          background: var(--card-bg);
+          border: 2px solid var(--primary-light);
+        }
+
+        .theme-label {
+          display: none;
+        }
+
         .hero h1 {
           font-size: 2.5rem;
         }
@@ -721,8 +893,13 @@
           display: none;
         }
 
-        .mobile-nav-actions {
-          display: flex;
+        .chat-options {
+          grid-template-columns: 1fr;
+          padding: 1rem;
+        }
+
+        .chat-option-card {
+          padding: 2rem;
         }
 
         .features {
@@ -779,26 +956,55 @@
         .demo-features {
           grid-template-columns: repeat(2, 1fr);
         }
+
+        .mobile-menu-btn {
+          display: block;
+        }
+
+        .nav-links {
+          position: fixed;
+          top: 70px;
+          left: 0;
+          width: 100%;
+          background: var(--skyline-dark);
+          flex-direction: column;
+          padding: 1rem;
+          border-bottom: 1px solid rgba(14, 165, 233, 0.3);
+          transform: translateY(-100%);
+          transition: transform 0.3s ease;
+          z-index: 1000;
+        }
+
+        .nav-links.active {
+          transform: translateY(0);
+        }
+
+        .nav-links a {
+          padding: 0.75rem 0;
+          border-bottom: 1px solid rgba(14, 165, 233, 0.1);
+          width: 100%;
+          text-align: center;
+        }
+
+        .nav-links a:last-child {
+          border-bottom: none;
+        }
       }
 
       @media (max-width: 480px) {
-        .navbar {
-          padding: 1rem 1.25rem;
-        }
-
-        .mobile-nav-actions {
-          gap: 0.75rem;
-        }
-
-        .mobile-nav-actions .btn {
-          padding: 0.4rem 0.8rem;
-          font-size: 0.8rem;
+        .theme-section {
+          bottom: 0.75rem;
+          right: 0.75rem;
         }
 
         .theme-switcher {
-          width: 35px;
-          height: 35px;
+          width: 40px;
+          height: 40px;
           font-size: 1rem;
+        }
+
+        .navbar {
+          padding: 1rem 1.25rem;
         }
 
         .demo-modal {
@@ -861,51 +1067,240 @@
         .demo-feature i {
           font-size: 1rem;
         }
-      }
 
-      /* Animation classes */
-      .fade-in {
-        animation: fadeIn 1s ease-in;
-      }
-
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(30px);
+        /* Mobile Responsive Fixes for Intro Page */
+        .navbar {
+          padding: 1rem;
+          flex-wrap: wrap;
         }
-        to {
-          opacity: 1;
-          transform: translateY(0);
+
+        .logo {
+          font-size: 1.2rem;
+        }
+
+        .logo i {
+          font-size: 1.5rem;
+        }
+
+        .nav-links {
+          display: none;
+        }
+
+        .hero {
+          padding: 2rem 1rem;
+        }
+
+        .hero h1 {
+          font-size: 2rem;
+          line-height: 1.2;
+        }
+
+        .hero p {
+          font-size: 1rem;
+          margin-bottom: 2rem;
+        }
+
+        .cta-buttons {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .btn {
+          width: 100%;
+          max-width: none;
+          justify-content: center;
+          padding: 1rem 1.5rem;
+          min-height: 54px;
+        }
+
+        .features {
+          grid-template-columns: 1fr;
+          padding: 0 1rem 2rem;
+          gap: 1rem;
+        }
+
+        .feature-card {
+          padding: 1.5rem;
+        }
+
+        .feature-icon {
+          width: 60px;
+          height: 60px;
+          font-size: 1.5rem;
+        }
+
+        .feature-card h3 {
+          font-size: 1.3rem;
+        }
+
+        .how-it-works {
+          padding: 0 1rem;
+          margin: 2rem auto;
+        }
+
+        .how-it-works h2 {
+          font-size: 2rem;
+          margin-bottom: 2rem;
+        }
+
+        .steps {
+          grid-template-columns: 1fr;
+          gap: 2rem;
+        }
+
+        .step {
+          padding: 1.5rem;
+        }
+
+        .step-number {
+          width: 35px;
+          height: 35px;
+          font-size: 0.9rem;
+        }
+
+        .stats {
+          margin: 2rem auto;
+          padding: 2rem 1rem;
+          border-radius: 15px;
+        }
+
+        .stats h2 {
+          font-size: 2rem;
+          margin-bottom: 2rem;
+        }
+
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1.5rem;
+        }
+
+        .stat-number {
+          font-size: 2rem;
+        }
+
+        .stat-label {
+          font-size: 0.9rem;
+        }
+
+        .footer {
+          padding: 2rem 1rem;
+        }
+
+        .footer-links {
+          flex-direction: column;
+          gap: 1rem;
+          margin: 1.5rem 0;
+        }
+
+        /* Demo modal mobile fixes */
+        .demo-modal {
+          padding: 0.5rem;
+          align-items: flex-start;
+          padding-top: 2rem;
+        }
+
+        .demo-container {
+          max-height: 95vh;
+          border-radius: 15px;
+        }
+
+        .demo-header {
+          padding: 1rem;
+        }
+
+        .demo-header h2 {
+          font-size: 1.2rem;
+        }
+
+        .demo-content {
+          padding: 1rem;
+          gap: 1rem;
+        }
+
+        .demo-chat-header {
+          padding: 0.75rem 1rem;
+        }
+
+        .demo-chat-messages {
+          padding: 0.75rem;
+          max-height: 40vh;
+        }
+
+        .demo-message {
+          max-width: 90%;
+          padding: 0.75rem;
+        }
+
+        .demo-controls {
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+
+        .demo-btn {
+          width: 100%;
+          justify-content: center;
+          min-height: 48px;
+        }
+
+        .demo-features {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.5rem;
+        }
+
+        .demo-feature {
+          padding: 0.75rem 0.5rem;
+          font-size: 0.8rem;
+        }
+
+        .demo-feature i {
+          font-size: 1.1rem;
+          margin-bottom: 0.3rem;
         }
       }
 
-      .slide-in-left {
-        animation: slideInLeft 1s ease-out;
+      /* Extra small devices */
+      @media (max-width: 360px) {
+        .hero h1 {
+          font-size: 1.8rem;
+        }
+
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .demo-features {
+          grid-template-columns: 1fr;
+        }
+
+        .theme-section {
+          bottom: 0.5rem;
+          right: 0.5rem;
+        }
+
+        .theme-switcher {
+          width: 38px;
+          height: 38px;
+          font-size: 0.9rem;
+        }
       }
 
-      @keyframes slideInLeft {
-        from {
-          opacity: 0;
-          transform: translateX(-50px);
+      /* Fix viewport for iOS Safari */
+      @supports (-webkit-touch-callout: none) {
+        .intro-container {
+          min-height: -webkit-fill-available;
         }
-        to {
-          opacity: 1;
-          transform: translateX(0);
+
+        .demo-container {
+          max-height: -webkit-fill-available;
         }
       }
 
-      .slide-in-right {
-        animation: slideInRight 1s ease-out;
-      }
-
-      @keyframes slideInRight {
-        from {
-          opacity: 0;
-          transform: translateX(50px);
-        }
-        to {
-          opacity: 1;
-          transform: translateX(0);
+      /* Prevent zoom on input focus for iOS */
+      @media (max-width: 480px) {
+        input,
+        select,
+        textarea {
+          font-size: 16px;
         }
       }
     </style>
@@ -1205,196 +1600,1135 @@
     </div>
 
     <script>
-      // Demo messages for the chat simulation
-      const demoMessages = [
-        "Hey! How's your day going? 🌟",
-        "I love how anonymous this chat is! No pressure to share personal info.",
-        "The AI features here are amazing - it even suggests replies!",
-        "Have you tried the voice chat feature yet? It's crystal clear!",
-        "This platform connects people from all over the world. So cool! 🌍",
-        "The safety features make me feel really comfortable chatting here.",
-        "What kind of conversations do you usually have on ShadowTalk?",
-        "I've met some really interesting people here. Everyone is so friendly!",
-        "The auto-translate feature is a game-changer for international chats!",
-        "Thanks for chatting with me! This demo shows how great ShadowTalk is! 🚀",
-      ];
+      // Mobile-optimized JavaScript
+      document.addEventListener("DOMContentLoaded", function () {
+        // Initialize the setup
+        generateAvatar();
+        updateProgressBar();
+        loadTrendingInterests();
+        startGuidedTour();
+        setupMobileOptimizations();
 
-      // Create animated background particles
-      function createParticles() {
-        const particlesContainer = document.getElementById("particles");
-        const particleCount = 15;
+        // Add form submission handler
+        setupFormSubmission();
+      });
 
-        for (let i = 0; i < particleCount; i++) {
-          const particle = document.createElement("div");
-          particle.className = "particle";
-
-          // Random properties
-          const size = Math.random() * 60 + 10;
-          const posX = Math.random() * 100;
-          const posY = Math.random() * 100;
-          const delay = Math.random() * 5;
-          const duration = Math.random() * 3 + 3;
-
-          particle.style.width = `${size}px`;
-          particle.style.height = `${size}px`;
-          particle.style.left = `${posX}%`;
-          particle.style.top = `${posY}%`;
-          particle.style.animationDelay = `${delay}s`;
-          particle.style.animationDuration = `${duration}s`;
-          particle.style.opacity = Math.random() * 0.2 + 0.1;
-          particle.style.background = `radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%)`;
-
-          particlesContainer.appendChild(particle);
-        }
-      }
-
-      // Demo functionality
-      let demoMessageIndex = 0;
-      let autoDemoInterval = null;
-
-      function openDemo() {
-        const modal = document.getElementById("demoModal");
-        modal.classList.add("active");
-        document.body.style.overflow = "hidden";
-      }
-
-      function closeDemo() {
-        const modal = document.getElementById("demoModal");
-        modal.classList.remove("active");
-        document.body.style.overflow = "auto";
-        stopAutoDemo();
-      }
-
-      function addDemoMessage(message, isOwn = false) {
-        const messagesContainer = document.getElementById("demoChatMessages");
-        const messageElement = document.createElement("div");
-        messageElement.className = `demo-message ${isOwn ? "own" : "other"}`;
-
-        const now = new Date();
-        const timeString = now.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
+      // Setup mobile-specific optimizations
+      function setupMobileOptimizations() {
+        // Prevent zoom on input focus for iOS
+        document.querySelectorAll("input, select, textarea").forEach((el) => {
+          el.addEventListener("focus", function () {
+            this.style.fontSize = "16px";
+          });
         });
 
-        messageElement.innerHTML = `
-          <div class="demo-message-text">${message}</div>
-          <div class="demo-message-time">${timeString}</div>
-      `;
+        // Handle touch events for better mobile interaction
+        document.querySelectorAll(".interest-tag").forEach((tag) => {
+          tag.addEventListener("touchstart", function () {
+            this.style.transform = "scale(0.95)";
+          });
 
-        messagesContainer.appendChild(messageElement);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          tag.addEventListener("touchend", function () {
+            this.style.transform = "";
+          });
+        });
+
+        // Adjust layout for mobile orientation changes
+        window.addEventListener("orientationchange", function () {
+          setTimeout(() => {
+            updateProgressBar();
+          }, 300);
+        });
       }
 
-      function showTypingIndicator() {
-        const indicator = document.getElementById("demoTypingIndicator");
-        indicator.classList.add("active");
+      // Setup form submission
+      function setupFormSubmission() {
+        const form = document.getElementById("profileForm");
+        const submitBtn = form.querySelector(".btn-complete");
+
+        submitBtn.addEventListener("click", function (e) {
+          e.preventDefault();
+          handleFormSubmission();
+        });
       }
 
-      function hideTypingIndicator() {
-        const indicator = document.getElementById("demoTypingIndicator");
-        indicator.classList.remove("active");
+      // Step Navigation
+      let currentStep = 1;
+      const totalSteps = 4;
+
+      function nextStep() {
+        if (currentStep < totalSteps) {
+          document
+            .getElementById(`step${currentStep}`)
+            .classList.remove("active");
+          currentStep++;
+          document.getElementById(`step${currentStep}`).classList.add("active");
+          updateProgressBar();
+          updatePreview();
+        }
       }
 
-      function sendDemoMessage() {
-        if (demoMessageIndex >= demoMessages.length) {
-          demoMessageIndex = 0; // Reset to start
+      function prevStep() {
+        if (currentStep > 1) {
+          document
+            .getElementById(`step${currentStep}`)
+            .classList.remove("active");
+          currentStep--;
+          document.getElementById(`step${currentStep}`).classList.add("active");
+          updateProgressBar();
+        }
+      }
+
+      function updateProgressBar() {
+        const progress = (currentStep / totalSteps) * 100;
+        document.getElementById("progressFill").style.width = `${progress}%`;
+
+        // Update step indicators
+        document.querySelectorAll(".step").forEach((step, index) => {
+          if (index + 1 <= currentStep) {
+            step.classList.add("active");
+          } else {
+            step.classList.remove("active");
+          }
+        });
+      }
+
+      // Avatar Generation
+      function generateAvatar() {
+        const style = document.getElementById("avatarStyle").value;
+        const bgColor = document.getElementById("avatarBgColor").value;
+        const mood = document.getElementById("avatarMood").value;
+
+        // Show the canvas and hide initials fallback
+        document.getElementById("avatarCanvas").style.display = "block";
+        document.getElementById("avatarInitialsFallback").style.display =
+          "none";
+
+        const canvas = document.getElementById("avatarCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw background
+        ctx.fillStyle = bgColor;
+        ctx.beginPath();
+        ctx.arc(
+          canvas.width / 2,
+          canvas.height / 2,
+          canvas.width / 2,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+
+        // Generate avatar based on style and mood
+        generateAvatarArt(ctx, canvas, style, mood);
+
+        // Update preview
+        updatePreview();
+      }
+
+      function generateAvatarArt(ctx, canvas, style, mood) {
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = canvas.width / 2;
+
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+
+        switch (style) {
+          case "adventurer":
+            drawAdventurerAvatar(ctx, centerX, centerY, radius, mood);
+            break;
+          case "pixel":
+            drawPixelAvatar(ctx, centerX, centerY, radius, mood);
+            break;
+          case "bottts":
+            drawRobotAvatar(ctx, centerX, centerY, radius, mood);
+            break;
+          case "identicon":
+            drawAbstractAvatar(ctx, centerX, centerY, radius, mood);
+            break;
+          case "avataaars":
+            drawCartoonAvatar(ctx, centerX, centerY, radius, mood);
+            break;
+          default:
+            drawDefaultAvatar(ctx, centerX, centerY, radius, mood);
+        }
+      }
+
+      function drawAdventurerAvatar(ctx, centerX, centerY, radius, mood) {
+        // Face
+        ctx.fillStyle = "#ffdbac";
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes
+        ctx.fillStyle = "#2c3e50";
+        const eyeY = centerY - radius * 0.1;
+        const eyeSpacing = radius * 0.3;
+
+        // Adjust eyes based on mood
+        let eyeSize = radius * 0.1;
+        if (mood === "happy") {
+          // Smiling eyes
+          ctx.beginPath();
+          ctx.arc(centerX - eyeSpacing, eyeY, eyeSize, 0, Math.PI, true);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(centerX + eyeSpacing, eyeY, eyeSize, 0, Math.PI, true);
+          ctx.stroke();
+        } else {
+          // Normal eyes
+          ctx.beginPath();
+          ctx.arc(centerX - eyeSpacing, eyeY, eyeSize, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(centerX + eyeSpacing, eyeY, eyeSize, 0, Math.PI * 2);
+          ctx.fill();
         }
 
-        const message = demoMessages[demoMessageIndex];
-        addDemoMessage(message, true);
-        demoMessageIndex++;
+        // Mouth based on mood
+        ctx.strokeStyle = "#2c3e50";
+        ctx.lineWidth = 2;
+        const mouthY = centerY + radius * 0.2;
 
-        // Show typing indicator and then respond
-        showTypingIndicator();
-        setTimeout(() => {
-          hideTypingIndicator();
-          setTimeout(() => {
-            const responses = [
-              "That's interesting! Tell me more.",
-              "I completely agree with you!",
-              "Wow, I never thought about it that way!",
-              "This is exactly why I love ShadowTalk!",
-              "Have you been using the platform for long?",
-              "The anonymity really makes conversations more genuine!",
-              "I've had some amazing discussions here too!",
-              "What's your favorite feature so far?",
-              "The global connections are mind-blowing!",
-              "Thanks for sharing that perspective! 🌟",
-            ];
-            const randomResponse =
-              responses[Math.floor(Math.random() * responses.length)];
-            addDemoMessage(randomResponse, false);
-          }, 500);
-        }, 1500);
+        switch (mood) {
+          case "happy":
+            // Smile
+            ctx.beginPath();
+            ctx.arc(centerX, mouthY, radius * 0.3, 0, Math.PI, false);
+            ctx.stroke();
+            break;
+          case "serious":
+            // Straight line
+            ctx.beginPath();
+            ctx.moveTo(centerX - radius * 0.2, mouthY);
+            ctx.lineTo(centerX + radius * 0.2, mouthY);
+            ctx.stroke();
+            break;
+          case "fun":
+            // Winky face
+            ctx.beginPath();
+            ctx.arc(centerX - eyeSpacing, eyeY, eyeSize, 0, Math.PI * 2);
+            ctx.fill();
+            // Winking eye
+            ctx.beginPath();
+            ctx.moveTo(centerX + eyeSpacing - eyeSize, eyeY);
+            ctx.lineTo(centerX + eyeSpacing + eyeSize, eyeY);
+            ctx.stroke();
+            // Smile
+            ctx.beginPath();
+            ctx.arc(centerX, mouthY, radius * 0.3, 0, Math.PI, false);
+            ctx.stroke();
+            break;
+          default: // neutral
+            // Small neutral mouth
+            ctx.beginPath();
+            ctx.arc(centerX, mouthY, radius * 0.15, 0, Math.PI, false);
+            ctx.stroke();
+        }
       }
 
-      function startAutoDemo() {
-        if (autoDemoInterval) {
-          stopAutoDemo();
+      function drawPixelAvatar(ctx, centerX, centerY, radius, mood) {
+        const pixelSize = radius * 0.2;
+
+        // Face
+        ctx.fillStyle = "#ffdbac";
+        for (let i = -2; i <= 2; i++) {
+          for (let j = -2; j <= 2; j++) {
+            if (Math.abs(i) <= 2 && Math.abs(j) <= 2) {
+              ctx.fillRect(
+                centerX + i * pixelSize - pixelSize / 2,
+                centerY + j * pixelSize - pixelSize / 2,
+                pixelSize,
+                pixelSize
+              );
+            }
+          }
+        }
+
+        // Eyes
+        ctx.fillStyle = "#2c3e50";
+        ctx.fillRect(
+          centerX - pixelSize * 1.5,
+          centerY - pixelSize,
+          pixelSize,
+          pixelSize
+        );
+        ctx.fillRect(
+          centerX + pixelSize * 0.5,
+          centerY - pixelSize,
+          pixelSize,
+          pixelSize
+        );
+
+        // Mouth
+        ctx.fillStyle = "#2c3e50";
+        if (mood === "happy") {
+          ctx.fillRect(
+            centerX - pixelSize,
+            centerY + pixelSize,
+            pixelSize,
+            pixelSize
+          );
+          ctx.fillRect(
+            centerX,
+            centerY + pixelSize * 1.5,
+            pixelSize,
+            pixelSize
+          );
+          ctx.fillRect(
+            centerX + pixelSize,
+            centerY + pixelSize,
+            pixelSize,
+            pixelSize
+          );
+        } else {
+          ctx.fillRect(
+            centerX - pixelSize,
+            centerY + pixelSize,
+            pixelSize * 3,
+            pixelSize
+          );
+        }
+      }
+
+      function drawRobotAvatar(ctx, centerX, centerY, radius, mood) {
+        // Head
+        ctx.fillStyle = "#95a5a6";
+        ctx.fillRect(
+          centerX - radius * 0.6,
+          centerY - radius * 0.6,
+          radius * 1.2,
+          radius * 1.2
+        );
+
+        // Eyes
+        ctx.fillStyle = "#e74c3c";
+        const eyeSize = radius * 0.15;
+        ctx.fillRect(
+          centerX - radius * 0.3,
+          centerY - radius * 0.1,
+          eyeSize,
+          eyeSize
+        );
+        ctx.fillRect(
+          centerX + radius * 0.15,
+          centerY - radius * 0.1,
+          eyeSize,
+          eyeSize
+        );
+
+        // Mouth - antenna for fun mood
+        if (mood === "fun") {
+          ctx.fillStyle = "#e74c3c";
+          ctx.fillRect(
+            centerX - radius * 0.05,
+            centerY,
+            radius * 0.1,
+            radius * 0.3
+          );
+          // Antenna ball
+          ctx.beginPath();
+          ctx.arc(
+            centerX,
+            centerY - radius * 0.8,
+            radius * 0.1,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        } else {
+          ctx.fillStyle = "#34495e";
+          ctx.fillRect(
+            centerX - radius * 0.2,
+            centerY + radius * 0.2,
+            radius * 0.4,
+            radius * 0.1
+          );
+        }
+      }
+
+      function drawAbstractAvatar(ctx, centerX, centerY, radius, mood) {
+        // Abstract geometric pattern
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 3;
+
+        const shapes = Math.random() > 0.5 ? 4 : 6;
+        const angleStep = (Math.PI * 2) / shapes;
+
+        for (let i = 0; i < shapes; i++) {
+          const angle = i * angleStep;
+          const x1 = centerX + Math.cos(angle) * radius * 0.3;
+          const y1 = centerY + Math.sin(angle) * radius * 0.3;
+          const x2 = centerX + Math.cos(angle) * radius * 0.7;
+          const y2 = centerY + Math.sin(angle) * radius * 0.7;
+
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+
+          // Add circles at endpoints for some moods
+          if (mood === "happy" || mood === "fun") {
+            ctx.beginPath();
+            ctx.arc(x2, y2, radius * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      function drawCartoonAvatar(ctx, centerX, centerY, radius, mood) {
+        // Simple cartoon face
+        ctx.fillStyle = "#ffdbac";
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Big cartoon eyes
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.arc(
+          centerX - radius * 0.25,
+          centerY - radius * 0.1,
+          radius * 0.15,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(
+          centerX + radius * 0.25,
+          centerY - radius * 0.1,
+          radius * 0.15,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+
+        // Pupils
+        ctx.fillStyle = "#2c3e50";
+        ctx.beginPath();
+        ctx.arc(
+          centerX - radius * 0.25,
+          centerY - radius * 0.1,
+          radius * 0.07,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(
+          centerX + radius * 0.25,
+          centerY - radius * 0.1,
+          radius * 0.07,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+
+        // Mouth based on mood
+        ctx.strokeStyle = "#e74c3c";
+        ctx.lineWidth = 3;
+        const mouthY = centerY + radius * 0.3;
+
+        if (mood === "happy") {
+          ctx.beginPath();
+          ctx.arc(centerX, mouthY, radius * 0.2, 0.1, Math.PI - 0.1, false);
+          ctx.stroke();
+        } else if (mood === "serious") {
+          ctx.beginPath();
+          ctx.moveTo(centerX - radius * 0.15, mouthY);
+          ctx.lineTo(centerX + radius * 0.15, mouthY);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.arc(centerX, mouthY, radius * 0.15, 0, Math.PI, false);
+          ctx.stroke();
+        }
+      }
+
+      function drawDefaultAvatar(ctx, centerX, centerY, radius, mood) {
+        // Simple fallback avatar
+        ctx.fillStyle = "#3498db";
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "white";
+        ctx.font = "bold 24px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("AI", centerX, centerY);
+      }
+
+      function useInitialsAvatar() {
+        // Hide canvas and show initials fallback
+        document.getElementById("avatarCanvas").style.display = "none";
+        document.getElementById("avatarInitialsFallback").style.display =
+          "flex";
+
+        // Get display name for initials
+        const displayName =
+          document.getElementById("display_name").value || "User";
+        const initials = displayName
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+          .substring(0, 2);
+
+        document.getElementById("avatarInitials").textContent = initials;
+        updatePreview();
+      }
+
+      // Interests Management
+      function updateInterestsCount() {
+        const selectedInterests = document.querySelectorAll(
+          'input[name="interests"]:checked'
+        ).length;
+        document.getElementById("selectedCount").textContent =
+          selectedInterests;
+
+        const continueButton = document.getElementById("continueToPreview");
+        continueButton.disabled = selectedInterests < 3;
+
+        updatePreview();
+      }
+
+      function loadTrendingInterests() {
+        // In a real app, this would fetch trending interests from an API
+        const trendingInterests = [
+          "AI",
+          "Web3",
+          "Crypto",
+          "VR",
+          "Gaming",
+          "Startups",
+          "Programming",
+          "Design",
+        ];
+
+        const trendingTagsContainer = document.getElementById("trendingTags");
+        trendingTagsContainer.innerHTML = "";
+
+        trendingInterests.forEach((interest) => {
+          const tag = document.createElement("span");
+          tag.className = "interest-tag";
+          tag.textContent = interest;
+          tag.style.cursor = "pointer";
+          tag.onclick = function () {
+            // Find and check the corresponding checkbox
+            const checkbox = document.querySelector(
+              `input[value="${interest}"]`
+            );
+            if (checkbox) {
+              checkbox.checked = true;
+              updateInterestsCount();
+            }
+          };
+          trendingTagsContainer.appendChild(tag);
+        });
+      }
+
+      // Preview Updates
+      function updatePreview() {
+        // Update name and username
+        const displayName =
+          document.getElementById("display_name").value || "Display Name";
+        const username =
+          document.getElementById("username").value || "username";
+        document.getElementById("previewName").textContent = displayName;
+        document.getElementById("previewUsername").textContent = `@${username}`;
+
+        // Update bio
+        const bio =
+          document.getElementById("bio").value || "Bio will appear here...";
+        document.getElementById("previewBio").textContent = bio;
+
+        // Update age
+        const age = document.getElementById("age").value;
+        document.getElementById("previewAge").textContent = age || "--";
+
+        // Update interests count
+        const selectedInterests = document.querySelectorAll(
+          'input[name="interests"]:checked'
+        ).length;
+        document.getElementById("previewInterestsCount").textContent =
+          selectedInterests;
+
+        // Update avatar preview
+        const avatarCanvas = document.getElementById("avatarCanvas");
+        const avatarInitials = document.getElementById(
+          "avatarInitialsFallback"
+        );
+
+        if (avatarCanvas.style.display !== "none") {
+          // Using AI avatar - convert canvas to image for preview
+          const canvas = document.getElementById("avatarCanvas");
+          const dataURL = canvas.toDataURL();
+          const previewAvatar = document.getElementById("previewAvatar");
+
+          previewAvatar.src = dataURL;
+          previewAvatar.style.display = "block";
+          document.getElementById("previewAvatarInitials").style.display =
+            "none";
+        } else {
+          // Using initials avatar
+          document.getElementById("previewAvatar").style.display = "none";
+          document.getElementById("previewAvatarInitials").style.display =
+            "flex";
+          document.getElementById("previewAvatarInitialsText").textContent =
+            document.getElementById("avatarInitials").textContent;
+        }
+
+        // Update selected interests in preview
+        updatePreviewInterests();
+
+        // Update character count
+        const bioText = document.getElementById("bio").value;
+        document.getElementById("charCount").textContent = bioText.length;
+
+        // Update compatibility score based on profile completeness
+        updateCompatibilityScore();
+      }
+
+      function updatePreviewInterests() {
+        const selectedInterests = Array.from(
+          document.querySelectorAll('input[name="interests"]:checked')
+        ).map((checkbox) => checkbox.value);
+
+        const previewInterestsContainer =
+          document.getElementById("previewInterests");
+        previewInterestsContainer.innerHTML = "";
+
+        selectedInterests.slice(0, 8).forEach((interest) => {
+          const tag = document.createElement("span");
+          tag.className = "interest-tag";
+          tag.textContent = interest;
+          previewInterestsContainer.appendChild(tag);
+        });
+
+        if (selectedInterests.length > 8) {
+          const moreTag = document.createElement("span");
+          moreTag.className = "interest-tag";
+          moreTag.textContent = `+${selectedInterests.length - 8} more`;
+          previewInterestsContainer.appendChild(moreTag);
+        }
+      }
+
+      function updateCompatibilityScore() {
+        // Calculate a simple compatibility score based on profile completeness
+        let score = 50; // Base score
+
+        // Add points for filled fields
+        if (document.getElementById("display_name").value.length > 0)
+          score += 10;
+        if (document.getElementById("username").value.length >= 3) score += 10;
+        if (document.getElementById("bio").value.length > 20) score += 10;
+        if (document.getElementById("age").value) score += 5;
+
+        // Add points for interests (max 15 points)
+        const interestCount = document.querySelectorAll(
+          'input[name="interests"]:checked'
+        ).length;
+        score += Math.min(interestCount * 5, 15);
+
+        // Ensure score doesn't exceed 100
+        score = Math.min(score, 100);
+
+        document.getElementById("compatibilityScore").textContent = `${score}%`;
+
+        // Update the score circle visual
+        const scoreCircle = document.querySelector(".score-circle");
+        if (scoreCircle) {
+          scoreCircle.style.background = `conic-gradient(#6366f1 0% ${score}%, #2d2d42 ${score}% 100%)`;
+        }
+      }
+
+      // Username Availability Check
+      function checkUsernameAvailability() {
+        const username = document.getElementById("username").value;
+        const feedback = document.getElementById("usernameFeedback");
+
+        if (username.length < 3) {
+          feedback.textContent = "Username must be at least 3 characters";
+          feedback.style.color = "#f87171";
           return;
         }
 
-        // Send initial message
-        sendDemoMessage();
-
-        // Set up interval for automatic messages
-        autoDemoInterval = setInterval(() => {
-          sendDemoMessage();
-        }, 4000);
-      }
-
-      function stopAutoDemo() {
-        if (autoDemoInterval) {
-          clearInterval(autoDemoInterval);
-          autoDemoInterval = null;
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+          feedback.textContent =
+            "Username can only contain letters, numbers, and underscores";
+          feedback.style.color = "#f87171";
+          return;
         }
+
+        // Simulate API check
+        setTimeout(() => {
+          feedback.textContent = "✓ Username is available";
+          feedback.style.color = "#06d6a0";
+        }, 500);
       }
 
-      // Event Listeners
-      document.addEventListener("DOMContentLoaded", function () {
-        createParticles();
+      // Guided Tour
+      let currentTourStep = 1;
 
-        // Demo modal functionality
-        document.getElementById("demoBtn").addEventListener("click", openDemo);
-        document.getElementById("demoBtn2").addEventListener("click", openDemo);
-        document
-          .getElementById("demoClose")
-          .addEventListener("click", closeDemo);
-        document
-          .getElementById("demoSendMessage")
-          .addEventListener("click", sendDemoMessage);
-        document
-          .getElementById("demoAutoChat")
-          .addEventListener("click", startAutoDemo);
+      function startGuidedTour() {
+        document.getElementById("guidedTour").style.display = "flex";
+      }
 
-        // Close modal when clicking outside
+      function nextTourStep() {
         document
-          .getElementById("demoModal")
-          .addEventListener("click", function (e) {
-            if (e.target === this) {
-              closeDemo();
+          .getElementById(`tourStep${currentTourStep}`)
+          .classList.remove("active");
+        currentTourStep++;
+        document
+          .getElementById(`tourStep${currentTourStep}`)
+          .classList.add("active");
+      }
+
+      function prevTourStep() {
+        document
+          .getElementById(`tourStep${currentTourStep}`)
+          .classList.remove("active");
+        currentTourStep--;
+        document
+          .getElementById(`tourStep${currentTourStep}`)
+          .classList.add("active");
+      }
+
+      function skipTour() {
+        document.getElementById("guidedTour").style.display = "none";
+      }
+
+      function completeTour() {
+        document.getElementById("guidedTour").style.display = "none";
+      }
+
+      // File upload handling
+      document
+        .getElementById("photoUpload")
+        .addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              // Show AI suggestions when a photo is uploaded
+              document.getElementById("aiSuggestion").style.display = "block";
+              generateAISuggestions(e.target.result);
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+      function generateAISuggestions(photoData) {
+        // In a real implementation, this would call an AI service
+        // For demo, we'll generate some mock suggestions
+        const suggestionGrid = document.getElementById("suggestionGrid");
+        suggestionGrid.innerHTML = "";
+
+        const styles = [
+          "Cartoon",
+          "Anime",
+          "Pixel Art",
+          "Cyberpunk",
+          "Watercolor",
+        ];
+
+        styles.forEach((style) => {
+          const suggestionItem = document.createElement("div");
+          suggestionItem.className = "suggestion-item";
+          suggestionItem.innerHTML = `
+        <div style="width: 80px; height: 80px; background: #6366f1; border-radius: 8px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; text-align: center;">
+          ${style}
+        </div>
+        <span style="font-size: 12px;">${style}</span>
+      `;
+          suggestionItem.onclick = function () {
+            alert(`AI ${style} avatar would be generated here`);
+          };
+          suggestionGrid.appendChild(suggestionItem);
+        });
+      }
+
+      // Interest search functionality
+      document
+        .getElementById("interestSearch")
+        .addEventListener("input", function (e) {
+          const searchTerm = e.target.value.toLowerCase();
+          const interestTags = document.querySelectorAll(".interest-tag");
+
+          interestTags.forEach((tag) => {
+            const interestText = tag.textContent.toLowerCase();
+            const checkbox = tag.previousElementSibling;
+
+            if (interestText.includes(searchTerm)) {
+              tag.parentElement.style.display = "block";
+            } else {
+              tag.parentElement.style.display = "none";
             }
           });
+        });
 
-        // Add scroll animations
-        const observerOptions = {
-          threshold: 0.1,
-          rootMargin: "0px 0px -50px 0px",
+      // Form submission handler
+      function handleFormSubmission() {
+        // Validate minimum interests
+        const selectedInterests = document.querySelectorAll(
+          'input[name="interests"]:checked'
+        ).length;
+        if (selectedInterests < 3) {
+          alert(
+            "Please select at least 3 interests before completing your profile."
+          );
+          // Go back to interests step
+          document
+            .getElementById(`step${currentStep}`)
+            .classList.remove("active");
+          currentStep = 3;
+          document.getElementById(`step${currentStep}`).classList.add("active");
+          updateProgressBar();
+          return;
+        }
+
+        // Show loading state
+        const submitBtn = document.querySelector(".btn-complete");
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML =
+          '<i class="fas fa-spinner fa-spin"></i> Creating Profile...';
+        submitBtn.disabled = true;
+
+        // Collect form data
+        const formData = {
+          display_name: document.getElementById("display_name").value,
+          username: document.getElementById("username").value,
+          age: document.getElementById("age").value,
+          gender: document.getElementById("gender").value,
+          bio: document.getElementById("bio").value,
+          interests: Array.from(
+            document.querySelectorAll('input[name="interests"]:checked')
+          ).map((cb) => cb.value),
+          avatar_type:
+            document.getElementById("avatarCanvas").style.display !== "none"
+              ? "ai"
+              : "initials",
+          avatar_style: document.getElementById("avatarStyle").value,
+          avatar_bg_color: document.getElementById("avatarBgColor").value,
+          avatar_mood: document.getElementById("avatarMood").value,
+          avatar_initials:
+            document.getElementById("avatarInitials").textContent,
         };
 
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("fade-in");
-            }
-          });
-        }, observerOptions);
+        console.log("Form data to be submitted:", formData);
 
-        // Observe all feature cards and steps
-        document.querySelectorAll(".feature-card, .step").forEach((el) => {
-          observer.observe(el);
-        });
-      });
+        // Simulate API call to save profile
+        setTimeout(() => {
+          showSuccessAnimation();
+
+          // Show success page after animation
+          setTimeout(() => {
+            showSuccessPage();
+          }, 1500);
+        }, 1500);
+      }
+
+      function showSuccessAnimation() {
+        const completionSection = document.querySelector(".setup-complete");
+        if (!completionSection) return;
+
+        const completionIcon = completionSection.querySelector("i");
+
+        // Change to checkmark and animate
+        completionIcon.className = "fas fa-check-circle";
+        completionIcon.style.color = "#06d6a0";
+
+        // Add pulsing animation
+        completionSection.style.animation = "pulse 1s ease-in-out";
+
+        // Update text
+        const title = completionSection.querySelector("h3");
+        const subtitle = completionSection.querySelector("p");
+
+        if (title) title.textContent = "Profile Created Successfully!";
+        if (subtitle) subtitle.textContent = "Redirecting to your dashboard...";
+      }
+
+      function showSuccessPage() {
+        const setupContainer = document.querySelector(".setup-container");
+        if (!setupContainer) return;
+
+        setupContainer.innerHTML = `
+      <div class="success-redirect">
+        <div class="success-animation">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <h2>Welcome to ShadowTalk! 🎉</h2>
+        <p>Your profile has been created successfully and you're all set to start chatting.</p>
+        
+        <div class="profile-summary">
+          <div class="summary-item">
+            <strong>Gender:</strong>
+            <span id="summaryGender">Prefer not to say</span>
+          </div>
+          <div class="summary-item">
+            <strong>Bio:</strong>
+            <p id="summaryBio">Tell us about yourself, your interests, or what you're looking for...</p>
+          </div>
+          <div class="summary-item">
+            <div class="char-counter">
+              <span id="summaryCharCount">0</span>/200 characters
+            </div>
+          </div>
+        </div>
+
+        <div class="next-steps">
+          <h3>Ready to Continue?</h3>
+          <p>Complete your profile setup to get the best experience</p>
+        </div>
+
+        <div class="redirect-actions">
+          <button class="btn-primary" onclick="continueToAvatar()">
+            Continue to Avatar <i class="fas fa-arrow-right"></i>
+          </button>
+          <button class="btn-secondary" onclick="skipToDashboard()">
+            Skip to Dashboard <i class="fas fa-rocket"></i>
+          </button>
+        </div>
+
+        <div class="tour-reminder">
+          <p><strong>Welcome to Profile Setup! 😊</strong></p>
+          <p>We'll guide you through creating an amazing profile that helps you find great matches.</p>
+          <div class="tour-actions">
+            <button class="btn-primary" onclick="startSetupTour()">
+              Let's Start!
+            </button>
+            <button class="btn-secondary" onclick="skipToDashboard()">
+              Skip Tour
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+        // Populate with actual user data
+        populateSummaryData();
+        addSuccessPageStyles();
+      }
+
+      function populateSummaryData() {
+        // Get the actual form data
+        const gender =
+          document.getElementById("gender")?.value || "Prefer not to say";
+        const bio =
+          document.getElementById("bio")?.value ||
+          "Tell us about yourself, your interests, or what you're looking for...";
+
+        // Update summary elements
+        const genderElement = document.getElementById("summaryGender");
+        const bioElement = document.getElementById("summaryBio");
+        const charCountElement = document.getElementById("summaryCharCount");
+
+        if (genderElement) genderElement.textContent = gender;
+        if (bioElement) bioElement.textContent = bio;
+        if (charCountElement) charCountElement.textContent = bio.length;
+      }
+
+      function continueToAvatar() {
+        // Continue with the profile setup process
+        // This would navigate to the avatar step in the setup flow
+        window.location.href = "/profile/setup?step=2";
+      }
+
+      function skipToDashboard() {
+        // Skip setup and go directly to dashboard
+        window.location.href = "/dashboard";
+      }
+
+      function startSetupTour() {
+        // Restart the setup process with guided tour
+        window.location.reload();
+      }
+
+      function addSuccessPageStyles() {
+        if (document.querySelector("#success-page-styles")) return;
+
+        const style = document.createElement("style");
+        style.id = "success-page-styles";
+        style.textContent = `
+      .success-redirect {
+        text-align: center;
+        padding: 30px 20px;
+        background: #1a1a2e;
+        border-radius: 15px;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        margin: 20px 0;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      
+      .success-animation i {
+        font-size: 60px;
+        color: #06d6a0;
+        margin-bottom: 20px;
+        animation: bounce 1s ease infinite;
+      }
+      
+      .success-redirect h2 {
+        color: #6366f1;
+        margin-bottom: 15px;
+        font-size: 1.8rem;
+      }
+      
+      .success-redirect p {
+        color: #ccc;
+        margin-bottom: 20px;
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+      
+      .profile-summary {
+        background: #2d2d42;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: left;
+        border-left: 4px solid #6366f1;
+      }
+      
+      .summary-item {
+        margin-bottom: 15px;
+      }
+      
+      .summary-item:last-child {
+        margin-bottom: 0;
+      }
+      
+      .summary-item strong {
+        color: #e0e0e0;
+        display: block;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+      }
+      
+      .summary-item span,
+      .summary-item p {
+        color: #ccc;
+        margin: 0;
+        font-size: 0.95rem;
+        line-height: 1.4;
+      }
+      
+      .char-counter {
+        text-align: right;
+        font-size: 0.8rem;
+        color: #88a0c7;
+        margin-top: 5px;
+      }
+      
+      .next-steps {
+        background: linear-gradient(135deg, #1a1a2e, #2d2d42);
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+      }
+      
+      .next-steps h3 {
+        color: #6366f1;
+        margin-bottom: 8px;
+        font-size: 1.2rem;
+      }
+      
+      .next-steps p {
+        color: #ccc;
+        margin: 0;
+        font-size: 0.9rem;
+      }
+      
+      .redirect-actions {
+        margin: 25px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      
+      .redirect-actions .btn-primary,
+      .redirect-actions .btn-secondary {
+        width: 100%;
+        min-height: 50px;
+        font-size: 1rem;
+      }
+      
+      .tour-reminder {
+        background: rgba(99, 102, 241, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        margin-top: 20px;
+      }
+      
+      .tour-reminder p {
+        margin-bottom: 10px;
+        color: #e0e0e0;
+      }
+      
+      .tour-reminder .tour-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+      }
+      
+      .tour-reminder .tour-actions button {
+        flex: 1;
+        padding: 12px;
+        font-size: 0.9rem;
+      }
+      
+      @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+          transform: translateY(0);
+        }
+        40% {
+          transform: translateY(-10px);
+        }
+        60% {
+          transform: translateY(-5px);
+        }
+      }
+      
+      /* Responsive adjustments */
+      @media (min-width: 768px) {
+        .success-redirect {
+          padding: 40px;
+        }
+        
+        .redirect-actions {
+          flex-direction: row;
+        }
+        
+        .redirect-actions .btn-primary,
+        .redirect-actions .btn-secondary {
+          width: auto;
+          flex: 1;
+        }
+        
+        .tour-reminder .tour-actions {
+          justify-content: center;
+        }
+        
+        .tour-reminder .tour-actions button {
+          flex: 0 1 auto;
+          min-width: 120px;
+        }
+      }
+    `;
+        document.head.appendChild(style);
+      }
     </script>
   </body>
 </html>
