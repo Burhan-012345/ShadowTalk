@@ -1,0 +1,54 @@
+{% extends 'admin/master.html' %} {% block body %}
+<div class="container">
+  <h2>System Analytics</h2>
+
+  <div class="row">
+    <div class="col-md-3">
+      <div class="card text-white bg-primary mb-3">
+        <div class="card-body">
+          <h4 class="card-title">{{ total_users }}</h4>
+          <p class="card-text">Total Users</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-success mb-3">
+        <div class="card-body">
+          <h4 class="card-title">{{ active_chats }}</h4>
+          <p class="card-text">Active Chats</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-warning mb-3">
+        <div class="card-body">
+          <h4 class="card-title">{{ pending_reports }}</h4>
+          <p class="card-text">Pending Reports</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-info mb-3">
+        <div class="card-body">
+          <h4 class="card-title">{{ new_users }}</h4>
+          <p class="card-text">New Users (30 days)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>Chat Type Distribution</h5>
+        </div>
+        <div class="card-body">
+          <p>Text Chats: {{ text_chats }}</p>
+          <p>Video Chats: {{ video_chats }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

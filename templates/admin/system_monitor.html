@@ -1,0 +1,90 @@
+{% extends 'admin/master.html' %} {% block body %}
+<div class="container">
+  <h2>System Monitor</h2>
+
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card text-white bg-dark mb-3">
+        <div class="card-body">
+          <h4 class="card-title">{{ stats.online_users }}</h4>
+          <p class="card-text">Online Users</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-white bg-info mb-3">
+        <div class="card-body">
+          <h4 class="card-title">{{ stats.waiting_text }}</h4>
+          <p class="card-text">Waiting (Text)</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-white bg-info mb-3">
+        <div class="card-body">
+          <h4 class="card-title">{{ stats.waiting_video }}</h4>
+          <p class="card-text">Waiting (Video)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>Recent Reports</h5>
+        </div>
+        <div class="card-body">
+          {% for report in recent_reports %}
+          <div class="border-bottom p-2">
+            <strong
+              >{{ report.reporter.display_name if report.reporter else
+              'Anonymous' }}</strong
+            >
+            reported
+            <strong
+              >{{ report.reported_user.display_name if report.reported_user else
+              'Anonymous' }}</strong
+            >
+            <br />
+            <small
+              >{{ report.reason }} - {{ report.created_at.strftime('%Y-%m-%d
+              %H:%M') }}</small
+            >
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>Recent Chat Sessions</h5>
+        </div>
+        <div class="card-body">
+          {% for session in recent_sessions %}
+          <div class="border-bottom p-2">
+            <strong
+              >{{ session.user1.display_name if session.user1 else 'User1'
+              }}</strong
+            >
+            and
+            <strong
+              >{{ session.user2.display_name if session.user2 else 'User2'
+              }}</strong
+            >
+            <br />
+            <small
+              >{{ session.session_type }} - {{
+              session.started_at.strftime('%Y-%m-%d %H:%M') }}</small
+            >
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
