@@ -64,6 +64,267 @@ waiting_users = {
     'video': []       
 }
 
+def attempt_matchmaking(chat_type):
+    """Attempt to match users in the waiting queue"""
+    if len(waiting_users[chat_type]) < 2:
+        return
+
+    # Use video-specific matching for video chats
+    if chat_type == 'video':
+        attempt_video_matchmaking()
+        return
+
+    # Original text chat matching logic
+    user1_data = waiting_users[chat_type].pop(0)
+    user2_data = waiting_users[chat_type].pop(0)
+
+    user1_id = user1_data['user_id']
+    user2_id = user2_data['user_id']
+
+    # Create chat session
+    chat_session = ChatSession(
+        user1_id=user1_id,
+        user2_id=user2_id,
+        session_type=chat_type,
+        started_at=datetime.utcnow()
+    )
+    db.session.add(chat_session)
+    db.session.commit()
+
+    # Store in active chats
+    active_chats[user1_id] = {
+        'session_id': chat_session.id,
+        'partner': user2_id,
+        'start_time': datetime.utcnow(),
+        'chat_type': chat_type
+    }
+    active_chats[user2_id] = {
+        'session_id': chat_session.id,
+        'partner': user1_id,
+        'start_time': datetime.utcnow(),
+        'chat_type': chat_type
+    }
+
+    # Get user info for notification
+    user1 = User.query.get(user1_id)
+    user2 = User.query.get(user2_id)
+
+    # Calculate common interests
+    interests1 = set(user1_data.get('interests', []))
+    interests2 = set(user2_data.get('interests', []))
+    common_interests = list(interests1.intersection(interests2))
+
+    # Notify both users
+    match_data = {
+        'session_id': chat_session.id,
+        'partner_id': user2_id,
+        'partner_name': user2.display_name if user2 else 'Anonymous',
+        'partner_interests': user2_data.get('interests', []),
+        'common_interests': common_interests,
+        'chat_type': chat_type,
+        'timestamp': datetime.utcnow().isoformat()
+    }
+
+    emit('chat_match_found', match_data, room=user1_id)
+
+    match_data['partner_id'] = user1_id
+    match_data['partner_name'] = user1.display_name if user1 else 'Anonymous'
+    match_data['partner_interests'] = user1_data.get('interests', [])
+
+    emit('chat_match_found', match_data, room=user2_id)
+
+    print(f"Matched users {user1_id} and {user2_id} for {chat_type} chat. Session: {chat_session.id}")
+
+def attempt_video_matchmaking():
+    """Attempt to match users in video chat queue with media readiness"""
+    if len(waiting_users['video']) < 2:
+        return
+
+    # Find users who have media ready or at least one media type
+    ready_users = [u for u in waiting_users['video'] if u.get('media_ready', False)]
+    
+    if len(ready_users) < 2:
+        # Try to match any users if queue is long enough
+        if len(waiting_users['video']) >= 2:
+            ready_users = waiting_users['video'][:2]
+        else:
+            return
+
+    # Simple FIFO matching for now - enhance with interest matching later
+    user1_data = ready_users[0]
+    user2_data = ready_users[1]
+
+    # Remove from waiting list
+    waiting_users['video'] = [u for u in waiting_users['video'] 
+                             if u['user_id'] not in [user1_data['user_id'], user2_data['user_id']]]
+
+    user1_id = user1_data['user_id']
+    user2_id = user2_data['user_id']
+
+    # Create video chat session
+    chat_session = ChatSession(
+        user1_id=user1_id,
+        user2_id=user2_id,
+        session_type='video',
+        started_at=datetime.utcnow()
+    )
+    db.session.add(chat_session)
+    db.session.commit()
+
+    # Store in active chats
+    active_chats[user1_id] = {
+        'session_id': chat_session.id,
+        'partner': user2_id,
+        'start_time': datetime.utcnow(),
+        'chat_type': 'video',
+        'media_ready': user1_data.get('media_ready', False)
+    }
+    active_chats[user2_id] = {
+        'session_id': chat_session.id,
+        'partner': user1_id,
+        'start_time': datetime.utcnow(),
+        'chat_type': 'video',
+        'media_ready': user2_data.get('media_ready', False)
+    }
+
+    # Get user info for notification
+    user1 = User.query.get(user1_id)
+    user2 = User.query.get(user2_id)
+
+    # Calculate common interests
+    interests1 = set(user1_data.get('interests', []))
+    interests2 = set(user2_data.get('interests', []))
+    common_interests = list(interests1.intersection(interests2))
+
+    # Notify both users
+    match_data = {
+        'session_id': chat_session.id,
+        'partner_id': user2_id,
+        'partner_name': user2.display_name if user2 else 'Anonymous',
+        'partner_interests': user2_data.get('interests', []),
+        'common_interests': common_interests,
+        'chat_type': 'video',
+        'timestamp': datetime.utcnow().isoformat()
+    }
+
+    emit('video_chat_match_found', match_data, room=user1_id)
+
+    match_data['partner_id'] = user1_id
+    match_data['partner_name'] = user1.display_name if user1 else 'Anonymous'
+    match_data['partner_interests'] = user1_data.get('interests', [])
+
+    emit('video_chat_match_found', match_data, room=user2_id)
+
+    print(f"Matched users {user1_id} and {user2_id} for video chat. Session: {chat_session.id}")
+
+def cleanup_inactive_sessions():
+    """Periodically clean up inactive sessions"""
+    global active_chats, waiting_users, online_users
+    
+    try:
+        with app.app_context():
+            # Clean up abandoned waiting users (older than 10 minutes)
+            cutoff_time = datetime.utcnow() - timedelta(minutes=10)
+
+            for chat_type in ['text', 'video']:
+                original_count = len(waiting_users[chat_type])
+                waiting_users[chat_type] = [
+                    u for u in waiting_users[chat_type]
+                    if datetime.fromisoformat(u.get('joined_at', datetime.utcnow().isoformat())) > cutoff_time
+                ]
+                if len(waiting_users[chat_type]) != original_count:
+                    print(f"Cleaned up {original_count - len(waiting_users[chat_type])} inactive waiting users from {chat_type} queue")
+
+            # Clean up stale active chats (no activity for 5 minutes)
+            stale_cutoff = datetime.utcnow() - timedelta(minutes=5)
+            users_to_remove = []
+
+            for user_id, chat_data in active_chats.items():
+                if chat_data.get('start_time', datetime.utcnow()) < stale_cutoff:
+                    users_to_remove.append(user_id)
+
+            for user_id in users_to_remove:
+                cleanup_user_sessions(user_id)
+                print(f"Cleaned up stale chat session for user {user_id}")
+
+            # Special cleanup for video sessions without media
+            cleanup_video_sessions()
+
+            # Clean up users who haven't sent heartbeat in 2 minutes
+            heartbeat_cutoff = datetime.utcnow() - timedelta(minutes=2)
+            stale_users = User.query.filter(
+                User.is_online == True,
+                User.last_heartbeat < heartbeat_cutoff
+            ).all()
+
+            for user in stale_users:
+                user.is_online = False
+                if user.id in online_users:
+                    online_users.remove(user.id)
+                print(f"Marked user {user.id} as offline due to inactivity")
+
+            if stale_users:
+                db.session.commit()
+
+    except Exception as e:
+        print(f"Error in cleanup_inactive_sessions: {str(e)}")
+
+def cleanup_video_sessions():
+    """Clean up abandoned video sessions"""
+    cutoff_time = datetime.utcnow() - timedelta(minutes=2)
+    
+    for user_id, chat_data in list(active_chats.items()):
+        if chat_data['chat_type'] == 'video' and chat_data.get('start_time', datetime.utcnow()) < cutoff_time:
+            print(f"Cleaning up stale video session for user {user_id}")
+            cleanup_user_sessions(user_id)
+
+def calculate_estimated_wait(chat_type):
+    """Calculate estimated wait time based on queue length"""
+    base_wait = 10  # seconds
+    wait_per_user = 5  # seconds
+    return base_wait + (len(waiting_users[chat_type]) * wait_per_user)
+
+def cleanup_user_sessions(user_id):
+    """Clean up user sessions on disconnect"""
+    # Remove from waiting lists
+    for chat_type in ['text', 'video']:
+        waiting_users[chat_type] = [u for u in waiting_users[chat_type] if u.get('user_id') != user_id]
+
+    # Handle active chat cleanup
+    if user_id in active_chats:
+        chat_data = active_chats[user_id]
+        partner_id = chat_data['partner']
+        session_id = chat_data['session_id']
+
+        # Notify partner
+        if partner_id in active_chats:
+            emit('partner_disconnected', {
+                'session_id': session_id,
+                'timestamp': datetime.utcnow().isoformat()
+            }, room=partner_id)
+            del active_chats[partner_id]
+
+        # Update chat session
+        chat_session = ChatSession.query.get(session_id)
+        if chat_session and not chat_session.ended_at:
+            chat_session.ended_at = datetime.utcnow()
+            chat_session.end_reason = 'user_disconnected'
+            if chat_session.started_at:
+                duration = (chat_session.ended_at - chat_session.started_at).total_seconds()
+                chat_session.duration = int(duration)
+            db.session.commit()
+
+        del active_chats[user_id]
+
+def start_background_tasks():
+    """Start background maintenance tasks"""
+    def periodic_cleanup():
+        while True:
+            socketio.sleep(60)  # Run every minute
+            cleanup_inactive_sessions()
+
+    socketio.start_background_task(periodic_cleanup)
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
@@ -2048,6 +2309,263 @@ def handle_next_chat(data):
     # Small delay to ensure clean state
     socketio.sleep(1)
     start_new_search()
+
+# Video Chat Specific SocketIO Handlers
+@socketio.on('join_video_chat')
+def handle_join_video_chat(data):
+    """Handle user joining video chat queue"""
+    if not current_user.is_authenticated:
+        emit('error', {'message': 'Authentication required'})
+        return
+
+    chat_type = 'video'
+    user_interests = data.get('interests', [])
+    filters = data.get('filters', {})
+
+    # Remove user from any existing queues
+    for ctype in ['text', 'video']:
+        waiting_users[ctype] = [u for u in waiting_users[ctype] if u.get('user_id') != current_user.id]
+
+    # Add user to video waiting list
+    user_data = {
+        'user_id': current_user.id,
+        'interests': user_interests,
+        'filters': filters,
+        'joined_at': datetime.utcnow().isoformat(),
+        'chat_type': chat_type,
+        'media_ready': False
+    }
+
+    waiting_users[chat_type].append(user_data)
+
+    # Send searching status
+    emit('video_chat_search_started', {
+        'position': len(waiting_users[chat_type]),
+        'total_waiting': len(waiting_users[chat_type]),
+        'estimated_wait': calculate_estimated_wait(chat_type),
+        'timestamp': datetime.utcnow().isoformat()
+    }, room=current_user.id)
+
+    # Try to match immediately
+    attempt_video_matchmaking()
+
+    print(f"User {current_user.id} joined video chat queue. Position: {len(waiting_users[chat_type])}")
+
+@socketio.on('leave_video_chat')
+def handle_leave_video_chat(data):
+    """Handle user leaving video chat queue"""
+    if not current_user.is_authenticated:
+        return
+
+    # Remove from waiting list
+    waiting_users['video'] = [u for u in waiting_users['video'] if u.get('user_id') != current_user.id]
+
+    emit('video_chat_search_cancelled', {
+        'timestamp': datetime.utcnow().isoformat()
+    }, room=current_user.id)
+
+    print(f"User {current_user.id} left video chat queue")
+
+@socketio.on('webrtc_signal')
+def handle_webrtc_signal(data):
+    """Handle WebRTC signaling for video chat"""
+    if not current_user.is_authenticated:
+        return
+
+    session_id = data.get('session_id')
+    signal_data = data.get('signal')
+    signal_type = data.get('type')  # offer, answer, ice_candidate
+
+    # Verify user is in this video chat session
+    if current_user.id not in active_chats:
+        emit('error', {'message': 'Not in active video chat'})
+        return
+
+    chat_data = active_chats[current_user.id]
+    if chat_data['session_id'] != session_id:
+        emit('error', {'message': 'Invalid session'})
+        return
+
+    partner_id = chat_data['partner']
+
+    # Forward signal to partner
+    emit('webrtc_signal', {
+        'session_id': session_id,
+        'from_user_id': current_user.id,
+        'signal': signal_data,
+        'type': signal_type,
+        'timestamp': datetime.utcnow().isoformat()
+    }, room=partner_id)
+
+    print(f"WebRTC {signal_type} signal forwarded from {current_user.id} to {partner_id}")
+
+@socketio.on('media_ready')
+def handle_media_ready(data):
+    """Handle user media readiness notification"""
+    if not current_user.is_authenticated:
+        return
+
+    session_id = data.get('session_id')
+    media_type = data.get('media_type')  # video, audio, both
+
+    # Update user's media status in waiting list
+    for user_data in waiting_users['video']:
+        if user_data['user_id'] == current_user.id:
+            user_data['media_ready'] = True
+            user_data['media_type'] = media_type
+            break
+
+    # If in active chat, notify partner
+    if current_user.id in active_chats:
+        chat_data = active_chats[current_user.id]
+        partner_id = chat_data['partner']
+
+        emit('partner_media_ready', {
+            'session_id': session_id,
+            'media_type': media_type,
+            'timestamp': datetime.utcnow().isoformat()
+        }, room=partner_id)
+
+    print(f"User {current_user.id} media ready: {media_type}")
+
+@socketio.on('video_chat_ended')
+def handle_video_chat_ended(data):
+    """Handle video chat session end"""
+    if not current_user.is_authenticated:
+        return
+
+    session_id = data.get('session_id')
+    reason = data.get('reason', 'user_left')
+
+    if current_user.id in active_chats:
+        chat_data = active_chats[current_user.id]
+        partner_id = chat_data['partner']
+
+        # Remove from active chats
+        del active_chats[current_user.id]
+
+        # Update chat session
+        chat_session = ChatSession.query.get(session_id)
+        if chat_session and not chat_session.ended_at:
+            chat_session.ended_at = datetime.utcnow()
+            chat_session.end_reason = reason
+            if chat_session.started_at:
+                duration = (chat_session.ended_at - chat_session.started_at).total_seconds()
+                chat_session.duration = int(duration)
+            db.session.commit()
+
+        # Notify partner
+        if partner_id in active_chats:
+            emit('video_chat_ended', {
+                'session_id': session_id,
+                'reason': reason,
+                'partner_left': True,
+                'timestamp': datetime.utcnow().isoformat()
+            }, room=partner_id)
+            del active_chats[partner_id]
+
+        # Notify user
+        emit('video_chat_ended', {
+            'session_id': session_id,
+            'reason': reason,
+            'partner_left': False,
+            'timestamp': datetime.utcnow().isoformat()
+        }, room=current_user.id)
+
+        print(f"Video chat session {session_id} ended by user {current_user.id}. Reason: {reason}")
+
+# Video Chat Matching Function
+def attempt_video_matchmaking():
+    """Attempt to match users in video chat queue with media readiness"""
+    if len(waiting_users['video']) < 2:
+        return
+
+    # Find users who have media ready or at least one media type
+    ready_users = [u for u in waiting_users['video'] if u.get('media_ready', False)]
+    
+    if len(ready_users) < 2:
+        # Try to match any users if queue is long enough
+        if len(waiting_users['video']) >= 2:
+            ready_users = waiting_users['video'][:2]
+        else:
+            return
+
+    # Simple FIFO matching for now - enhance with interest matching later
+    user1_data = ready_users[0]
+    user2_data = ready_users[1]
+
+    # Remove from waiting list
+    waiting_users['video'] = [u for u in waiting_users['video'] 
+                             if u['user_id'] not in [user1_data['user_id'], user2_data['user_id']]]
+
+    user1_id = user1_data['user_id']
+    user2_id = user2_data['user_id']
+
+    # Create video chat session
+    chat_session = ChatSession(
+        user1_id=user1_id,
+        user2_id=user2_id,
+        session_type='video',
+        started_at=datetime.utcnow()
+    )
+    db.session.add(chat_session)
+    db.session.commit()
+
+    # Store in active chats
+    active_chats[user1_id] = {
+        'session_id': chat_session.id,
+        'partner': user2_id,
+        'start_time': datetime.utcnow(),
+        'chat_type': 'video',
+        'media_ready': user1_data.get('media_ready', False)
+    }
+    active_chats[user2_id] = {
+        'session_id': chat_session.id,
+        'partner': user1_id,
+        'start_time': datetime.utcnow(),
+        'chat_type': 'video',
+        'media_ready': user2_data.get('media_ready', False)
+    }
+
+    # Get user info for notification
+    user1 = User.query.get(user1_id)
+    user2 = User.query.get(user2_id)
+
+    # Calculate common interests
+    interests1 = set(user1_data.get('interests', []))
+    interests2 = set(user2_data.get('interests', []))
+    common_interests = list(interests1.intersection(interests2))
+
+    # Notify both users
+    match_data = {
+        'session_id': chat_session.id,
+        'partner_id': user2_id,
+        'partner_name': user2.display_name if user2 else 'Anonymous',
+        'partner_interests': user2_data.get('interests', []),
+        'common_interests': common_interests,
+        'chat_type': 'video',
+        'timestamp': datetime.utcnow().isoformat()
+    }
+
+    emit('video_chat_match_found', match_data, room=user1_id)
+
+    match_data['partner_id'] = user1_id
+    match_data['partner_name'] = user1.display_name if user1 else 'Anonymous'
+    match_data['partner_interests'] = user1_data.get('interests', [])
+
+    emit('video_chat_match_found', match_data, room=user2_id)
+
+    print(f"Matched users {user1_id} and {user2_id} for video chat. Session: {chat_session.id}")
+
+# Enhanced cleanup function for video chats
+def cleanup_video_sessions():
+    """Clean up abandoned video sessions"""
+    cutoff_time = datetime.utcnow() - timedelta(minutes=2)
+    
+    for user_id, chat_data in list(active_chats.items()):
+        if chat_data['chat_type'] == 'video' and chat_data.get('start_time', datetime.utcnow()) < cutoff_time:
+            print(f"Cleaning up stale video session for user {user_id}")
+            cleanup_user_sessions(user_id)
 
 # User Status and Presence
 @socketio.on('update_user_status')
