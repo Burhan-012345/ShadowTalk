@@ -201,6 +201,7 @@ async function requestMediaAccess() {
             width: { ideal: 640 },
             height: { ideal: 480 },
             frameRate: { ideal: 30 },
+            facingMode: "user", // Force front camera
           }
         : false,
       audio: hasAudio
@@ -256,6 +257,75 @@ async function requestMediaAccess() {
     console.error("Media access error:", error);
     hideInfoModal();
     await handleMediaError(error);
+    return false;
+  }
+}
+
+// Fix for reversed camera - try different camera constraints
+async function fixReversedCamera() {
+  try {
+    console.log("Attempting to fix reversed camera...");
+
+    // Stop current stream
+    if (localStream) {
+      localStream.getTracks().forEach((track) => track.stop());
+    }
+
+    // Try different camera constraints
+    const constraints = {
+      video: {
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+        frameRate: { ideal: 30 },
+        facingMode: { exact: "user" }, // Force front camera explicitly
+      },
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    };
+
+    // Try to get specific device if available
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter(
+      (device) => device.kind === "videoinput"
+    );
+
+    if (videoDevices.length > 0) {
+      // Try to find front camera
+      const frontCamera = videoDevices.find(
+        (device) =>
+          device.label.toLowerCase().includes("front") ||
+          device.label.toLowerCase().includes("face")
+      );
+
+      if (frontCamera) {
+        constraints.video.deviceId = { exact: frontCamera.deviceId };
+        console.log("Using front camera:", frontCamera.label);
+      } else {
+        // Use first camera but try to force front facing
+        constraints.video.deviceId = { exact: videoDevices[0].deviceId };
+        console.log("Using first camera:", videoDevices[0].label);
+      }
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    localStream = stream;
+
+    // Update video element
+    const localVideo = document.getElementById("localVideo");
+    if (localVideo) {
+      localVideo.srcObject = stream;
+
+      // Apply CSS transform to mirror the video if it's still reversed
+      localVideo.style.transform = "scaleX(-1)";
+    }
+
+    console.log("Camera fixed - applied mirror effect");
+    return true;
+  } catch (error) {
+    console.error("Error fixing camera:", error);
     return false;
   }
 }
@@ -392,6 +462,9 @@ function showEnhancedErrorModal(
         `
             : ""
         }
+        <button class="btn-secondary" onclick="document.getElementById('enhancedErrorModal').remove(); fixReversedCamera();">
+          Fix Camera Orientation
+        </button>
         <button class="btn-secondary" onclick="document.getElementById('enhancedErrorModal').remove(); emergencyFallback();">
           Continue Without Camera
         </button>
@@ -406,6 +479,9 @@ function setupLocalVideo(stream) {
   const localVideo = document.getElementById("localVideo");
   if (localVideo) {
     localVideo.srcObject = stream;
+
+    // Apply mirror effect to fix reversed camera
+    localVideo.style.transform = "scaleX(-1)";
 
     // Handle video loading
     localVideo.onloadedmetadata = () => {
@@ -428,6 +504,35 @@ function setupLocalVideo(stream) {
   const localContainer = document.querySelector(".video-container:first-child");
   if (localContainer) {
     localContainer.classList.remove("video-off");
+  }
+}
+
+function setupRemoteVideo(stream) {
+  const remoteVideo = document.getElementById("remoteVideo");
+  if (remoteVideo) {
+    remoteVideo.srcObject = stream;
+
+    // Don't mirror remote video (it should appear normal)
+    remoteVideo.style.transform = "scaleX(1)";
+
+    remoteVideo.onloadedmetadata = () => {
+      console.log("Remote video metadata loaded");
+      remoteVideo
+        .play()
+        .catch((e) => console.error("Error playing remote video:", e));
+    };
+
+    remoteVideo.onerror = (e) => {
+      console.error("Remote video error:", e);
+    };
+
+    remoteVideo.oncanplay = () => {
+      console.log("Remote video can play");
+    };
+
+    // Hide overlays when remote video is active
+    const remoteVideoOverlay = document.getElementById("remoteVideoOverlay");
+    if (remoteVideoOverlay) remoteVideoOverlay.style.display = "none";
   }
 }
 
@@ -620,6 +725,13 @@ function stopVideoChat() {
   const remoteVideo = document.getElementById("remoteVideo");
   if (remoteVideo) {
     remoteVideo.srcObject = null;
+    remoteVideo.style.transform = "scaleX(1)"; // Reset transform
+  }
+
+  // Clear local video transform
+  const localVideo = document.getElementById("localVideo");
+  if (localVideo) {
+    localVideo.style.transform = "scaleX(1)";
   }
 
   // Reset state
@@ -765,32 +877,6 @@ async function createPeerConnection() {
   } catch (error) {
     console.error("Error creating peer connection:", error);
     throw error;
-  }
-}
-
-function setupRemoteVideo(stream) {
-  const remoteVideo = document.getElementById("remoteVideo");
-  if (remoteVideo) {
-    remoteVideo.srcObject = stream;
-
-    remoteVideo.onloadedmetadata = () => {
-      console.log("Remote video metadata loaded");
-      remoteVideo
-        .play()
-        .catch((e) => console.error("Error playing remote video:", e));
-    };
-
-    remoteVideo.onerror = (e) => {
-      console.error("Remote video error:", e);
-    };
-
-    remoteVideo.oncanplay = () => {
-      console.log("Remote video can play");
-    };
-
-    // Hide overlays when remote video is active
-    const remoteVideoOverlay = document.getElementById("remoteVideoOverlay");
-    if (remoteVideoOverlay) remoteVideoOverlay.style.display = "none";
   }
 }
 
@@ -1887,6 +1973,7 @@ window.hideDeviceCheckModal = hideDeviceCheckModal;
 window.hideNoDevicesModal = hideNoDevicesModal;
 window.emergencyFallback = emergencyFallback;
 window.retryMediaAccess = retryMediaAccess;
+window.fixReversedCamera = fixReversedCamera;
 
 // Export advanced features functions
 window.changeBackgroundEffect = changeBackgroundEffect;
