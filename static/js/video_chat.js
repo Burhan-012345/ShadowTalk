@@ -177,6 +177,12 @@ async function requestMediaAccess() {
     console.log("Requesting media access...");
     updateConnectionStatus("Requesting camera/microphone access...");
 
+    // Show the overlay initially
+    const localVideoOverlay = document.getElementById("localVideoOverlay");
+    if (localVideoOverlay) {
+      localVideoOverlay.style.display = "flex";
+    }
+
     // Check if we're on a supported environment
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       throw new Error("WebRTC is not supported in this browser");
@@ -256,6 +262,13 @@ async function requestMediaAccess() {
   } catch (error) {
     console.error("Media access error:", error);
     hideInfoModal();
+
+    // Ensure overlay is shown on error
+    const localVideoOverlay = document.getElementById("localVideoOverlay");
+    if (localVideoOverlay) {
+      localVideoOverlay.style.display = "flex";
+    }
+
     await handleMediaError(error);
     return false;
   }
@@ -477,6 +490,8 @@ function showEnhancedErrorModal(
 
 function setupLocalVideo(stream) {
   const localVideo = document.getElementById("localVideo");
+  const localVideoOverlay = document.getElementById("localVideoOverlay");
+
   if (localVideo) {
     localVideo.srcObject = stream;
 
@@ -489,14 +504,39 @@ function setupLocalVideo(stream) {
       localVideo
         .play()
         .catch((e) => console.error("Error playing local video:", e));
+
+      // Hide the overlay when video is ready
+      if (localVideoOverlay) {
+        localVideoOverlay.style.display = "none";
+      }
     };
 
     localVideo.onerror = (e) => {
       console.error("Local video error:", e);
+      // Show overlay if there's an error
+      if (localVideoOverlay) {
+        localVideoOverlay.style.display = "flex";
+      }
     };
 
     localVideo.oncanplay = () => {
       console.log("Local video can play");
+    };
+
+    // Check if video is actually playing and hide overlay
+    localVideo.onplaying = () => {
+      console.log("Local video is playing");
+      if (localVideoOverlay) {
+        localVideoOverlay.style.display = "none";
+      }
+    };
+
+    // Show overlay if video pauses (camera turned off)
+    localVideo.onpause = () => {
+      console.log("Local video paused");
+      if (localVideoOverlay) {
+        localVideoOverlay.style.display = "flex";
+      }
     };
   }
 
@@ -505,6 +545,11 @@ function setupLocalVideo(stream) {
   if (localContainer) {
     localContainer.classList.remove("video-off");
   }
+
+  // Check video stream status after a short delay
+  setTimeout(() => {
+    checkVideoStreamStatus();
+  }, 500);
 }
 
 function setupRemoteVideo(stream) {
@@ -696,6 +741,12 @@ async function startVideoChat() {
 
 function stopVideoChat() {
   console.log("Stopping video chat...");
+
+  // Show camera off overlay when stopping
+  const localVideoOverlay = document.getElementById("localVideoOverlay");
+  if (localVideoOverlay) {
+    localVideoOverlay.style.display = "flex";
+  }
 
   // Notify server about ending video chat
   if (window.chatSocket && window.currentSessionId) {
@@ -1686,11 +1737,18 @@ function toggleVideo() {
       videoTrack.enabled = !videoTrack.enabled;
 
       const btn = document.getElementById("videoToggle");
+      const localVideoOverlay = document.getElementById("localVideoOverlay");
+
       if (btn) {
         btn.innerHTML = videoTrack.enabled
           ? '<i class="fas fa-video"></i>'
           : '<i class="fas fa-video-slash"></i>';
         btn.style.background = videoTrack.enabled ? "#8b5cf6" : "#ef4444";
+      }
+
+      // Show/hide the camera off overlay
+      if (localVideoOverlay) {
+        localVideoOverlay.style.display = videoTrack.enabled ? "none" : "flex";
       }
 
       const localVideoContainer = document.querySelector(
@@ -1846,6 +1904,35 @@ function resetCallDuration() {
   }
 }
 
+// Video Stream Status Check
+function checkVideoStreamStatus() {
+  const localVideo = document.getElementById("localVideo");
+  const localVideoOverlay = document.getElementById("localVideoOverlay");
+
+  if (localVideo && localVideo.srcObject) {
+    // Check if video is actually playing after a short delay
+    setTimeout(() => {
+      if (
+        localVideo.readyState >= 2 &&
+        localVideo.videoWidth > 0 &&
+        localVideo.videoHeight > 0
+      ) {
+        // Video is playing and has valid dimensions
+        if (localVideoOverlay) {
+          localVideoOverlay.style.display = "none";
+        }
+        console.log("Video stream is active and playing");
+      } else {
+        // Video not playing properly, show overlay
+        if (localVideoOverlay) {
+          localVideoOverlay.style.display = "flex";
+        }
+        console.log("Video stream is not active");
+      }
+    }, 1000);
+  }
+}
+
 // Modal Functions
 function showDeviceCheckModal() {
   const modal = document.getElementById("deviceCheckModal");
@@ -1959,6 +2046,33 @@ function addTestButton() {
   }
 }
 
+// Test function to verify camera overlay
+function testCameraOverlay() {
+  const localVideo = document.getElementById("localVideo");
+  const localVideoOverlay = document.getElementById("localVideoOverlay");
+
+  console.log("Video srcObject:", localVideo.srcObject);
+  console.log("Video readyState:", localVideo.readyState);
+  console.log("Video paused:", localVideo.paused);
+  console.log(
+    "Video dimensions:",
+    localVideo.videoWidth,
+    "x",
+    localVideo.videoHeight
+  );
+  console.log("Overlay display:", localVideoOverlay.style.display);
+
+  // Force hide overlay for testing if video is active
+  if (
+    localVideo.srcObject &&
+    localVideo.readyState >= 2 &&
+    localVideo.videoWidth > 0
+  ) {
+    localVideoOverlay.style.display = "none";
+    console.log("Overlay should be hidden now");
+  }
+}
+
 // Export functions for global access
 window.startVideoChat = startVideoChat;
 window.stopVideoChat = stopVideoChat;
@@ -1974,6 +2088,7 @@ window.hideNoDevicesModal = hideNoDevicesModal;
 window.emergencyFallback = emergencyFallback;
 window.retryMediaAccess = retryMediaAccess;
 window.fixReversedCamera = fixReversedCamera;
+window.testCameraOverlay = testCameraOverlay;
 
 // Export advanced features functions
 window.changeBackgroundEffect = changeBackgroundEffect;
