@@ -11,9 +11,9 @@ let isSearching = false;
 let backgroundProcessor = null;
 let voiceProcessor = null;
 let faceFilterProcessor = null;
-let currentBackgroundEffect = 'none';
-let currentVoiceEffect = 'normal';
-let currentFaceFilter = 'none';
+let currentBackgroundEffect = "none";
+let currentVoiceEffect = "normal";
+let currentFaceFilter = "none";
 let networkMonitorInterval = null;
 let miniGameActive = false;
 let currentGame = null;
@@ -41,7 +41,8 @@ function checkSecureContext() {
       "Security Warning",
       "Camera access requires HTTPS or localhost. " +
         "Please access via: https://localhost:5000 or http://localhost:5000\n\n" +
-        "Current URL: " + location.href,
+        "Current URL: " +
+        location.href,
       false,
       true
     );
@@ -77,13 +78,13 @@ async function initializeVideoChat() {
 async function initializeAdvancedFeatures() {
   try {
     console.log("Initializing advanced features...");
-    
+
     // Initialize screenshot protection
     initializeScreenshotProtection();
-    
+
     // Initialize network monitoring
     startNetworkMonitoring();
-    
+
     // Try to initialize Web Audio API for voice effects
     try {
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -91,7 +92,6 @@ async function initializeAdvancedFeatures() {
     } catch (error) {
       console.warn("Web Audio API not available for voice effects:", error);
     }
-    
   } catch (error) {
     console.error("Error initializing advanced features:", error);
   }
@@ -154,7 +154,12 @@ async function checkDevices() {
     console.error("Error checking devices:", error);
     updateDeviceStatus("cameraStatusText", "Error", "status-unavailable");
     updateDeviceStatus("microphoneStatusText", "Error", "status-unavailable");
-    showEnhancedErrorModal("Device detection failed", error.message, true, false);
+    showEnhancedErrorModal(
+      "Device detection failed",
+      error.message,
+      true,
+      false
+    );
     return false;
   }
 }
@@ -179,8 +184,8 @@ async function requestMediaAccess() {
 
     // First, get device list to check what's available
     const devices = await navigator.mediaDevices.enumerateDevices();
-    const hasVideo = devices.some(device => device.kind === 'videoinput');
-    const hasAudio = devices.some(device => device.kind === 'audioinput');
+    const hasVideo = devices.some((device) => device.kind === "videoinput");
+    const hasAudio = devices.some((device) => device.kind === "audioinput");
 
     console.log(`Devices - Video: ${hasVideo}, Audio: ${hasAudio}`);
 
@@ -191,17 +196,20 @@ async function requestMediaAccess() {
 
     // Build constraints based on available devices
     const constraints = {
-      video: hasVideo ? {
-        width: { ideal: 640 },
-        height: { ideal: 480 },
-        frameRate: { ideal: 30 },
-        facingMode: 'user' // Prefer front camera
-      } : false,
-      audio: hasAudio ? {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      } : false
+      video: hasVideo
+        ? {
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            frameRate: { ideal: 30 },
+          }
+        : false,
+      audio: hasAudio
+        ? {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          }
+        : false,
     };
 
     console.log("Media constraints:", constraints);
@@ -210,17 +218,20 @@ async function requestMediaAccess() {
     showInfoModal(
       "Permission Required",
       "Please allow camera and microphone access in the browser permission dialog. " +
-      "Look for the camera/microphone icon in your address bar."
+        "Look for the camera/microphone icon in your address bar."
     );
 
     // Request media access with timeout
     const mediaPromise = navigator.mediaDevices.getUserMedia(constraints);
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Permission request timed out")), 10000);
+      setTimeout(
+        () => reject(new Error("Permission request timed out")),
+        10000
+      );
     });
 
     const stream = await Promise.race([mediaPromise, timeoutPromise]);
-    
+
     hideInfoModal();
     console.log("Media access granted successfully");
     localStream = stream;
@@ -232,8 +243,15 @@ async function requestMediaAccess() {
     updateDeviceStatus("cameraStatusText", "Active", "status-available");
     updateDeviceStatus("microphoneStatusText", "Active", "status-available");
 
-    return true;
+    // Notify server that media is ready for video chat
+    if (window.chatSocket && window.chatSocket.connected) {
+      window.chatSocket.emit("media_ready", {
+        media_type:
+          hasVideo && hasAudio ? "both" : hasVideo ? "video" : "audio",
+      });
+    }
 
+    return true;
   } catch (error) {
     console.error("Media access error:", error);
     hideInfoModal();
@@ -251,7 +269,7 @@ async function handleMediaError(error) {
   switch (error.name) {
     case "NotAllowedError":
       errorMessage = "Camera/Microphone Permission Denied";
-      detailedMessage = 
+      detailedMessage =
         "You denied camera/microphone access. To fix this:\n\n" +
         "1. Click the camera/microphone icon in your address bar\n" +
         "2. Select 'Allow' for camera and microphone\n" +
@@ -259,72 +277,83 @@ async function handleMediaError(error) {
         "Or check your browser settings to reset permissions.";
       showAdvancedHelp = true;
       break;
-      
+
     case "NotFoundError":
     case "DevicesNotFoundError":
       errorMessage = "No Camera/Microphone Found";
-      detailedMessage = 
+      detailedMessage =
         "No camera or microphone was detected on your device.\n\n" +
         "Please check:\n" +
         "• Camera/microphone is properly connected\n" +
         "• No other app is using the camera\n" +
         "• Drivers are properly installed";
       break;
-      
+
     case "NotReadableError":
     case "TrackStartError":
       errorMessage = "Camera/Microphone Already in Use";
-      detailedMessage = 
+      detailedMessage =
         "Your camera or microphone is being used by another application.\n\n" +
         "Please close:\n" +
         "• Zoom, Teams, Skype\n" +
         "• Other browser tabs using camera\n" +
         "• Any video recording software";
       break;
-      
+
     case "OverconstrainedError":
     case "ConstraintNotSatisfiedError":
       errorMessage = "Camera Requirements Not Met";
-      detailedMessage = 
+      detailedMessage =
         "Your camera doesn't meet the required specifications.\n\n" +
         "Try:\n" +
         "• Using a different camera\n" +
         "• Updating camera drivers\n" +
         "• Using a different browser";
       break;
-      
+
     case "SecurityError":
       errorMessage = "Security Restrictions";
-      detailedMessage = 
+      detailedMessage =
         "Camera access is blocked for security reasons.\n\n" +
         "Make sure you're accessing via:\n" +
         "• HTTPS (secure connection)\n" +
         "• Localhost (for development)\n" +
         "• Trusted website";
       break;
-      
+
     default:
       errorMessage = `Error: ${error.name}`;
       detailedMessage = error.message || "An unexpected error occurred";
   }
 
   console.error("Media error details:", error);
-  
+
   // Show enhanced error modal
-  showEnhancedErrorModal(errorMessage, detailedMessage, showRetryButton, showAdvancedHelp);
+  showEnhancedErrorModal(
+    errorMessage,
+    detailedMessage,
+    showRetryButton,
+    showAdvancedHelp
+  );
 
   // Update device status
   updateDeviceStatus("cameraStatusText", "Error", "status-unavailable");
   updateDeviceStatus("microphoneStatusText", "Error", "status-unavailable");
 }
 
-function showEnhancedErrorModal(title, message, showRetry = true, showAdvancedHelp = false) {
-  const modal = document.createElement('div');
-  modal.id = 'enhancedErrorModal';
-  modal.className = 'modal';
-  modal.style.display = 'flex';
-  
-  const advancedHelp = showAdvancedHelp ? `
+function showEnhancedErrorModal(
+  title,
+  message,
+  showRetry = true,
+  showAdvancedHelp = false
+) {
+  const modal = document.createElement("div");
+  modal.id = "enhancedErrorModal";
+  modal.className = "modal";
+  modal.style.display = "flex";
+
+  const advancedHelp = showAdvancedHelp
+    ? `
     <div class="advanced-help">
       <h4>Advanced Troubleshooting:</h4>
       <div class="browser-help">
@@ -337,7 +366,8 @@ function showEnhancedErrorModal(title, message, showRetry = true, showAdvancedHe
         <strong>Edge:</strong> Settings → Site Permissions → Camera/Microphone
       </div>
     </div>
-  ` : '';
+  `
+    : "";
 
   modal.innerHTML = `
     <div class="modal-content" style="max-width: 600px;">
@@ -346,18 +376,22 @@ function showEnhancedErrorModal(title, message, showRetry = true, showAdvancedHe
         <h3>${title}</h3>
       </div>
       <div class="error-message">
-        <p>${message.replace(/\n/g, '<br>')}</p>
+        <p>${message.replace(/\n/g, "<br>")}</p>
       </div>
       ${advancedHelp}
       <div class="modal-buttons" style="margin-top: 20px;">
         <button class="btn-primary" onclick="document.getElementById('enhancedErrorModal').remove()">
           OK
         </button>
-        ${showRetry ? `
+        ${
+          showRetry
+            ? `
           <button class="btn-secondary" onclick="document.getElementById('enhancedErrorModal').remove(); setTimeout(() => retryMediaAccess(), 500);">
             Try Again
         </button>
-        ` : ''}
+        `
+            : ""
+        }
         <button class="btn-secondary" onclick="document.getElementById('enhancedErrorModal').remove(); emergencyFallback();">
           Continue Without Camera
         </button>
@@ -373,9 +407,6 @@ function setupLocalVideo(stream) {
   if (localVideo) {
     localVideo.srcObject = stream;
 
-    // Fix for mirrored camera - apply CSS transform to un-mirror the video
-    localVideo.style.transform = 'scaleX(-1)';
-    
     // Handle video loading
     localVideo.onloadedmetadata = () => {
       console.log("Local video metadata loaded");
@@ -397,41 +428,6 @@ function setupLocalVideo(stream) {
   const localContainer = document.querySelector(".video-container:first-child");
   if (localContainer) {
     localContainer.classList.remove("video-off");
-  }
-}
-
-// Helper function to detect camera type
-async function detectCameraType(stream) {
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const videoDevices = devices.filter(device => device.kind === 'videoinput');
-    
-    if (videoDevices.length === 0) return true; // Default to front camera
-    
-    const currentTrack = stream.getVideoTracks()[0];
-    if (!currentTrack) return true;
-    
-    const settings = currentTrack.getSettings();
-    
-    // Check for front-facing camera indicators
-    if (settings.facingMode) {
-      return settings.facingMode === 'user'; // 'user' means front camera
-    }
-    
-    // Check device label for common front camera indicators
-    const currentDevice = videoDevices.find(device => 
-      device.label && (
-        device.label.toLowerCase().includes('front') ||
-        device.label.toLowerCase().includes('facetime') ||
-        device.label.toLowerCase().includes('user')
-      )
-    );
-    
-    return !!currentDevice; // If we found a front camera device
-    
-  } catch (error) {
-    console.warn("Could not detect camera type:", error);
-    return true; // Default to front camera behavior
   }
 }
 
@@ -458,6 +454,45 @@ function setupSocketListeners() {
       }
     });
 
+    // Video chat specific events
+    socket.on("video_chat_search_started", (data) => {
+      console.log("Searching for video partner...", data);
+      updateConnectionStatus("Searching for video partner...");
+      updateUsersWaiting(data.total_waiting || 0);
+      isSearching = true;
+    });
+
+    socket.on("video_chat_match_found", (data) => {
+      console.log("Video match found:", data);
+      isSearching = false;
+      handleMatchFound(data);
+    });
+
+    socket.on("video_chat_ended", (data) => {
+      console.log("Video chat ended:", data);
+      handlePartnerLeft(data.reason);
+    });
+
+    socket.on("webrtc_signal", (data) => {
+      console.log("Received WebRTC signal:", data.type);
+      handleSignal(data);
+    });
+
+    socket.on("partner_media_ready", (data) => {
+      console.log("Partner media ready:", data.media_type);
+      showInfoModal(
+        "Partner Ready",
+        "Your partner's camera/microphone is now ready."
+      );
+    });
+
+    socket.on("video_chat_search_cancelled", () => {
+      console.log("Video search cancelled");
+      isSearching = false;
+      updateUIState("ready");
+    });
+
+    // Legacy events for backward compatibility
     socket.on("searching", (data) => {
       console.log("Searching for partner...", data);
       updateConnectionStatus("Searching for partner...");
@@ -471,14 +506,23 @@ function setupSocketListeners() {
       handleMatchFound(data);
     });
 
-    socket.on("webrtc_signal", (data) => {
-      console.log("Received WebRTC signal:", data.type);
-      handleSignal(data);
-    });
-
     socket.on("partner_left", () => {
       console.log("Partner left the chat");
       handlePartnerLeft();
+    });
+
+    // Advanced features socket events
+    socket.on("game_started", (data) => {
+      console.log("Partner started game:", data.game_type);
+      showInfoModal(
+        "Game Started",
+        `Your partner started a ${data.game_type} game!`
+      );
+    });
+
+    socket.on("game_ended", () => {
+      console.log("Partner ended game");
+      showInfoModal("Game Ended", "Your partner ended the game.");
     });
 
     socket.on("error", (data) => {
@@ -488,17 +532,6 @@ function setupSocketListeners() {
         data.message || "An error occurred",
         true
       );
-    });
-
-    // Advanced features socket events
-    socket.on("game_started", (data) => {
-      console.log("Partner started game:", data.game_type);
-      showInfoModal("Game Started", `Your partner started a ${data.game_type} game!`);
-    });
-
-    socket.on("game_ended", () => {
-      console.log("Partner ended game");
-      showInfoModal("Game Ended", "Your partner ended the game.");
     });
 
     window.chatSocket = socket;
@@ -524,15 +557,28 @@ async function startVideoChat() {
       return;
     }
 
-    updateConnectionStatus("Searching for partner...");
+    updateConnectionStatus("Searching for video partner...");
     updateUIState("searching");
 
-    // Join the video chat queue
+    // Join the video chat queue with specific video parameters
     if (window.chatSocket && window.chatSocket.connected) {
-      window.chatSocket.emit("join_chat", {
+      window.chatSocket.emit("join_video_chat", {
         type: "video",
         interests: [],
+        filters: {
+          require_video: true,
+          require_audio: true,
+        },
       });
+
+      // Notify server that media is ready
+      setTimeout(() => {
+        if (window.chatSocket && window.chatSocket.connected) {
+          window.chatSocket.emit("media_ready", {
+            media_type: "both", // video and audio
+          });
+        }
+      }, 1000);
     } else {
       throw new Error("Not connected to chat server");
     }
@@ -545,6 +591,14 @@ async function startVideoChat() {
 
 function stopVideoChat() {
   console.log("Stopping video chat...");
+
+  // Notify server about ending video chat
+  if (window.chatSocket && window.currentSessionId) {
+    window.chatSocket.emit("video_chat_ended", {
+      session_id: window.currentSessionId,
+      reason: "user_left",
+    });
+  }
 
   // Stop local stream
   if (localStream) {
@@ -589,9 +643,9 @@ function stopVideoChat() {
   resetCallDuration();
 
   // Hide game container
-  const gameContainer = document.getElementById('gameContainer');
+  const gameContainer = document.getElementById("gameContainer");
   if (gameContainer) {
-    gameContainer.style.display = 'none';
+    gameContainer.style.display = "none";
   }
 
   // Show waiting overlay
@@ -602,8 +656,8 @@ function stopVideoChat() {
 
   // Reset advanced features
   removeBackgroundEffects();
-  changeFaceFilter('none');
-  changeVoiceEffect('normal');
+  changeFaceFilter("none");
+  changeVoiceEffect("normal");
 
   console.log("Video chat stopped");
 }
@@ -802,9 +856,9 @@ async function handleSignal(data) {
   }
 }
 
-function handlePartnerLeft() {
-  console.log("Handling partner left");
-  showInfoModal("Partner Left", "Your chat partner has left the conversation.");
+function handlePartnerLeft(reason = "Partner left the chat") {
+  console.log("Handling partner left:", reason);
+  showInfoModal("Partner Left", reason);
   stopVideoChat();
 }
 
@@ -813,236 +867,251 @@ function handlePartnerLeft() {
 // Background Effects
 async function changeBackgroundEffect(effect) {
   currentBackgroundEffect = effect;
-  
+
   if (!localStream) return;
-  
+
   const videoTrack = localStream.getVideoTracks()[0];
   if (!videoTrack) return;
-  
+
   try {
-    switch(effect) {
-      case 'blur':
+    switch (effect) {
+      case "blur":
         await applyBackgroundBlur();
         break;
-      case 'virtual':
+      case "virtual":
         await applyVirtualBackground();
         break;
-      case 'pixelate':
+      case "pixelate":
         await applyFacePixelation();
         break;
-      case 'none':
+      case "none":
       default:
         removeBackgroundEffects();
         break;
     }
-    
+
     console.log("Background effect applied:", effect);
   } catch (error) {
     console.error("Error applying background effect:", error);
-    showInfoModal("Effect Not Available", "This effect requires more processing power and may not work on all devices.");
+    showInfoModal(
+      "Effect Not Available",
+      "This effect requires more processing power and may not work on all devices."
+    );
   }
 }
 
 async function applyBackgroundBlur() {
-  const localVideo = document.getElementById('localVideo');
+  const localVideo = document.getElementById("localVideo");
   if (localVideo) {
-    localVideo.style.filter = 'blur(15px)';
-    localVideo.style.maskImage = 'radial-gradient(circle, white 40%, transparent 70%)';
-    localVideo.style.webkitMaskImage = 'radial-gradient(circle, white 40%, transparent 70%)';
+    localVideo.style.filter = "blur(15px)";
+    localVideo.style.maskImage =
+      "radial-gradient(circle, white 40%, transparent 70%)";
+    localVideo.style.webkitMaskImage =
+      "radial-gradient(circle, white 40%, transparent 70%)";
   }
 }
 
 async function applyVirtualBackground() {
-  const localVideo = document.getElementById('localVideo');
+  const localVideo = document.getElementById("localVideo");
   if (localVideo) {
     // Create a canvas-based virtual background
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
     // Set canvas size to match video
     canvas.width = localVideo.videoWidth || 640;
     canvas.height = localVideo.videoHeight || 480;
-    
+
     // Draw virtual background (gradient)
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    gradient.addColorStop(0, '#8b5cf6');
-    gradient.addColorStop(1, '#3b82f6');
+    const gradient = ctx.createLinearGradient(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+    gradient.addColorStop(0, "#8b5cf6");
+    gradient.addColorStop(1, "#3b82f6");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     // Use canvas as background
     localVideo.style.backgroundImage = `url(${canvas.toDataURL()})`;
-    localVideo.style.backgroundSize = 'cover';
-    localVideo.style.backgroundPosition = 'center';
+    localVideo.style.backgroundSize = "cover";
+    localVideo.style.backgroundPosition = "center";
   }
 }
 
 async function applyFacePixelation() {
-  const localVideo = document.getElementById('localVideo');
+  const localVideo = document.getElementById("localVideo");
   if (localVideo) {
-    localVideo.style.filter = 'pixelate(8px) contrast(1.2)';
+    localVideo.style.filter = "pixelate(8px) contrast(1.2)";
   }
 }
 
 function removeBackgroundEffects() {
-  const localVideo = document.getElementById('localVideo');
+  const localVideo = document.getElementById("localVideo");
   if (localVideo) {
-    localVideo.style.filter = 'none';
-    localVideo.style.maskImage = 'none';
-    localVideo.style.webkitMaskImage = 'none';
-    localVideo.style.backgroundImage = 'none';
+    localVideo.style.filter = "none";
+    localVideo.style.maskImage = "none";
+    localVideo.style.webkitMaskImage = "none";
+    localVideo.style.backgroundImage = "none";
   }
 }
 
 // Voice Modulator
 function changeVoiceEffect(effect) {
   currentVoiceEffect = effect;
-  
+
   if (!localStream) return;
-  
+
   const audioTracks = localStream.getAudioTracks();
   if (audioTracks.length === 0) return;
-  
+
   console.log("Voice effect changed to:", effect);
-  
+
   // Apply voice effect using Web Audio API if available
   applyVoiceModulation(effect);
 }
 
 function applyVoiceModulation(effect) {
-  if (!audioContext || audioContext.state === 'suspended') {
+  if (!audioContext || audioContext.state === "suspended") {
     console.warn("Audio context not available for voice modulation");
-    showInfoModal("Voice Effect", `${effect} voice effect selected. Full voice modulation requires Web Audio API support.`);
+    showInfoModal(
+      "Voice Effect",
+      `${effect} voice effect selected. Full voice modulation requires Web Audio API support.`
+    );
     return;
   }
-  
+
   try {
     // Resume audio context if suspended
-    if (audioContext.state === 'suspended') {
+    if (audioContext.state === "suspended") {
       audioContext.resume();
     }
-    
+
     // Remove existing effect node
     if (voiceEffectNode) {
       voiceEffectNode.disconnect();
     }
-    
+
     const source = audioContext.createMediaStreamSource(localStream);
-    
-    switch(effect) {
-      case 'deep':
+
+    switch (effect) {
+      case "deep":
         // Low-pass filter for deeper voice
         voiceEffectNode = audioContext.createBiquadFilter();
-        voiceEffectNode.type = 'lowpass';
+        voiceEffectNode.type = "lowpass";
         voiceEffectNode.frequency.value = 800;
         break;
-        
-      case 'high':
+
+      case "high":
         // High-pass filter for higher voice
         voiceEffectNode = audioContext.createBiquadFilter();
-        voiceEffectNode.type = 'highpass';
+        voiceEffectNode.type = "highpass";
         voiceEffectNode.frequency.value = 1000;
         break;
-        
-      case 'robot':
+
+      case "robot":
         // Robot effect using oscillator modulation
         voiceEffectNode = audioContext.createGain();
         const oscillator = audioContext.createOscillator();
-        oscillator.type = 'sawtooth';
+        oscillator.type = "sawtooth";
         oscillator.frequency.value = 50;
-        
+
         const modulator = audioContext.createGain();
         modulator.gain.value = 0.1;
-        
+
         oscillator.connect(modulator);
         modulator.connect(voiceEffectNode.gain);
         oscillator.start();
         break;
-        
-      case 'anonymous':
+
+      case "anonymous":
         // Pitch shift for anonymous effect
         voiceEffectNode = audioContext.createGain();
         voiceEffectNode.gain.value = 0.8;
         break;
-        
-      case 'normal':
+
+      case "normal":
       default:
         voiceEffectNode = audioContext.createGain();
         voiceEffectNode.gain.value = 1.0;
         break;
     }
-    
+
     const destination = audioContext.createMediaStreamDestination();
     source.connect(voiceEffectNode);
     voiceEffectNode.connect(destination);
-    
+
     // Replace audio track with processed stream
     const processedStream = new MediaStream([
       destination.stream.getAudioTracks()[0],
-      ...localStream.getVideoTracks()
+      ...localStream.getVideoTracks(),
     ]);
-    
+
     // Update local video source
-    const localVideo = document.getElementById('localVideo');
+    const localVideo = document.getElementById("localVideo");
     if (localVideo) {
       localVideo.srcObject = processedStream;
     }
-    
+
     // Update local stream reference
     localStream = processedStream;
-    
+
     console.log("Voice modulation applied:", effect);
-    
   } catch (error) {
     console.error("Error applying voice modulation:", error);
-    showInfoModal("Voice Effect", `${effect} voice effect applied with basic processing.`);
+    showInfoModal(
+      "Voice Effect",
+      `${effect} voice effect applied with basic processing.`
+    );
   }
 }
 
 // Face Filters
 function changeFaceFilter(filter) {
   currentFaceFilter = filter;
-  
-  const videoContainer = document.querySelector('.video-container:first-child');
-  let filterOverlay = document.getElementById('faceFilterOverlay');
-  
-  if (filter === 'none') {
+
+  const videoContainer = document.querySelector(".video-container:first-child");
+  let filterOverlay = document.getElementById("faceFilterOverlay");
+
+  if (filter === "none") {
     if (filterOverlay) {
       filterOverlay.remove();
     }
     return;
   }
-  
+
   if (!filterOverlay) {
-    filterOverlay = document.createElement('div');
-    filterOverlay.id = 'faceFilterOverlay';
-    filterOverlay.className = 'face-filter-overlay';
+    filterOverlay = document.createElement("div");
+    filterOverlay.id = "faceFilterOverlay";
+    filterOverlay.className = "face-filter-overlay";
     videoContainer.appendChild(filterOverlay);
   }
-  
-  filterOverlay.innerHTML = '';
-  const filterElement = document.createElement('div');
+
+  filterOverlay.innerHTML = "";
+  const filterElement = document.createElement("div");
   filterElement.className = `filter-${filter}`;
-  
-  switch(filter) {
-    case 'glasses':
-      filterElement.innerHTML = '🤓';
-      filterElement.style.fontSize = '48px';
+
+  switch (filter) {
+    case "glasses":
+      filterElement.innerHTML = "🤓";
+      filterElement.style.fontSize = "48px";
       break;
-    case 'mustache':
-      filterElement.innerHTML = '👨‍🎤';
-      filterElement.style.fontSize = '42px';
+    case "mustache":
+      filterElement.innerHTML = "👨‍🎤";
+      filterElement.style.fontSize = "42px";
       break;
-    case 'hat':
-      filterElement.innerHTML = '🎩';
-      filterElement.style.fontSize = '44px';
+    case "hat":
+      filterElement.innerHTML = "🎩";
+      filterElement.style.fontSize = "44px";
       break;
-    case 'heart':
-      filterElement.innerHTML = '😍';
-      filterElement.style.fontSize = '46px';
+    case "heart":
+      filterElement.innerHTML = "😍";
+      filterElement.style.fontSize = "46px";
       break;
   }
-  
+
   filterOverlay.appendChild(filterElement);
 }
 
@@ -1051,7 +1120,7 @@ function startNetworkMonitoring() {
   if (networkMonitorInterval) {
     clearInterval(networkMonitorInterval);
   }
-  
+
   networkMonitorInterval = setInterval(() => {
     if (peerConnection && isCallActive) {
       monitorNetworkQuality();
@@ -1061,89 +1130,99 @@ function startNetworkMonitoring() {
 
 function monitorNetworkQuality() {
   if (!peerConnection) return;
-  
-  let quality = 'good';
-  let indicatorClass = 'quality-good';
-  
+
+  let quality = "good";
+  let indicatorClass = "quality-good";
+
   // Simulate network quality monitoring
   // In a real implementation, you would analyze WebRTC stats
-  const qualities = ['excellent', 'good', 'fair', 'poor'];
+  const qualities = ["excellent", "good", "fair", "poor"];
   const randomQuality = qualities[Math.floor(Math.random() * qualities.length)];
-  
-  switch(randomQuality) {
-    case 'excellent':
-      quality = 'Excellent';
-      indicatorClass = 'quality-excellent';
+
+  switch (randomQuality) {
+    case "excellent":
+      quality = "Excellent";
+      indicatorClass = "quality-excellent";
       break;
-    case 'good':
-      quality = 'Good';
-      indicatorClass = 'quality-good';
+    case "good":
+      quality = "Good";
+      indicatorClass = "quality-good";
       break;
-    case 'fair':
-      quality = 'Fair';
-      indicatorClass = 'quality-fair';
+    case "fair":
+      quality = "Fair";
+      indicatorClass = "quality-fair";
       break;
-    case 'poor':
-      quality = 'Poor';
-      indicatorClass = 'quality-poor';
+    case "poor":
+      quality = "Poor";
+      indicatorClass = "quality-poor";
       break;
   }
-  
+
   // Update UI
-  const qualityElement = document.getElementById('networkQuality');
-  const indicatorElement = document.getElementById('qualityIndicator');
-  
+  const qualityElement = document.getElementById("networkQuality");
+  const indicatorElement = document.getElementById("qualityIndicator");
+
   if (qualityElement) qualityElement.textContent = quality;
   if (indicatorElement) {
     indicatorElement.className = `quality-indicator ${indicatorClass}`;
   }
-  
+
   // Adjust video quality based on network conditions
-  if (randomQuality === 'poor' && localStream) {
-    adjustVideoQuality('low');
-  } else if (randomQuality === 'excellent' && localStream) {
-    adjustVideoQuality('high');
+  if (randomQuality === "poor" && localStream) {
+    adjustVideoQuality("low");
+  } else if (randomQuality === "excellent" && localStream) {
+    adjustVideoQuality("high");
   }
 }
 
 function adjustVideoQuality(quality) {
   const videoTrack = localStream.getVideoTracks()[0];
   if (!videoTrack) return;
-  
+
   const constraints = {
     video: {
-      width: quality === 'low' ? { ideal: 320 } : { ideal: 640 },
-      height: quality === 'low' ? { ideal: 240 } : { ideal: 480 },
-      frameRate: quality === 'low' ? { ideal: 15 } : { ideal: 30 }
-    }
+      width: quality === "low" ? { ideal: 320 } : { ideal: 640 },
+      height: quality === "low" ? { ideal: 240 } : { ideal: 480 },
+      frameRate: quality === "low" ? { ideal: 15 } : { ideal: 30 },
+    },
   };
-  
+
   // Apply constraints to video track
-  videoTrack.applyConstraints(constraints.video)
+  videoTrack
+    .applyConstraints(constraints.video)
     .then(() => console.log(`Video quality adjusted to: ${quality}`))
-    .catch(error => console.error("Error adjusting video quality:", error));
+    .catch((error) => console.error("Error adjusting video quality:", error));
 }
 
 // Screenshot Protection
 function initializeScreenshotProtection() {
   // Prevent right-click context menu
-  document.addEventListener('contextmenu', function(e) {
+  document.addEventListener("contextmenu", function (e) {
     if (screenshotProtectionEnabled) {
       e.preventDefault();
-      showInfoModal("Screenshot Protection", "Right-click is disabled to protect your privacy.");
+      showInfoModal(
+        "Screenshot Protection",
+        "Right-click is disabled to protect your privacy."
+      );
     }
   });
-  
+
   // Detect print screen and other screenshot attempts
-  document.addEventListener('keydown', function(e) {
-    if (screenshotProtectionEnabled && (e.key === 'PrintScreen' || (e.ctrlKey && e.key === 'p'))) {
+  document.addEventListener("keydown", function (e) {
+    if (
+      screenshotProtectionEnabled &&
+      (e.key === "PrintScreen" || (e.ctrlKey && e.key === "p"))
+    ) {
       e.preventDefault();
-      showInfoModal("Screenshot Protection", "Screenshot functionality is disabled for privacy protection.");
+      showInfoModal(
+        "Screenshot Protection",
+        "Screenshot functionality is disabled for privacy protection."
+      );
     }
   });
-  
+
   // Add visual protection overlay when tab is hidden (user might be taking screenshot)
-  document.addEventListener('visibilitychange', function() {
+  document.addEventListener("visibilitychange", function () {
     if (screenshotProtectionEnabled && document.hidden) {
       // User switched tabs - could be taking screenshot
       console.log("Tab hidden - screenshot protection active");
@@ -1153,87 +1232,87 @@ function initializeScreenshotProtection() {
 
 function toggleScreenshotProtection() {
   screenshotProtectionEnabled = !screenshotProtectionEnabled;
-  const btn = document.getElementById('screenshotProtectionBtn');
-  const statusElement = document.getElementById('screenshotStatus');
-  
+  const btn = document.getElementById("screenshotProtectionBtn");
+  const statusElement = document.getElementById("screenshotStatus");
+
   if (btn) {
     if (screenshotProtectionEnabled) {
-      btn.classList.add('active');
+      btn.classList.add("active");
       btn.innerHTML = '<i class="fas fa-shield-alt"></i>';
       if (statusElement) {
-        statusElement.textContent = 'Active';
-        statusElement.className = 'status-badge status-available';
+        statusElement.textContent = "Active";
+        statusElement.className = "status-badge status-available";
       }
     } else {
-      btn.classList.remove('active');
+      btn.classList.remove("active");
       btn.innerHTML = '<i class="fas fa-shield-alt"></i>';
       if (statusElement) {
-        statusElement.textContent = 'Inactive';
-        statusElement.className = 'status-badge status-unavailable';
+        statusElement.textContent = "Inactive";
+        statusElement.className = "status-badge status-unavailable";
       }
     }
   }
-  
+
   showInfoModal(
-    "Screenshot Protection", 
-    screenshotProtectionEnabled ? 
-    "Screenshot protection is now ACTIVE. Your privacy is protected." :
-    "Screenshot protection is now INACTIVE. Use with caution."
+    "Screenshot Protection",
+    screenshotProtectionEnabled
+      ? "Screenshot protection is now ACTIVE. Your privacy is protected."
+      : "Screenshot protection is now INACTIVE. Use with caution."
   );
 }
 
 // Mini Games
 function startMiniGame() {
-  const modal = document.getElementById('miniGameModal');
+  const modal = document.getElementById("miniGameModal");
   if (modal) {
-    modal.style.display = 'flex';
+    modal.style.display = "flex";
   }
 }
 
 function hideMiniGameModal() {
-  const modal = document.getElementById('miniGameModal');
+  const modal = document.getElementById("miniGameModal");
   if (modal) {
-    modal.style.display = 'none';
+    modal.style.display = "none";
   }
 }
 
 function startGame(gameType) {
   miniGameActive = true;
   currentGame = gameType;
-  
+
   hideMiniGameModal();
-  
-  const gameContainer = document.getElementById('gameContainer');
-  const gameContent = document.getElementById('gameContent');
-  const gameTitle = document.getElementById('gameTitle');
-  
+
+  const gameContainer = document.getElementById("gameContainer");
+  const gameContent = document.getElementById("gameContent");
+  const gameTitle = document.getElementById("gameTitle");
+
   if (gameContainer && gameContent && gameTitle) {
-    gameContainer.style.display = 'block';
-    
-    switch(gameType) {
-      case 'tic-tac-toe':
-        gameTitle.textContent = 'Tic Tac Toe';
+    gameContainer.style.display = "block";
+
+    switch (gameType) {
+      case "tic-tac-toe":
+        gameTitle.textContent = "Tic Tac Toe";
         initializeTicTacToe(gameContent);
         break;
-      case 'trivia':
-        gameTitle.textContent = 'Trivia Quiz';
+      case "trivia":
+        gameTitle.textContent = "Trivia Quiz";
         initializeTrivia(gameContent);
         break;
-      case 'drawing':
-        gameTitle.textContent = 'Drawing Game';
+      case "drawing":
+        gameTitle.textContent = "Drawing Game";
         initializeDrawing(gameContent);
         break;
-      case 'word':
-        gameTitle.textContent = 'Word Chain';
+      case "word":
+        gameTitle.textContent = "Word Chain";
         initializeWordChain(gameContent);
         break;
     }
-    
+
     // Notify partner about game start
     if (window.chatSocket && isCallActive) {
-      window.chatSocket.emit('game_started', {
+      window.chatSocket.emit("game_started", {
         game_type: gameType,
-        session_id: window.currentSessionId
+        session_id: window.currentSessionId,
       });
     }
   }
@@ -1242,65 +1321,74 @@ function startGame(gameType) {
 function endGame() {
   miniGameActive = false;
   currentGame = null;
-  
-  const gameContainer = document.getElementById('gameContainer');
+
+  const gameContainer = document.getElementById("gameContainer");
   if (gameContainer) {
-    gameContainer.style.display = 'none';
+    gameContainer.style.display = "none";
   }
-  
+
   // Notify partner about game end
   if (window.chatSocket && isCallActive) {
-    window.chatSocket.emit('game_ended', {
-      session_id: window.currentSessionId
+    window.chatSocket.emit("game_ended", {
+      session_id: window.currentSessionId,
     });
   }
 }
 
 function initializeTicTacToe(container) {
-  let currentPlayer = 'X';
-  let board = ['', '', '', '', '', '', '', '', ''];
-  
+  let currentPlayer = "X";
+  let board = ["", "", "", "", "", "", "", "", ""];
+
   container.innerHTML = `
     <div class="tic-tac-toe">
-      ${Array(9).fill().map((_, i) => 
-        `<div class="tic-tac-toe-cell" onclick="makeMove(${i})" id="cell-${i}"></div>`
-      ).join('')}
+      ${Array(9)
+        .fill()
+        .map(
+          (_, i) =>
+            `<div class="tic-tac-toe-cell" onclick="makeMove(${i})" id="cell-${i}"></div>`
+        )
+        .join("")}
     </div>
     <div style="text-align: center; margin-top: 15px;">
       <p>Current Player: <span id="current-player">${currentPlayer}</span></p>
     </div>
   `;
-  
-  window.makeMove = function(index) {
-    if (board[index] === '' && !checkWinner()) {
+
+  window.makeMove = function (index) {
+    if (board[index] === "" && !checkWinner()) {
       board[index] = currentPlayer;
       const cell = document.getElementById(`cell-${index}`);
       cell.textContent = currentPlayer;
-      cell.style.color = currentPlayer === 'X' ? '#8b5cf6' : '#3b82f6';
-      
+      cell.style.color = currentPlayer === "X" ? "#8b5cf6" : "#3b82f6";
+
       if (checkWinner()) {
         setTimeout(() => {
           showInfoModal("Game Over", `Player ${currentPlayer} wins!`);
         }, 100);
-      } else if (board.every(cell => cell !== '')) {
+      } else if (board.every((cell) => cell !== "")) {
         setTimeout(() => {
           showInfoModal("Game Over", "It's a tie!");
         }, 100);
       } else {
-        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-        document.getElementById('current-player').textContent = currentPlayer;
+        currentPlayer = currentPlayer === "X" ? "O" : "X";
+        document.getElementById("current-player").textContent = currentPlayer;
       }
     }
   };
-  
+
   function checkWinner() {
     const winPatterns = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-      [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-      [0, 4, 8], [2, 4, 6] // diagonals
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8], // rows
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8], // columns
+      [0, 4, 8],
+      [2, 4, 6], // diagonals
     ];
-    
-    return winPatterns.some(pattern => {
+
+    return winPatterns.some((pattern) => {
       const [a, b, c] = pattern;
       return board[a] && board[a] === board[b] && board[a] === board[c];
     });
@@ -1312,23 +1400,23 @@ function initializeTrivia(container) {
     {
       question: "What is the capital of France?",
       options: ["London", "Berlin", "Paris", "Madrid"],
-      correct: 2
+      correct: 2,
     },
     {
       question: "Which planet is known as the Red Planet?",
       options: ["Venus", "Mars", "Jupiter", "Saturn"],
-      correct: 1
+      correct: 1,
     },
     {
       question: "What is the largest mammal in the world?",
       options: ["Elephant", "Blue Whale", "Giraffe", "Polar Bear"],
-      correct: 1
-    }
+      correct: 1,
+    },
   ];
-  
+
   let currentQuestion = 0;
   let score = 0;
-  
+
   function loadQuestion() {
     const question = questions[currentQuestion];
     container.innerHTML = `
@@ -1337,30 +1425,33 @@ function initializeTrivia(container) {
         <p>Score: ${score}/${currentQuestion}</p>
       </div>
       <div class="trivia-options">
-        ${question.options.map((option, index) => 
-          `<div class="trivia-option" onclick="selectAnswer(${index})">${option}</div>`
-        ).join('')}
+        ${question.options
+          .map(
+            (option, index) =>
+              `<div class="trivia-option" onclick="selectAnswer(${index})">${option}</div>`
+          )
+          .join("")}
       </div>
     `;
   }
-  
-  window.selectAnswer = function(selectedIndex) {
+
+  window.selectAnswer = function (selectedIndex) {
     const question = questions[currentQuestion];
-    const options = container.querySelectorAll('.trivia-option');
-    
+    const options = container.querySelectorAll(".trivia-option");
+
     options.forEach((option, index) => {
       if (index === question.correct) {
-        option.classList.add('correct');
+        option.classList.add("correct");
       } else if (index === selectedIndex) {
-        option.classList.add('incorrect');
+        option.classList.add("incorrect");
       }
-      option.style.pointerEvents = 'none';
+      option.style.pointerEvents = "none";
     });
-    
+
     if (selectedIndex === question.correct) {
       score++;
     }
-    
+
     setTimeout(() => {
       currentQuestion++;
       if (currentQuestion < questions.length) {
@@ -1378,7 +1469,7 @@ function initializeTrivia(container) {
       }
     }, 2000);
   };
-  
+
   loadQuestion();
 }
 
@@ -1393,54 +1484,54 @@ function initializeDrawing(container) {
       </div>
     </div>
   `;
-  
-  const canvas = document.getElementById('drawingCanvas');
-  const ctx = canvas.getContext('2d');
+
+  const canvas = document.getElementById("drawingCanvas");
+  const ctx = canvas.getContext("2d");
   let isDrawing = false;
   let lastX = 0;
   let lastY = 0;
-  let currentColor = '#8b5cf6';
+  let currentColor = "#8b5cf6";
   let brushSize = 5;
-  
-  canvas.addEventListener('mousedown', startDrawing);
-  canvas.addEventListener('mousemove', draw);
-  canvas.addEventListener('mouseup', stopDrawing);
-  canvas.addEventListener('mouseout', stopDrawing);
-  
+
+  canvas.addEventListener("mousedown", startDrawing);
+  canvas.addEventListener("mousemove", draw);
+  canvas.addEventListener("mouseup", stopDrawing);
+  canvas.addEventListener("mouseout", stopDrawing);
+
   function startDrawing(e) {
     isDrawing = true;
     [lastX, lastY] = [e.offsetX, e.offsetY];
   }
-  
+
   function draw(e) {
     if (!isDrawing) return;
-    
+
     ctx.strokeStyle = currentColor;
     ctx.lineWidth = brushSize;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
     ctx.beginPath();
     ctx.moveTo(lastX, lastY);
     ctx.lineTo(e.offsetX, e.offsetY);
     ctx.stroke();
-    
+
     [lastX, lastY] = [e.offsetX, e.offsetY];
   }
-  
+
   function stopDrawing() {
     isDrawing = false;
   }
-  
-  window.clearCanvas = function() {
+
+  window.clearCanvas = function () {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   };
-  
-  window.changeColor = function(color) {
+
+  window.changeColor = function (color) {
     currentColor = color;
   };
-  
-  window.changeBrushSize = function(size) {
+
+  window.changeBrushSize = function (size) {
     brushSize = parseInt(size);
   };
 }
@@ -1459,33 +1550,43 @@ function initializeWordChain(container) {
       </div>
     </div>
   `;
-  
-  let lastWord = '';
+
+  let lastWord = "";
   let wordChain = [];
-  
-  window.submitWord = function() {
-    const input = document.getElementById('wordInput');
+
+  window.submitWord = function () {
+    const input = document.getElementById("wordInput");
     const word = input.value.trim().toLowerCase();
-    
+
     if (!word) {
       showInfoModal("Invalid Word", "Please enter a word.");
       return;
     }
-    
+
     if (lastWord && word[0] !== lastWord[lastWord.length - 1]) {
-      showInfoModal("Invalid Word", `Your word must start with the letter "${lastWord[lastWord.length - 1].toUpperCase()}"`);
+      showInfoModal(
+        "Invalid Word",
+        `Your word must start with the letter "${lastWord[
+          lastWord.length - 1
+        ].toUpperCase()}"`
+      );
       return;
     }
-    
+
     wordChain.push(word);
     lastWord = word;
-    
-    const display = document.getElementById('wordChainDisplay');
-    display.innerHTML = wordChain.map((w, i) => 
-      `<span style="color: ${i % 2 === 0 ? '#8b5cf6' : '#3b82f6'}">${w}</span>`
-    ).join(' → ');
-    
-    input.value = '';
+
+    const display = document.getElementById("wordChainDisplay");
+    display.innerHTML = wordChain
+      .map(
+        (w, i) =>
+          `<span style="color: ${
+            i % 2 === 0 ? "#8b5cf6" : "#3b82f6"
+          }">${w}</span>`
+      )
+      .join(" → ");
+
+    input.value = "";
     input.focus();
   };
 }
@@ -1503,7 +1604,7 @@ function toggleVideo() {
         btn.innerHTML = videoTrack.enabled
           ? '<i class="fas fa-video"></i>'
           : '<i class="fas fa-video-slash"></i>';
-        btn.style.background = videoTrack.enabled ? '#8b5cf6' : '#ef4444';
+        btn.style.background = videoTrack.enabled ? "#8b5cf6" : "#ef4444";
       }
 
       const localVideoContainer = document.querySelector(
@@ -1534,7 +1635,7 @@ function toggleAudio() {
         btn.innerHTML = audioTrack.enabled
           ? '<i class="fas fa-microphone"></i>'
           : '<i class="fas fa-microphone-slash"></i>';
-        btn.style.background = audioTrack.enabled ? '#8b5cf6' : '#ef4444';
+        btn.style.background = audioTrack.enabled ? "#8b5cf6" : "#ef4444";
       }
 
       console.log("Audio toggled:", audioTrack.enabled);
@@ -1742,9 +1843,13 @@ async function emergencyFallback() {
   updateUIState("searching");
 
   if (window.chatSocket && window.chatSocket.connected) {
-    window.chatSocket.emit("join_chat", {
+    window.chatSocket.emit("join_video_chat", {
       type: "video",
       interests: [],
+      filters: {
+        require_video: false,
+        require_audio: false,
+      },
     });
   }
 
@@ -1753,14 +1858,17 @@ async function emergencyFallback() {
 
 // Add test button for development
 function addTestButton() {
-  const sidebar = document.querySelector('.chat-sidebar .sidebar-section:last-child');
+  const sidebar = document.querySelector(
+    ".chat-sidebar .sidebar-section:last-child"
+  );
   if (sidebar) {
-    const testButton = document.createElement('button');
-    testButton.className = 'btn-secondary btn-full';
-    testButton.innerHTML = '<i class="fas fa-video-slash"></i> Test Without Camera';
+    const testButton = document.createElement("button");
+    testButton.className = "btn-secondary btn-full";
+    testButton.innerHTML =
+      '<i class="fas fa-video-slash"></i> Test Without Camera';
     testButton.onclick = emergencyFallback;
-    testButton.style.marginTop = '10px';
-    testButton.style.background = '#666';
+    testButton.style.marginTop = "10px";
+    testButton.style.background = "#666";
     sidebar.appendChild(testButton);
   }
 }
