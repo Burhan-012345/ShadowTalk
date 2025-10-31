@@ -1109,6 +1109,258 @@
         font-size: 0.7rem;
         margin-left: 5px;
       }
+
+      /* Camera Error Modal Buttons */
+      .btn-try-again,
+      .btn-fix-camera-orientation,
+      .btn-continue-without-camera {
+        padding: 12px 20px;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        border: 2px solid transparent;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-width: 160px;
+        margin: 5px;
+        text-decoration: none;
+        text-align: center;
+      }
+
+      .btn-try-again {
+        background: var(--sky-blue);
+        color: white;
+      }
+
+      .btn-try-again:hover:not(:disabled) {
+        background: var(--sky-blue-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+      }
+
+      .btn-try-again:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      .btn-fix-camera-orientation {
+        background: var(--success);
+        color: white;
+      }
+
+      .btn-fix-camera-orientation:hover:not(:disabled) {
+        background: #059669;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
+      }
+
+      .btn-fix-camera-orientation:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      .btn-continue-without-camera {
+        background: var(--warning);
+        color: black;
+      }
+
+      .btn-continue-without-camera:hover:not(:disabled) {
+        background: #d97706;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+      }
+
+      .btn-continue-without-camera:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      /* Camera Error Modal Specific Styles */
+      .camera-error-modal .modal-content {
+        max-width: 500px;
+      }
+
+      .camera-error-content {
+        text-align: center;
+        padding: 10px 0;
+      }
+
+      .camera-error-icon {
+        font-size: 4rem;
+        color: var(--danger);
+        margin-bottom: 1.5rem;
+        opacity: 0.8;
+      }
+
+      .camera-error-title {
+        color: var(--danger);
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+
+      .camera-error-message {
+        color: var(--text-color-secondary);
+        margin-bottom: 2rem;
+        font-size: 1rem;
+        line-height: 1.6;
+        padding: 0 1rem;
+      }
+
+      .camera-error-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 2rem;
+        align-items: center;
+      }
+
+      /* Responsive styles for camera error buttons */
+      @media (min-width: 480px) {
+        .camera-error-buttons {
+          flex-direction: row;
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+
+        .btn-try-again,
+        .btn-fix-camera-orientation,
+        .btn-continue-without-camera {
+          min-width: 180px;
+          flex: 1;
+          max-width: 200px;
+        }
+      }
+
+      @media (min-width: 768px) {
+        .camera-error-buttons {
+          gap: 15px;
+        }
+
+        .btn-try-again,
+        .btn-fix-camera-orientation,
+        .btn-continue-without-camera {
+          padding: 14px 24px;
+          font-size: 1rem;
+        }
+
+        .camera-error-icon {
+          font-size: 5rem;
+        }
+
+        .camera-error-title {
+          font-size: 1.75rem;
+        }
+
+        .camera-error-message {
+          font-size: 1.1rem;
+        }
+      }
+
+      /* Button disabled states */
+      .btn-try-again:disabled,
+      .btn-fix-camera-orientation:disabled,
+      .btn-continue-without-camera:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      /* Focus states for accessibility */
+      .btn-try-again:focus-visible,
+      .btn-fix-camera-orientation:focus-visible,
+      .btn-continue-without-camera:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+      }
+
+      /* Loading state for buttons */
+      .btn-loading {
+        position: relative;
+        color: transparent !important;
+      }
+
+      .btn-loading::after {
+        content: "";
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Enhanced modal backdrop */
+      .camera-error-modal {
+        backdrop-filter: blur(8px);
+        background: rgba(0, 0, 0, 0.85);
+      }
+
+      .camera-error-modal .modal-content {
+        background: linear-gradient(
+          135deg,
+          var(--bg-card) 0%,
+          var(--bg-secondary) 100%
+        );
+        border: 2px solid var(--danger);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Pulse animation for error icon */
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.8;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.05);
+        }
+      }
+
+      .camera-error-icon {
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      /* Additional troubleshooting info */
+      .troubleshooting-info {
+        background: var(--bg-input);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin: 1.5rem 0;
+        text-align: left;
+        border-left: 4px solid var(--warning);
+      }
+
+      .troubleshooting-info h4 {
+        color: var(--warning);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+      }
+
+      .troubleshooting-info ul {
+        margin: 0;
+        padding-left: 1.2rem;
+        font-size: 0.85rem;
+        color: var(--text-color-secondary);
+      }
+
+      .troubleshooting-info li {
+        margin: 0.3rem 0;
+        line-height: 1.4;
+      }
     </style>
   </head>
   <body>
@@ -1150,38 +1402,23 @@
           </div>
         </div>
 
-        <!-- Camera Error Modal -->
-        <div id="cameraErrorModal" class="modal camera-error-modal">
-          <div class="modal-content">
-            <div class="camera-error-content">
-              <div class="camera-error-icon">
-                <i class="fas fa-video-slash"></i>
-              </div>
-              <h3 class="camera-error-title">No Camera or Microphone Found</h3>
-              <p class="camera-error-message">
-                We couldn't detect any camera or microphone devices on your
-                system. Please check your connections and permissions.
-              </p>
-
-              <div class="camera-error-buttons">
-                <button class="btn-try-again" onclick="retryCameraDetection()">
-                  <i class="fas fa-redo"></i> Try Again
-                </button>
-                <button
-                  class="btn-fix-camera-orientation"
-                  onclick="showCameraTroubleshooting()"
-                >
-                  <i class="fas fa-cog"></i> Fix Camera
-                </button>
-                <button
-                  class="btn-continue-without-camera"
-                  onclick="continueWithoutCamera()"
-                >
-                  <i class="fas fa-user"></i> Continue Without Camera
-                </button>
-              </div>
-            </div>
-          </div>
+        <!-- Replace the camera error modal buttons section with this: -->
+        <div class="camera-error-buttons">
+          <button class="btn-try-again" onclick="retryMediaAccess()">
+            <i class="fas fa-redo"></i> Try Again
+          </button>
+          <button
+            class="btn-fix-camera-orientation"
+            onclick="fixReversedCamera()"
+          >
+            <i class="fas fa-cog"></i> Fix Camera
+          </button>
+          <button
+            class="btn-continue-without-camera"
+            onclick="emergencyFallback()"
+          >
+            <i class="fas fa-user"></i> Continue Anyway
+          </button>
         </div>
 
         <!-- Global Match Modal -->
@@ -1866,6 +2103,69 @@
         document.getElementById("usersWaiting").textContent = Math.floor(
           Math.random() * 10
         );
+      }
+
+      // Camera error modal functions
+      function retryCameraDetection() {
+        console.log("Retrying camera detection...");
+        hideModal("cameraErrorModal");
+        checkDevices().then((hasDevices) => {
+          if (hasDevices) {
+            startVideoChat();
+          } else {
+            showModal("cameraErrorModal");
+          }
+        });
+      }
+
+      function showCameraTroubleshooting() {
+        const troubleshootingSteps = `
+        Advanced Camera Troubleshooting:
+
+        1. Browser Permissions:
+           • Chrome: Settings → Privacy and Security → Site Settings → Camera
+           • Firefox: Options → Privacy & Security → Permissions → Camera
+           • Edge: Settings → Site Permissions → Camera
+
+        2. System Settings:
+           • Windows: Settings → Privacy → Camera
+           • Mac: System Preferences → Security & Privacy → Camera
+           • Check if camera is enabled in system settings
+
+        3. Hardware Check:
+           • Try a different USB port
+           • Test camera in another app
+           • Update camera drivers
+
+        4. Browser Specific:
+           • Try incognito/private mode
+           • Clear site data and refresh
+           • Try a different browser
+
+        Still having issues? Contact support with your browser and OS details.
+    `;
+
+        alert(troubleshootingSteps);
+      }
+
+      function continueWithoutCamera() {
+        console.log("Continuing without camera...");
+        hideModal("cameraErrorModal");
+        // Enable text-only mode or redirect to text chat
+        emergencyFallback();
+      }
+
+      function emergencyTestMode() {
+        console.log("Entering emergency test mode...");
+        hideModal("cameraErrorModal");
+        // Simulate successful device check for testing
+        updateDeviceStatus("cameraStatusText", "Test Mode", "status-warning");
+        updateDeviceStatus(
+          "microphoneStatusText",
+          "Test Mode",
+          "status-warning"
+        );
+        startVideoChat();
       }
 
       // Initialize when page loads
