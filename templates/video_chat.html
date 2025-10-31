@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Anonymous Video Chat - Global Gender Matching</title>
+    <title>Anonymous Video Chat</title>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -371,6 +371,76 @@
         background-color: #d97706;
       }
 
+      /* Camera Error Modal Buttons */
+      .btn-continue-without-camera {
+        background: var(--warning);
+        color: black;
+        padding: 10px 20px;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        border: 2px solid transparent;
+        margin: 5px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .btn-continue-without-camera:hover:not(:disabled) {
+        background: #d97706;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .btn-try-again {
+        background: var(--sky-blue);
+        color: white;
+        padding: 10px 20px;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        border: 2px solid transparent;
+        margin: 5px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .btn-try-again:hover:not(:disabled) {
+        background: var(--sky-blue-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .btn-fix-camera-orientation {
+        background: var(--success);
+        color: white;
+        padding: 10px 20px;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        border: 2px solid transparent;
+        margin: 5px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .btn-fix-camera-orientation:hover:not(:disabled) {
+        background: #059669;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
       /* Sidebar */
       .chat-sidebar {
         background-color: var(--bg-card);
@@ -543,73 +613,6 @@
       .quality-poor {
         background: var(--danger);
         width: 30%;
-      }
-
-      /* Global Matching Styles */
-      .global-match-header {
-        text-align: center;
-        margin-bottom: 20px;
-      }
-
-      .global-match-header h3 {
-        color: #8b5cf6;
-        margin: 10px 0;
-      }
-
-      .match-details {
-        background: var(--bg-input);
-        padding: 15px;
-        border-radius: var(--border-radius);
-        margin: 15px 0;
-      }
-
-      .match-item {
-        display: flex;
-        justify-content: space-between;
-        margin: 8px 0;
-        padding: 5px 0;
-        border-bottom: 1px solid var(--border-color);
-      }
-
-      .match-item:last-child {
-        border-bottom: none;
-      }
-
-      .matching-controls select {
-        width: 100%;
-        background: var(--bg-input);
-        color: var(--text-color);
-        border: 2px solid var(--border-color);
-        border-radius: 4px;
-        padding: 8px;
-        margin-top: 5px;
-        font-size: 0.85rem;
-      }
-
-      .matching-controls label {
-        font-size: 0.85rem;
-        color: var(--text-color-secondary);
-        font-weight: 600;
-      }
-
-      /* Global Connection Status */
-      .connection-status-global {
-        background: linear-gradient(135deg, #8b5cf6, #3b82f6);
-        color: white;
-        padding: 4px 10px;
-        border-radius: 15px;
-        font-size: 0.75rem;
-        font-weight: bold;
-      }
-
-      /* Enhanced location display */
-      .location-badge {
-        background: var(--sky-blue);
-        color: white;
-        padding: 2px 8px;
-        border-radius: 10px;
-        font-size: 0.7rem;
-        margin-left: 5px;
       }
 
       /* Modals */
@@ -1039,6 +1042,73 @@
           min-width: 140px;
         }
       }
+
+      /* Global Matching Styles */
+      .global-match-header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .global-match-header h3 {
+        color: #8b5cf6;
+        margin: 10px 0;
+      }
+
+      .match-details {
+        background: var(--bg-input);
+        padding: 15px;
+        border-radius: var(--border-radius);
+        margin: 15px 0;
+      }
+
+      .match-item {
+        display: flex;
+        justify-content: space-between;
+        margin: 8px 0;
+        padding: 5px 0;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .match-item:last-child {
+        border-bottom: none;
+      }
+
+      .matching-controls select {
+        width: 100%;
+        background: var(--bg-input);
+        color: var(--text-color);
+        border: 2px solid var(--border-color);
+        border-radius: 4px;
+        padding: 8px;
+        margin-top: 5px;
+        font-size: 0.85rem;
+      }
+
+      .matching-controls label {
+        font-size: 0.85rem;
+        color: var(--text-color-secondary);
+        font-weight: 600;
+      }
+
+      /* Global Connection Status */
+      .connection-status-global {
+        background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: bold;
+      }
+
+      /* Enhanced location display */
+      .location-badge {
+        background: var(--sky-blue);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        margin-left: 5px;
+      }
     </style>
   </head>
   <body>
@@ -1118,24 +1188,32 @@
         <div id="globalMatchModal" class="modal">
           <div class="modal-content">
             <div class="global-match-header">
-              <i class="fas fa-globe-americas" style="color: #8b5cf6; font-size: 48px;"></i>
+              <i
+                class="fas fa-globe-americas"
+                style="color: #8b5cf6; font-size: 48px"
+              ></i>
               <h3>Global Match Found! 🌍</h3>
             </div>
             <div class="match-details">
               <div class="match-item">
-                <strong>Partner:</strong> <span id="matchPartnerName">Loading...</span>
+                <strong>Partner:</strong>
+                <span id="matchPartnerName">Loading...</span>
               </div>
               <div class="match-item">
-                <strong>Gender:</strong> <span id="matchPartnerGender">Loading...</span>
+                <strong>Gender:</strong>
+                <span id="matchPartnerGender">Loading...</span>
               </div>
               <div class="match-item">
-                <strong>Location:</strong> <span id="matchPartnerLocation">Loading...</span>
+                <strong>Location:</strong>
+                <span id="matchPartnerLocation">Loading...</span>
               </div>
               <div class="match-item">
-                <strong>Common Interests:</strong> <span id="matchCommonInterests">None</span>
+                <strong>Common Interests:</strong>
+                <span id="matchCommonInterests">None</span>
               </div>
               <div class="match-item">
-                <strong>Distance:</strong> <span id="matchDistance">Global</span>
+                <strong>Distance:</strong>
+                <span id="matchDistance">Global</span>
               </div>
             </div>
             <div class="modal-buttons">
@@ -1289,17 +1367,23 @@
               <span id="searchRange">Worldwide</span>
             </div>
           </div>
-          
-          <div class="matching-controls" style="margin-top: 10px;">
+
+          <div class="matching-controls" style="margin-top: 10px">
             <label>Gender Preference:</label>
-            <select id="genderPreference" onchange="updateGenderPreference(this.value)">
+            <select
+              id="genderPreference"
+              onchange="updateGenderPreference(this.value)"
+            >
               <option value="opposite">Opposite Gender</option>
               <option value="same">Same Gender</option>
               <option value="any">Any Gender</option>
             </select>
-            
-            <label style="margin-top: 8px; display: block;">Search Range:</label>
-            <select id="searchRangeSelect" onchange="updateSearchRange(this.value)">
+
+            <label style="margin-top: 8px; display: block">Search Range:</label>
+            <select
+              id="searchRangeSelect"
+              onchange="updateSearchRange(this.value)"
+            >
               <option value="global">Worldwide</option>
               <option value="continent">Same Continent</option>
               <option value="country">Same Country</option>
@@ -1411,140 +1495,381 @@
     <script src="{{ url_for('static', filename='js/video_chat.js') }}"></script>
 
     <script>
-      // Initialize the application
-      document.addEventListener('DOMContentLoaded', function() {
-        console.log('Video chat interface loaded successfully');
-        
-        // Add any additional initialization here
-        const startBtn = document.getElementById('startVideoChatBtn');
-        if (startBtn) {
-          startBtn.focus();
-        }
+      // Theme Toggle Functionality
+      const themeToggle = document.getElementById("themeToggle");
+      const themeButtons = document.querySelectorAll(".theme-toggle-btn");
+      const htmlElement = document.documentElement;
+
+      // Check for saved theme or prefer-color-scheme
+      const savedTheme =
+        localStorage.getItem("theme") ||
+        (window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light");
+
+      // Apply saved theme
+      htmlElement.setAttribute("data-theme", savedTheme);
+      themeToggle.checked = savedTheme === "dark";
+      updateThemeButtons(savedTheme);
+
+      // Theme toggle event
+      themeToggle.addEventListener("change", function () {
+        const theme = this.checked ? "dark" : "light";
+        htmlElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+        updateThemeButtons(theme);
       });
 
-      // Global matching preference handlers
-      function updateGenderPreference(preference) {
-        if (window.updateGenderPreference) {
-          window.updateGenderPreference(preference);
+      // Theme button clicks
+      themeButtons.forEach((button) => {
+        button.addEventListener("click", function () {
+          const theme = this.getAttribute("data-theme");
+          htmlElement.setAttribute("data-theme", theme);
+          localStorage.setItem("theme", theme);
+          themeToggle.checked = theme === "dark";
+          updateThemeButtons(theme);
+        });
+      });
+
+      function updateThemeButtons(theme) {
+        themeButtons.forEach((button) => {
+          if (button.getAttribute("data-theme") === theme) {
+            button.classList.add("active");
+          } else {
+            button.classList.remove("active");
+          }
+        });
+      }
+
+      // Video Chat Functionality
+      let localStream = null;
+      let remoteStream = null;
+      let isVideoEnabled = true;
+      let isAudioEnabled = true;
+      let isScreenshotProtectionActive = false;
+      let callTimer = null;
+      let callStartTime = null;
+
+      // Initialize the video chat
+      function initVideoChat() {
+        checkDevices();
+        updateConnectionStatus("Ready");
+      }
+
+      // Start video chat
+      async function startVideoChat() {
+        try {
+          // Request camera and microphone access
+          localStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true,
+          });
+
+          // Display local video stream
+          const localVideo = document.getElementById("localVideo");
+          localVideo.srcObject = localStream;
+
+          // Hide local video overlay
+          document.getElementById("localVideoOverlay").style.display = "none";
+
+          // Update UI
+          document.getElementById("chatStatus").textContent = "Searching";
+          document.getElementById("chatStatus").className =
+            "chat-status searching";
+          document.getElementById("startVideoChatBtn").style.display = "none";
+          document.getElementById("stopVideoChatBtn").style.display = "block";
+          document.getElementById("endCallBtn").disabled = false;
+          document.getElementById("nextUserBtn").disabled = false;
+
+          // Update device status
+          document.getElementById("cameraStatusText").textContent = "Available";
+          document.getElementById("cameraStatusText").className =
+            "status-badge status-available";
+          document.getElementById("microphoneStatusText").textContent =
+            "Available";
+          document.getElementById("microphoneStatusText").className =
+            "status-badge status-available";
+
+          // Start call timer
+          startCallTimer();
+
+          // Simulate finding a connection after 2 seconds
+          setTimeout(() => {
+            simulateConnection();
+          }, 2000);
+        } catch (error) {
+          console.error("Error accessing media devices:", error);
+          showCameraErrorModal();
         }
       }
 
-      function updateSearchRange(range) {
-        if (window.updateSearchRange) {
-          window.updateSearchRange(range);
-        }
-      }
-
-      // Global match modal handlers
-      function startCallWithMatch() {
-        if (window.startCallWithMatch) {
-          window.startCallWithMatch();
-        }
-      }
-
-      function declineMatch() {
-        if (window.declineMatch) {
-          window.declineMatch();
-        }
-      }
-
-      // Camera error modal handlers
-      function retryCameraDetection() {
-        if (window.retryCameraDetection) {
-          window.retryCameraDetection();
-        }
-      }
-
-      function showCameraTroubleshooting() {
-        alert('Camera Troubleshooting Guide:\n\n1. Check if camera is physically connected\n2. Ensure camera permissions are granted in browser settings\n3. Close other applications using the camera\n4. Try using a different browser\n5. Restart your device if issues persist');
-      }
-
-      function continueWithoutCamera() {
-        if (window.continueWithoutCamera) {
-          window.continueWithoutCamera();
-        }
-      }
-
-      // Device check modal handlers
-      function proceedWithMediaAccess() {
-        if (window.proceedWithMediaAccess) {
-          window.proceedWithMediaAccess();
-        }
-      }
-
-      function hideDeviceCheckModal() {
-        if (window.hideDeviceCheckModal) {
-          window.hideDeviceCheckModal();
-        }
-      }
-
-      // Advanced features handlers
-      function changeBackgroundEffect(effect) {
-        if (window.changeBackgroundEffect) {
-          window.changeBackgroundEffect(effect);
-        }
-      }
-
-      function changeVoiceEffect(effect) {
-        if (window.changeVoiceEffect) {
-          window.changeVoiceEffect(effect);
-        }
-      }
-
-      function changeFaceFilter(filter) {
-        if (window.changeFaceFilter) {
-          window.changeFaceFilter(filter);
-        }
-      }
-
-      function toggleScreenshotProtection() {
-        if (window.toggleScreenshotProtection) {
-          window.toggleScreenshotProtection();
-        }
-      }
-
-      // Main control handlers
-      function startVideoChat() {
-        if (window.startVideoChat) {
-          window.startVideoChat();
-        }
-      }
-
+      // Stop video chat
       function stopVideoChat() {
-        if (window.stopVideoChat) {
-          window.stopVideoChat();
+        if (localStream) {
+          localStream.getTracks().forEach((track) => track.stop());
+          localStream = null;
         }
+
+        // Reset UI
+        document.getElementById("chatStatus").textContent = "Disconnected";
+        document.getElementById("chatStatus").className = "chat-status";
+        document.getElementById("startVideoChatBtn").style.display = "block";
+        document.getElementById("stopVideoChatBtn").style.display = "none";
+        document.getElementById("endCallBtn").disabled = true;
+        document.getElementById("nextUserBtn").disabled = true;
+
+        // Show video overlays
+        document.getElementById("localVideoOverlay").style.display = "flex";
+        document.getElementById("waitingOverlay").style.display = "flex";
+        document.getElementById("remoteVideoOverlay").style.display = "none";
+
+        // Stop call timer
+        stopCallTimer();
+
+        // Update connection status
+        updateConnectionStatus("Ready");
       }
 
+      // Toggle video
       function toggleVideo() {
-        if (window.toggleVideo) {
-          window.toggleVideo();
+        if (localStream) {
+          const videoTrack = localStream.getVideoTracks()[0];
+          if (videoTrack) {
+            isVideoEnabled = !videoTrack.enabled;
+            videoTrack.enabled = isVideoEnabled;
+
+            const btn = document.getElementById("videoToggle");
+            if (isVideoEnabled) {
+              btn.classList.add("active");
+              document.getElementById("localVideoOverlay").style.display =
+                "none";
+            } else {
+              btn.classList.remove("active");
+              document.getElementById("localVideoOverlay").style.display =
+                "flex";
+            }
+          }
         }
       }
 
+      // Toggle audio
       function toggleAudio() {
-        if (window.toggleAudio) {
-          window.toggleAudio();
+        if (localStream) {
+          const audioTrack = localStream.getAudioTracks()[0];
+          if (audioTrack) {
+            isAudioEnabled = !audioTrack.enabled;
+            audioTrack.enabled = isAudioEnabled;
+
+            const btn = document.getElementById("audioToggle");
+            if (isAudioEnabled) {
+              btn.classList.add("active");
+            } else {
+              btn.classList.remove("active");
+            }
+          }
         }
       }
 
+      // End call
       function endCall() {
-        if (window.endCall) {
-          window.endCall();
-        }
+        stopVideoChat();
       }
 
+      // Connect to next user
       function nextUser() {
-        if (window.nextUser) {
-          window.nextUser();
+        document.getElementById("chatStatus").textContent = "Searching";
+        document.getElementById("chatStatus").className =
+          "chat-status searching";
+        document.getElementById("waitingOverlay").style.display = "flex";
+        document.getElementById("remoteVideoOverlay").style.display = "none";
+
+        // Simulate finding a new connection after 1 second
+        setTimeout(() => {
+          simulateConnection();
+        }, 1000);
+      }
+
+      // Toggle screenshot protection
+      function toggleScreenshotProtection() {
+        const protection = document.getElementById("screenshotProtection");
+        const btn = document.getElementById("screenshotProtectionBtn");
+        const status = document.getElementById("screenshotStatus");
+
+        isScreenshotProtectionActive = !isScreenshotProtectionActive;
+
+        if (isScreenshotProtectionActive) {
+          protection.classList.add("active");
+          btn.classList.add("active");
+          status.textContent = "Active";
+          status.className = "status-badge status-available";
+        } else {
+          protection.classList.remove("active");
+          btn.classList.remove("active");
+          status.textContent = "Inactive";
+          status.className = "status-badge status-unavailable";
         }
       }
 
-      function checkDevices() {
-        if (window.checkDevices) {
-          window.checkDevices();
+      // Check devices
+      async function checkDevices() {
+        document.getElementById("deviceCheckModal").style.display = "flex";
+
+        try {
+          // Check camera
+          const cameras = await navigator.mediaDevices.enumerateDevices();
+          const hasCamera = cameras.some(
+            (device) => device.kind === "videoinput"
+          );
+
+          // Check microphone
+          const hasMicrophone = cameras.some(
+            (device) => device.kind === "audioinput"
+          );
+
+          // Update modal status
+          document.getElementById("cameraStatus").textContent = hasCamera
+            ? "Available"
+            : "Not Found";
+          document.getElementById("microphoneStatus").textContent =
+            hasMicrophone ? "Available" : "Not Found";
+
+          // Update sidebar status
+          document.getElementById("cameraStatusText").textContent = hasCamera
+            ? "Available"
+            : "Not Found";
+          document.getElementById("cameraStatusText").className = hasCamera
+            ? "status-badge status-available"
+            : "status-badge status-unavailable";
+          document.getElementById("microphoneStatusText").textContent =
+            hasMicrophone ? "Available" : "Not Found";
+          document.getElementById("microphoneStatusText").className =
+            hasMicrophone
+              ? "status-badge status-available"
+              : "status-badge status-unavailable";
+        } catch (error) {
+          console.error("Error checking devices:", error);
+          document.getElementById("cameraStatus").textContent = "Error";
+          document.getElementById("microphoneStatus").textContent = "Error";
         }
       }
+
+      // Show camera error modal
+      function showCameraErrorModal() {
+        document.getElementById("cameraErrorModal").style.display = "flex";
+      }
+
+      // Hide camera error modal
+      function hideCameraErrorModal() {
+        document.getElementById("cameraErrorModal").style.display = "none";
+      }
+
+      // Retry camera detection
+      function retryCameraDetection() {
+        hideCameraErrorModal();
+        checkDevices();
+      }
+
+      // Show camera troubleshooting guide
+      function showCameraTroubleshooting() {
+        hideCameraErrorModal();
+        alert(
+          "Camera Troubleshooting:\n\n1. Check if camera is physically connected\n2. Ensure no other app is using the camera\n3. Check browser permissions\n4. Try refreshing the page"
+        );
+      }
+
+      // Continue without camera (text-only mode)
+      function continueWithoutCamera() {
+        hideCameraErrorModal();
+        alert("Continuing in text-only mode...");
+        // You would typically redirect to text chat or disable video features
+      }
+
+      // Proceed with media access
+      function proceedWithMediaAccess() {
+        document.getElementById("deviceCheckModal").style.display = "none";
+      }
+
+      // Hide device check modal
+      function hideDeviceCheckModal() {
+        document.getElementById("deviceCheckModal").style.display = "none";
+      }
+
+      // Change background effect
+      function changeBackgroundEffect(effect) {
+        const localVideo = document.getElementById("localVideo");
+        // Remove all effect classes
+        localVideo.classList.remove(
+          "video-effect-blur",
+          "video-effect-pixelate",
+          "video-effect-sepia"
+        );
+
+        if (effect !== "none") {
+          localVideo.classList.add(`video-effect-${effect}`);
+        }
+
+        console.log("Background effect changed to:", effect);
+      }
+
+      // Change voice effect
+      function changeVoiceEffect(effect) {
+        console.log("Voice effect changed to:", effect);
+        // In a real implementation, this would apply audio filters to the audio stream
+      }
+
+      // Change face filter
+      function changeFaceFilter(filter) {
+        console.log("Face filter changed to:", filter);
+        // In a real implementation, this would apply AR filters to the video stream
+      }
+
+      // Start call timer
+      function startCallTimer() {
+        callStartTime = new Date();
+        callTimer = setInterval(updateCallDuration, 1000);
+      }
+
+      // Stop call timer
+      function stopCallTimer() {
+        if (callTimer) {
+          clearInterval(callTimer);
+          callTimer = null;
+        }
+        document.getElementById("callDuration").textContent = "00:00";
+      }
+
+      // Update call duration
+      function updateCallDuration() {
+        const now = new Date();
+        const diff = Math.floor((now - callStartTime) / 1000);
+        const minutes = Math.floor(diff / 60);
+        const seconds = diff % 60;
+        document.getElementById("callDuration").textContent = `${minutes
+          .toString()
+          .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+      }
+
+      // Update connection status
+      function updateConnectionStatus(status) {
+        document.getElementById("connectionStatus").textContent = status;
+      }
+
+      // Simulate connection (for demo purposes)
+      function simulateConnection() {
+        document.getElementById("chatStatus").textContent = "Connected";
+        document.getElementById("chatStatus").className =
+          "chat-status connected";
+        document.getElementById("waitingOverlay").style.display = "none";
+        updateConnectionStatus("Connected");
+
+        // Simulate users waiting
+        document.getElementById("usersWaiting").textContent = Math.floor(
+          Math.random() * 10
+        );
+      }
+
+      // Initialize when page loads
+      window.addEventListener("load", initVideoChat);
     </script>
   </body>
 </html>
