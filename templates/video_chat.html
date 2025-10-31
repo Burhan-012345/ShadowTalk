@@ -1402,23 +1402,47 @@
           </div>
         </div>
 
-        <!-- Replace the camera error modal buttons section with this: -->
-        <div class="camera-error-buttons">
-          <button class="btn-try-again" onclick="retryMediaAccess()">
-            <i class="fas fa-redo"></i> Try Again
-          </button>
-          <button
-            class="btn-fix-camera-orientation"
-            onclick="fixReversedCamera()"
-          >
-            <i class="fas fa-cog"></i> Fix Camera
-          </button>
-          <button
-            class="btn-continue-without-camera"
-            onclick="emergencyFallback()"
-          >
-            <i class="fas fa-user"></i> Continue Anyway
-          </button>
+        <!-- Camera Error Modal -->
+        <div id="cameraErrorModal" class="modal camera-error-modal">
+          <div class="modal-content">
+            <div class="camera-error-content">
+              <div class="camera-error-icon">
+                <i class="fas fa-video-slash"></i>
+              </div>
+              <h3 class="camera-error-title">Camera Error</h3>
+              <p class="camera-error-message" id="cameraErrorMessage">
+                No camera or microphone devices were detected on your system.
+              </p>
+
+              <div class="troubleshooting-info">
+                <h4>Quick Troubleshooting:</h4>
+                <ul>
+                  <li>Check if camera/microphone is properly connected</li>
+                  <li>Ensure no other app is using the camera</li>
+                  <li>Check browser permissions for camera access</li>
+                  <li>Try refreshing the page</li>
+                </ul>
+              </div>
+
+              <div class="camera-error-buttons">
+                <button class="btn-try-again" onclick="retryMediaAccess()">
+                  <i class="fas fa-redo"></i> Try Again
+                </button>
+                <button
+                  class="btn-fix-camera-orientation"
+                  onclick="fixReversedCamera()"
+                >
+                  <i class="fas fa-cog"></i> Fix Camera
+                </button>
+                <button
+                  class="btn-continue-without-camera"
+                  onclick="emergencyFallback()"
+                >
+                  <i class="fas fa-user"></i> Continue Anyway
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Global Match Modal -->
