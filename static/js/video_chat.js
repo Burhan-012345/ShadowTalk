@@ -59,6 +59,30 @@ function checkSecureContext() {
   return true;
 }
 
+// Show camera error modal
+function showCameraErrorModal(
+  message = "No camera or microphone devices were detected on your system."
+) {
+  const modal = document.getElementById("cameraErrorModal");
+  const messageElement = document.getElementById("cameraErrorMessage");
+
+  if (messageElement) {
+    messageElement.textContent = message;
+  }
+
+  if (modal) {
+    modal.style.display = "flex";
+  }
+}
+
+// Hide camera error modal
+function hideCameraErrorModal() {
+  const modal = document.getElementById("cameraErrorModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+}
+
 // Initialize when page loads
 document.addEventListener("DOMContentLoaded", function () {
   console.log(
@@ -210,30 +234,37 @@ async function checkDevices() {
     console.log("Initial devices (no permissions):", devices);
 
     // Check if we have device labels (which means we have permissions)
-    const hasPermissions = devices.some(device => device.label !== '');
+    const hasPermissions = devices.some((device) => device.label !== "");
 
     if (!hasPermissions) {
       // Try to get permissions by requesting a temporary stream
       try {
         console.log("No permissions yet, requesting temporary access...");
-        const tempStream = await navigator.mediaDevices.getUserMedia({ 
-          video: true, 
-          audio: true 
+        const tempStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
         });
-        
+
         // Stop the temporary stream
-        tempStream.getTracks().forEach(track => track.stop());
-        
+        tempStream.getTracks().forEach((track) => track.stop());
+
         // Now enumerate devices again with permissions
         devices = await navigator.mediaDevices.enumerateDevices();
         console.log("Devices after permission grant:", devices);
       } catch (tempError) {
-        console.log("Could not get permissions for device enumeration:", tempError);
+        console.log(
+          "Could not get permissions for device enumeration:",
+          tempError
+        );
       }
     }
 
-    const videoDevices = devices.filter(device => device.kind === 'videoinput');
-    const audioDevices = devices.filter(device => device.kind === 'audioinput');
+    const videoDevices = devices.filter(
+      (device) => device.kind === "videoinput"
+    );
+    const audioDevices = devices.filter(
+      (device) => device.kind === "audioinput"
+    );
 
     if (videoDevices.length > 0) {
       updateDeviceStatus("cameraStatusText", "Available", "status-available");
@@ -244,10 +275,18 @@ async function checkDevices() {
     }
 
     if (audioDevices.length > 0) {
-      updateDeviceStatus("microphoneStatusText", "Available", "status-available");
+      updateDeviceStatus(
+        "microphoneStatusText",
+        "Available",
+        "status-available"
+      );
       console.log("Microphone devices found:", audioDevices.length);
     } else {
-      updateDeviceStatus("microphoneStatusText", "Not Found", "status-unavailable");
+      updateDeviceStatus(
+        "microphoneStatusText",
+        "Not Found",
+        "status-unavailable"
+      );
       console.warn("No microphone devices found");
     }
 
@@ -262,9 +301,9 @@ async function checkDevices() {
     console.error("Error checking devices:", error);
     updateDeviceStatus("cameraStatusText", "Error", "status-unavailable");
     updateDeviceStatus("microphoneStatusText", "Error", "status-unavailable");
-    
+
     // Show appropriate error modal
-    if (error.name === 'NotAllowedError') {
+    if (error.name === "NotAllowedError") {
       showEnhancedErrorModal(
         "Permission Required",
         "Please allow camera and microphone access to check your devices.",
@@ -284,17 +323,14 @@ async function checkDevices() {
 }
 
 function showNoDevicesModal() {
-  showEnhancedErrorModal(
-    "No Devices Found",
+  showCameraErrorModal(
     "No camera or microphone devices were detected on your system.\n\n" +
-    "Please check:\n" +
-    "• Camera/microphone is properly connected\n" +
-    "• Drivers are installed and up to date\n" +
-    "• No other application is using the camera\n" +
-    "• Try refreshing the page\n\n" +
-    "You can still continue with text chat or test mode.",
-    true,
-    false
+      "Please check:\n" +
+      "• Camera/microphone is properly connected\n" +
+      "• Drivers are installed and up to date\n" +
+      "• No other application is using the camera\n" +
+      "• Try refreshing the page\n\n" +
+      "You can still continue with text chat or test mode."
   );
 }
 
@@ -1894,11 +1930,11 @@ function hideDeviceCheckModal() {
 function hideModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
-    modal.style.display = 'none';
+    modal.style.display = "none";
   }
-  
+
   // Also hide the enhanced error modal if it exists
-  const enhancedModal = document.getElementById('enhancedErrorModal');
+  const enhancedModal = document.getElementById("enhancedErrorModal");
   if (enhancedModal) {
     enhancedModal.remove();
   }
@@ -1958,15 +1994,16 @@ function retryDeviceDetection() {
 // Emergency fallback for testing without camera
 async function emergencyFallback() {
   console.warn("Using emergency fallback - no camera access");
-  
+
   // Update UI to show test mode
   updateConnectionStatus("Connected (Test Mode - No Camera)");
   updateDeviceStatus("cameraStatusText", "Test Mode", "status-warning");
   updateDeviceStatus("microphoneStatusText", "Test Mode", "status-warning");
 
   // Hide any error modals
-  const errorModal = document.getElementById('enhancedErrorModal');
+  const errorModal = document.getElementById("enhancedErrorModal");
   if (errorModal) errorModal.remove();
+  hideCameraErrorModal();
 
   // Continue with chat without media
   updateUIState("searching");
@@ -2056,6 +2093,10 @@ window.retryMediaAccess = retryMediaAccess;
 window.fixReversedCamera = fixReversedCamera;
 window.testCameraOverlay = testCameraOverlay;
 window.hideModal = hideModal;
+
+// Add these new exports for camera error modal
+window.showCameraErrorModal = showCameraErrorModal;
+window.hideCameraErrorModal = hideCameraErrorModal;
 
 // Export global matching functions
 window.updateGenderPreference = updateGenderPreference;
