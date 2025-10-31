@@ -205,15 +205,35 @@ async function checkDevices() {
       throw new Error("Media devices not supported in this browser");
     }
 
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    console.log("Available devices:", devices);
+    // First get devices without permissions to see what's available
+    let devices = await navigator.mediaDevices.enumerateDevices();
+    console.log("Initial devices (no permissions):", devices);
 
-    const videoDevices = devices.filter(
-      (device) => device.kind === "videoinput"
-    );
-    const audioDevices = devices.filter(
-      (device) => device.kind === "audioinput"
-    );
+    // Check if we have device labels (which means we have permissions)
+    const hasPermissions = devices.some(device => device.label !== '');
+
+    if (!hasPermissions) {
+      // Try to get permissions by requesting a temporary stream
+      try {
+        console.log("No permissions yet, requesting temporary access...");
+        const tempStream = await navigator.mediaDevices.getUserMedia({ 
+          video: true, 
+          audio: true 
+        });
+        
+        // Stop the temporary stream
+        tempStream.getTracks().forEach(track => track.stop());
+        
+        // Now enumerate devices again with permissions
+        devices = await navigator.mediaDevices.enumerateDevices();
+        console.log("Devices after permission grant:", devices);
+      } catch (tempError) {
+        console.log("Could not get permissions for device enumeration:", tempError);
+      }
+    }
+
+    const videoDevices = devices.filter(device => device.kind === 'videoinput');
+    const audioDevices = devices.filter(device => device.kind === 'audioinput');
 
     if (videoDevices.length > 0) {
       updateDeviceStatus("cameraStatusText", "Available", "status-available");
@@ -224,18 +244,10 @@ async function checkDevices() {
     }
 
     if (audioDevices.length > 0) {
-      updateDeviceStatus(
-        "microphoneStatusText",
-        "Available",
-        "status-available"
-      );
+      updateDeviceStatus("microphoneStatusText", "Available", "status-available");
       console.log("Microphone devices found:", audioDevices.length);
     } else {
-      updateDeviceStatus(
-        "microphoneStatusText",
-        "Not Found",
-        "status-unavailable"
-      );
+      updateDeviceStatus("microphoneStatusText", "Not Found", "status-unavailable");
       console.warn("No microphone devices found");
     }
 
@@ -250,14 +262,40 @@ async function checkDevices() {
     console.error("Error checking devices:", error);
     updateDeviceStatus("cameraStatusText", "Error", "status-unavailable");
     updateDeviceStatus("microphoneStatusText", "Error", "status-unavailable");
-    showEnhancedErrorModal(
-      "Device detection failed",
-      error.message,
-      true,
-      false
-    );
+    
+    // Show appropriate error modal
+    if (error.name === 'NotAllowedError') {
+      showEnhancedErrorModal(
+        "Permission Required",
+        "Please allow camera and microphone access to check your devices.",
+        true,
+        true
+      );
+    } else {
+      showEnhancedErrorModal(
+        "Device detection failed",
+        error.message,
+        true,
+        false
+      );
+    }
     return false;
   }
+}
+
+function showNoDevicesModal() {
+  showEnhancedErrorModal(
+    "No Devices Found",
+    "No camera or microphone devices were detected on your system.\n\n" +
+    "Please check:\n" +
+    "• Camera/microphone is properly connected\n" +
+    "• Drivers are installed and up to date\n" +
+    "• No other application is using the camera\n" +
+    "• Try refreshing the page\n\n" +
+    "You can still continue with text chat or test mode.",
+    true,
+    false
+  );
 }
 
 function updateDeviceStatus(elementId, text, statusClass) {
@@ -559,22 +597,22 @@ function showEnhancedErrorModal(
         </div>
         ${advancedHelp}
         <div class="modal-buttons" style="margin-top: 20px;">
-            <button class="btn-primary" onclick="document.getElementById('enhancedErrorModal').remove()">
+            <button class="btn-primary" onclick="hideModal('enhancedErrorModal')">
                 OK
             </button>
             ${
               showRetry
                 ? `
-            <button class="btn-secondary" onclick="document.getElementById('enhancedErrorModal').remove(); setTimeout(() => retryMediaAccess(), 500);">
+            <button class="btn-secondary" onclick="hideModal('enhancedErrorModal'); setTimeout(() => retryMediaAccess(), 500);">
                 Try Again
             </button>
             `
                 : ""
             }
-            <button class="btn-secondary" onclick="document.getElementById('enhancedErrorModal').remove(); fixReversedCamera();">
+            <button class="btn-secondary" onclick="hideModal('enhancedErrorModal'); fixReversedCamera();">
                 Fix Camera Orientation
             </button>
-            <button class="btn-secondary" onclick="document.getElementById('enhancedErrorModal').remove(); emergencyFallback();">
+            <button class="btn-secondary" onclick="hideModal('enhancedErrorModal'); emergencyFallback();">
                 Continue Without Camera
             </button>
         </div>
@@ -1853,14 +1891,17 @@ function hideDeviceCheckModal() {
   if (modal) modal.style.display = "none";
 }
 
-function showNoDevicesModal() {
-  const modal = document.getElementById("noDevicesModal");
-  if (modal) modal.style.display = "flex";
-}
-
-function hideNoDevicesModal() {
-  const modal = document.getElementById("noDevicesModal");
-  if (modal) modal.style.display = "none";
+function hideModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  
+  // Also hide the enhanced error modal if it exists
+  const enhancedModal = document.getElementById('enhancedErrorModal');
+  if (enhancedModal) {
+    enhancedModal.remove();
+  }
 }
 
 function showInfoModal(title, message) {
@@ -1917,9 +1958,15 @@ function retryDeviceDetection() {
 // Emergency fallback for testing without camera
 async function emergencyFallback() {
   console.warn("Using emergency fallback - no camera access");
+  
+  // Update UI to show test mode
   updateConnectionStatus("Connected (Test Mode - No Camera)");
-  updateDeviceStatus("cameraStatusText", "Test Mode", "status-unknown");
-  updateDeviceStatus("microphoneStatusText", "Test Mode", "status-unknown");
+  updateDeviceStatus("cameraStatusText", "Test Mode", "status-warning");
+  updateDeviceStatus("microphoneStatusText", "Test Mode", "status-warning");
+
+  // Hide any error modals
+  const errorModal = document.getElementById('enhancedErrorModal');
+  if (errorModal) errorModal.remove();
 
   // Continue with chat without media
   updateUIState("searching");
@@ -1939,6 +1986,11 @@ async function emergencyFallback() {
       language: navigator.language || "en",
     });
   }
+
+  showInfoModal(
+    "Test Mode Activated",
+    "Continuing without camera access. You can still chat with text."
+  );
 
   return true;
 }
@@ -2003,6 +2055,7 @@ window.emergencyFallback = emergencyFallback;
 window.retryMediaAccess = retryMediaAccess;
 window.fixReversedCamera = fixReversedCamera;
 window.testCameraOverlay = testCameraOverlay;
+window.hideModal = hideModal;
 
 // Export global matching functions
 window.updateGenderPreference = updateGenderPreference;
