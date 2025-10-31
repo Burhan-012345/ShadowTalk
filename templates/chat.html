@@ -1,22 +1,40 @@
 {% extends "base.html" %} {% block content %}
 <div class="chat-container">
   <div class="chat-header">
-    <h2>Anonymous Text Chat</h2>
+    <h2>🌍 Global Anonymous Chat</h2>
     <div class="chat-status" id="chatStatus">Disconnected</div>
+    <div class="connection-quality" style="display: none"></div>
   </div>
 
   <div class="chat-main">
     <div class="chat-messages" id="chatMessages">
       <div class="welcome-message">
-        <i class="fas fa-comments"></i>
-        <h3>Welcome to Text Chat</h3>
-        <p>Click "Start Chat" to connect with a random stranger</p>
+        <i class="fas fa-globe-americas"></i>
+        <h3>Welcome to Global Chat</h3>
+        <p>
+          Connect with people worldwide. We match males with females for better
+          conversations.
+        </p>
+        <div class="feature-list">
+          <div class="feature">
+            <i class="fas fa-venus-mars"></i>
+            <span>Gender-based matching</span>
+          </div>
+          <div class="feature">
+            <i class="fas fa-globe"></i>
+            <span>Worldwide connections</span>
+          </div>
+          <div class="feature">
+            <i class="fas fa-shield-alt"></i>
+            <span>Safe & anonymous</span>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="chat-sidebar">
       <div class="sidebar-section">
-        <h4>Chat Info</h4>
+        <h4>🌍 Global Info</h4>
         <div class="chat-info">
           <div class="info-item">
             <span>Status:</span>
@@ -26,17 +44,24 @@
             <span>Duration:</span>
             <span id="chatDuration">00:00</span>
           </div>
+          <div class="info-item">
+            <span>Online Users:</span>
+            <span id="onlineCount">0</span>
+          </div>
         </div>
       </div>
+
+      <div id="searchInfo"></div>
+      <div id="globalStats"></div>
 
       <div class="sidebar-section">
         <h4>Quick Actions</h4>
         <button
           class="btn-primary btn-full"
           id="startChatBtn"
-          onclick="startChat()"
+          onclick="startGlobalChat()"
         >
-          Start Chat
+          <i class="fas fa-globe"></i> Start Global Chat
         </button>
         <button
           class="btn-secondary btn-full"
@@ -44,7 +69,7 @@
           onclick="nextChat()"
           disabled
         >
-          Next User
+          <i class="fas fa-random"></i> Next User
         </button>
         <button
           class="btn-danger btn-full"
@@ -52,14 +77,29 @@
           onclick="endChat()"
           disabled
         >
-          End Chat
+          <i class="fas fa-times"></i> End Chat
         </button>
+      </div>
+
+      <div class="sidebar-section">
+        <h4>Your Profile</h4>
+        <div class="profile-info">
+          <div class="profile-item">
+            <span>Gender:</span>
+            <span id="userGender">Loading...</span>
+          </div>
+          <div class="profile-item">
+            <span>Location:</span>
+            <span id="userLocation">Detecting...</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="chat-input-container">
     <div class="typing-indicator" id="typingIndicator" style="display: none">
+      <span class="typing-dots"></span>
       <span>Stranger is typing...</span>
     </div>
     <div class="input-group">
@@ -75,6 +115,130 @@
     </div>
   </div>
 </div>
-{% endblock %} {% block extra_js %}
+
+<style>
+  /* Global Chat Styles */
+  .global-search-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    margin: 10px 0;
+    animation: pulse 2s infinite;
+  }
+
+  .searching-animation {
+    display: flex;
+    gap: 4px;
+  }
+
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out;
+  }
+
+  .pulse-dot:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+  .pulse-dot:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+
+  .connection-quality {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-left: auto;
+  }
+
+  .quality-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+  }
+
+  .quality-info i {
+    color: #22c55e;
+  }
+
+  .global-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 15px 0;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 6px;
+    font-size: 0.9em;
+  }
+
+  .stat-item i {
+    color: #6366f1;
+  }
+
+  .chat-status.searching-global {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 10px #667eea;
+    }
+    to {
+      box-shadow: 0 0 20px #764ba2;
+    }
+  }
+
+  @keyframes bounce {
+    0%,
+    80%,
+    100% {
+      transform: scale(0);
+    }
+    40% {
+      transform: scale(1);
+    }
+  }
+
+  /* Responsive design for global elements */
+  @media (max-width: 768px) {
+    .global-stats {
+      grid-template-columns: 1fr;
+    }
+
+    .connection-quality {
+      margin-left: 0;
+      margin-top: 10px;
+    }
+  }
+</style>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
-{% endblock %}
+<script>
+  // Initialize user profile info
+  document.addEventListener("DOMContentLoaded", function () {
+    // This would be populated from your backend
+    const userGender =
+      "{{ current_user.gender if current_user else 'Unknown' }}";
+    document.getElementById("userGender").textContent = userGender || "Not set";
+
+    // Get and display user location
+    getUserLocation().then((location) => {
+      document.getElementById("userLocation").textContent = location;
+    });
+  });
+</script>
