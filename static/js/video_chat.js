@@ -1,4 +1,4 @@
-// video_chat.js - Complete Enhanced Version with Advanced Features
+// video_chat.js - Complete Enhanced Version with Global Gender-Based Matching
 let localStream = null;
 let remoteStream = null;
 let peerConnection = null;
@@ -27,8 +27,16 @@ const pcConfig = {
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun2.l.google.com:19302" },
+    { urls: "stun:stun3.l.google.com:19302" },
+    { urls: "stun:stun4.l.google.com:19302" },
   ],
 };
+
+// Global matching variables
+let userGender = "unknown";
+let genderPreference = "opposite";
+let searchRange = "global";
+let userLocation = "Unknown";
 
 // Secure context check
 function checkSecureContext() {
@@ -53,7 +61,9 @@ function checkSecureContext() {
 
 // Initialize when page loads
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("Initializing enhanced video chat...");
+  console.log(
+    "Initializing enhanced video chat with global gender matching..."
+  );
   console.log("Secure context:", window.isSecureContext);
   console.log("Protocol:", location.protocol);
   console.log("Hostname:", location.hostname);
@@ -64,13 +74,100 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   initializeVideoChat();
+  initializeGlobalFeatures();
   initializeAdvancedFeatures();
+  setupSocketListeners();
+  setupGlobalSocketListeners();
   addTestButton();
 });
 
+// Global Features Initialization
+function initializeGlobalFeatures() {
+  // Detect user location
+  userLocation = detectUserLocation();
+  document.getElementById("userLocation").textContent = userLocation;
+
+  // Set user gender (in real app, get from user profile)
+  userGender = getUserGenderFromProfile();
+  document.getElementById("userGender").textContent = userGender;
+
+  // Set up preferences
+  updateGenderPreference("opposite");
+  updateSearchRange("global");
+
+  console.log("🌍 Global features initialized:", {
+    gender: userGender,
+    location: userLocation,
+    preference: genderPreference,
+    range: searchRange,
+  });
+}
+
+function detectUserLocation() {
+  // Mock location detection - in production, use IP geolocation
+  const locations = [
+    "New York, USA",
+    "London, UK",
+    "Tokyo, Japan",
+    "Sydney, Australia",
+    "Berlin, Germany",
+    "Paris, France",
+    "Toronto, Canada",
+    "São Paulo, Brazil",
+    "Mumbai, India",
+    "Singapore",
+    "Dubai, UAE",
+    "Amsterdam, Netherlands",
+  ];
+  return locations[Math.floor(Math.random() * locations.length)];
+}
+
+function getUserGenderFromProfile() {
+  // Mock gender detection - in real app, get from user profile
+  const genders = ["male", "female"];
+  return genders[Math.floor(Math.random() * genders.length)];
+}
+
+function updateGenderPreference(preference) {
+  genderPreference = preference;
+  const element = document.getElementById("matchPreference");
+  if (element) {
+    switch (preference) {
+      case "opposite":
+        element.textContent = "Opposite Gender";
+        break;
+      case "same":
+        element.textContent = "Same Gender";
+        break;
+      case "any":
+        element.textContent = "Any Gender";
+        break;
+    }
+  }
+  console.log("Gender preference updated to:", preference);
+}
+
+function updateSearchRange(range) {
+  searchRange = range;
+  const element = document.getElementById("searchRange");
+  if (element) {
+    switch (range) {
+      case "global":
+        element.textContent = "Worldwide";
+        break;
+      case "continent":
+        element.textContent = "Same Continent";
+        break;
+      case "country":
+        element.textContent = "Same Country";
+        break;
+    }
+  }
+  console.log("Search range updated to:", range);
+}
+
 async function initializeVideoChat() {
   await checkDevices();
-  setupSocketListeners();
   updateUIState("ready");
 }
 
@@ -142,7 +239,6 @@ async function checkDevices() {
       console.warn("No microphone devices found");
     }
 
-    // Changed from AND to OR - only need at least one device type
     const hasDevices = videoDevices.length > 0 || audioDevices.length > 0;
 
     if (!hasDevices) {
@@ -438,52 +534,52 @@ function showEnhancedErrorModal(
   const advancedHelp = showAdvancedHelp
     ? `
     <div class="advanced-help">
-      <h4>Advanced Troubleshooting:</h4>
-      <div class="browser-help">
-        <strong>Chrome:</strong> Settings → Privacy and Security → Site Settings → Camera/Microphone
-      </div>
-      <div class="browser-help">
-        <strong>Firefox:</strong> Options → Privacy & Security → Permissions → Camera/Microphone
-      </div>
-      <div class="browser-help">
-        <strong>Edge:</strong> Settings → Site Permissions → Camera/Microphone
-      </div>
+        <h4>Advanced Troubleshooting:</h4>
+        <div class="browser-help">
+            <strong>Chrome:</strong> Settings → Privacy and Security → Site Settings → Camera/Microphone
+        </div>
+        <div class="browser-help">
+            <strong>Firefox:</strong> Options → Privacy & Security → Permissions → Camera/Microphone
+        </div>
+        <div class="browser-help">
+            <strong>Edge:</strong> Settings → Site Permissions → Camera/Microphone
+        </div>
     </div>
-  `
+    `
     : "";
 
   modal.innerHTML = `
     <div class="modal-content" style="max-width: 600px;">
-      <div class="error-header">
-        <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 48px; margin-bottom: 20px;"></i>
-        <h3>${title}</h3>
-      </div>
-      <div class="error-message">
-        <p>${message.replace(/\n/g, "<br>")}</p>
-      </div>
-      ${advancedHelp}
-      <div class="modal-buttons" style="margin-top: 20px;">
-        <button class="btn-primary" onclick="document.getElementById('enhancedErrorModal').remove()">
-          OK
-        </button>
-        ${
-          showRetry
-            ? `
-          <button class="btn-secondary" onclick="document.getElementById('enhancedErrorModal').remove(); setTimeout(() => retryMediaAccess(), 500);">
-            Try Again
-        </button>
-        `
-            : ""
-        }
-        <button class="btn-secondary" onclick="document.getElementById('enhancedErrorModal').remove(); fixReversedCamera();">
-          Fix Camera Orientation
-        </button>
-        <button class="btn-secondary" onclick="document.getElementById('enhancedErrorModal').remove(); emergencyFallback();">
-          Continue Without Camera
-        </button>
-      </div>
+        <div class="error-header">
+            <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 48px; margin-bottom: 20px;"></i>
+            <h3>${title}</h3>
+        </div>
+        <div class="error-message">
+            <p>${message.replace(/\n/g, "<br>")}</p>
+        </div>
+        ${advancedHelp}
+        <div class="modal-buttons" style="margin-top: 20px;">
+            <button class="btn-primary" onclick="document.getElementById('enhancedErrorModal').remove()">
+                OK
+            </button>
+            ${
+              showRetry
+                ? `
+            <button class="btn-secondary" onclick="document.getElementById('enhancedErrorModal').remove(); setTimeout(() => retryMediaAccess(), 500);">
+                Try Again
+            </button>
+            `
+                : ""
+            }
+            <button class="btn-secondary" onclick="document.getElementById('enhancedErrorModal').remove(); fixReversedCamera();">
+                Fix Camera Orientation
+            </button>
+            <button class="btn-secondary" onclick="document.getElementById('enhancedErrorModal').remove(); emergencyFallback();">
+                Continue Without Camera
+            </button>
+        </div>
     </div>
-  `;
+    `;
 
   document.body.appendChild(modal);
 }
@@ -578,6 +674,60 @@ function setupRemoteVideo(stream) {
     // Hide overlays when remote video is active
     const remoteVideoOverlay = document.getElementById("remoteVideoOverlay");
     if (remoteVideoOverlay) remoteVideoOverlay.style.display = "none";
+  }
+}
+
+// Global Video Chat Functions
+async function startGlobalVideoChat() {
+  try {
+    console.log("🌍 Starting global video chat...");
+    updateUIState("starting");
+
+    // Request media access
+    const hasAccess = await requestMediaAccess();
+    if (!hasAccess) {
+      updateUIState("ready");
+      return;
+    }
+
+    updateConnectionStatus("🌍 Searching globally for opposite gender...");
+    updateUIState("searching");
+
+    // Join global video chat with gender preferences
+    if (window.chatSocket && window.chatSocket.connected) {
+      window.chatSocket.emit("join_global_video_chat", {
+        type: "video",
+        interests: getUserInterests(),
+        filters: {
+          require_video: true,
+          require_audio: true,
+          gender_preference: genderPreference,
+          search_range: searchRange,
+        },
+        location: userLocation,
+        gender: userGender,
+        language: navigator.language || "en",
+      });
+
+      // Notify server that media is ready
+      setTimeout(() => {
+        if (window.chatSocket && window.chatSocket.connected) {
+          window.chatSocket.emit("media_ready", {
+            media_type: "both",
+          });
+        }
+      }, 1000);
+    } else {
+      throw new Error("Not connected to chat server");
+    }
+  } catch (error) {
+    console.error("Error starting global video chat:", error);
+    showEnhancedErrorModal(
+      "Failed to start global video chat",
+      error.message,
+      true
+    );
+    updateUIState("ready");
   }
 }
 
@@ -695,134 +845,134 @@ function setupSocketListeners() {
   }
 }
 
-async function startVideoChat() {
+// Global Socket Listeners
+function setupGlobalSocketListeners() {
+  if (!window.chatSocket) return;
+
+  // Global video match found
+  window.chatSocket.on("global_video_match_found", (data) => {
+    console.log("🌍 Global video match found:", data);
+    handleGlobalMatchFound(data);
+  });
+
+  // Global video search started
+  window.chatSocket.on("global_video_search_started", (data) => {
+    console.log("🌍 Global video search started:", data);
+    updateConnectionStatus(
+      `🌍 Searching globally... (Position: ${data.position})`
+    );
+    updateUsersWaiting(data.total_waiting || 0);
+    isSearching = true;
+
+    // Show global search info
+    showInfoModal(
+      "Global Search Started",
+      `Searching for ${
+        genderPreference === "opposite"
+          ? "opposite gender"
+          : genderPreference + " gender"
+      } worldwide...\nYour location: ${
+        data.user_location
+      }\nPosition in queue: ${data.position}`
+    );
+  });
+}
+
+async function handleGlobalMatchFound(data) {
   try {
-    console.log("Starting video chat...");
-    updateUIState("starting");
+    console.log("🌍 Handling global match found:", data);
+    window.currentSessionId = data.session_id;
+    window.currentPartnerId = data.partner_id;
 
-    // First, request media access
-    const hasAccess = await requestMediaAccess();
-    if (!hasAccess) {
-      updateUIState("ready");
-      return;
-    }
+    // Show global match modal
+    showGlobalMatchModal(data);
 
-    updateConnectionStatus("Searching for video partner...");
-    updateUIState("searching");
+    updateConnectionStatus(`🌍 Connected to ${data.partner_location}`);
+    isCallActive = true;
+    isSearching = false;
 
-    // Join the video chat queue with specific video parameters
-    if (window.chatSocket && window.chatSocket.connected) {
-      window.chatSocket.emit("join_video_chat", {
-        type: "video",
-        interests: [],
-        filters: {
-          require_video: true,
-          require_audio: true,
-        },
-      });
+    // Update UI
+    const waitingOverlay = document.getElementById("waitingOverlay");
+    if (waitingOverlay) waitingOverlay.style.display = "none";
+    updateUIState("connected");
 
-      // Notify server that media is ready
-      setTimeout(() => {
-        if (window.chatSocket && window.chatSocket.connected) {
-          window.chatSocket.emit("media_ready", {
-            media_type: "both", // video and audio
-          });
-        }
-      }, 1000);
-    } else {
-      throw new Error("Not connected to chat server");
-    }
+    // Start call timer
+    startCallTimer();
+
+    // Create peer connection and start call
+    await createPeerConnection();
+    await startCall();
+
+    console.log("🌍 Global call started successfully");
   } catch (error) {
-    console.error("Error starting video chat:", error);
-    showEnhancedErrorModal("Failed to start video chat", error.message, true);
-    updateUIState("ready");
+    console.error("Error handling global match found:", error);
+    showEnhancedErrorModal("Failed to start global call", error.message, true);
+    stopVideoChat();
   }
 }
 
-function stopVideoChat() {
-  console.log("Stopping video chat...");
+function showGlobalMatchModal(matchData) {
+  const modal = document.getElementById("globalMatchModal");
+  if (!modal) return;
 
-  // Show camera off overlay when stopping
-  const localVideoOverlay = document.getElementById("localVideoOverlay");
-  if (localVideoOverlay) {
-    localVideoOverlay.style.display = "flex";
+  // Update modal content
+  document.getElementById("matchPartnerName").textContent =
+    matchData.partner_name;
+  document.getElementById("matchPartnerGender").textContent =
+    matchData.partner_gender;
+  document.getElementById("matchPartnerLocation").textContent =
+    matchData.partner_location;
+  document.getElementById("matchCommonInterests").textContent =
+    matchData.common_interests && matchData.common_interests.length > 0
+      ? matchData.common_interests.join(", ")
+      : "None";
+  document.getElementById("matchDistance").textContent =
+    matchData.distance || "Global";
+
+  // Show modal
+  modal.style.display = "flex";
+}
+
+function hideGlobalMatchModal() {
+  const modal = document.getElementById("globalMatchModal");
+  if (modal) {
+    modal.style.display = "none";
   }
+}
 
-  // Notify server about ending video chat
-  if (window.chatSocket && window.currentSessionId) {
-    window.chatSocket.emit("video_chat_ended", {
-      session_id: window.currentSessionId,
-      reason: "user_left",
-    });
-  }
+function startCallWithMatch() {
+  hideGlobalMatchModal();
+  console.log("Starting call with matched partner...");
+}
 
-  // Stop local stream
-  if (localStream) {
-    localStream.getTracks().forEach((track) => {
-      track.stop();
-      console.log("Stopped track:", track.kind);
-    });
-    localStream = null;
-  }
+function declineMatch() {
+  hideGlobalMatchModal();
+  console.log("Match declined");
+  stopVideoChat();
+  showInfoModal(
+    "Match Declined",
+    "You declined the match. Starting new search..."
+  );
+  setTimeout(() => startGlobalVideoChat(), 2000);
+}
 
-  // Close peer connection
-  if (peerConnection) {
-    peerConnection.close();
-    peerConnection = null;
-    console.log("Peer connection closed");
-  }
-
-  // Clear remote video
-  const remoteVideo = document.getElementById("remoteVideo");
-  if (remoteVideo) {
-    remoteVideo.srcObject = null;
-    remoteVideo.style.transform = "scaleX(1)"; // Reset transform
-  }
-
-  // Clear local video transform
-  const localVideo = document.getElementById("localVideo");
-  if (localVideo) {
-    localVideo.style.transform = "scaleX(1)";
-  }
-
-  // Reset state
-  isCallActive = false;
-  isSearching = false;
-  miniGameActive = false;
-  currentGame = null;
-
-  // Leave the chat if we have an active session
-  if (window.chatSocket && window.currentSessionId) {
-    window.chatSocket.emit("leave_chat", {
-      session_id: window.currentSessionId,
-    });
-    window.currentSessionId = null;
-    window.currentPartnerId = null;
-  }
-
-  // Update UI
-  updateUIState("ready");
-  updateConnectionStatus("Ready");
-  resetCallDuration();
-
-  // Hide game container
-  const gameContainer = document.getElementById("gameContainer");
-  if (gameContainer) {
-    gameContainer.style.display = "none";
-  }
-
-  // Show waiting overlay
-  const waitingOverlay = document.getElementById("waitingOverlay");
-  const remoteVideoOverlay = document.getElementById("remoteVideoOverlay");
-  if (waitingOverlay) waitingOverlay.style.display = "flex";
-  if (remoteVideoOverlay) remoteVideoOverlay.style.display = "none";
-
-  // Reset advanced features
-  removeBackgroundEffects();
-  changeFaceFilter("none");
-  changeVoiceEffect("normal");
-
-  console.log("Video chat stopped");
+// Get user interests from profile or form
+function getUserInterests() {
+  // In a real implementation, get from user profile or form
+  const interests = [
+    "travel",
+    "music",
+    "movies",
+    "sports",
+    "technology",
+    "art",
+    "food",
+    "reading",
+    "gaming",
+    "fitness",
+  ];
+  // Return 3 random interests for demo
+  return interests.sort(() => 0.5 - Math.random()).slice(0, 3);
 }
 
 async function handleMatchFound(data) {
@@ -997,6 +1147,95 @@ function handlePartnerLeft(reason = "Partner left the chat") {
   console.log("Handling partner left:", reason);
   showInfoModal("Partner Left", reason);
   stopVideoChat();
+}
+
+function stopVideoChat() {
+  console.log("Stopping video chat...");
+
+  // Show camera off overlay when stopping
+  const localVideoOverlay = document.getElementById("localVideoOverlay");
+  if (localVideoOverlay) {
+    localVideoOverlay.style.display = "flex";
+  }
+
+  // Notify server about ending video chat
+  if (window.chatSocket && window.currentSessionId) {
+    window.chatSocket.emit("video_chat_ended", {
+      session_id: window.currentSessionId,
+      reason: "user_left",
+    });
+  }
+
+  // Stop local stream
+  if (localStream) {
+    localStream.getTracks().forEach((track) => {
+      track.stop();
+      console.log("Stopped track:", track.kind);
+    });
+    localStream = null;
+  }
+
+  // Close peer connection
+  if (peerConnection) {
+    peerConnection.close();
+    peerConnection = null;
+    console.log("Peer connection closed");
+  }
+
+  // Clear remote video
+  const remoteVideo = document.getElementById("remoteVideo");
+  if (remoteVideo) {
+    remoteVideo.srcObject = null;
+    remoteVideo.style.transform = "scaleX(1)"; // Reset transform
+  }
+
+  // Clear local video transform
+  const localVideo = document.getElementById("localVideo");
+  if (localVideo) {
+    localVideo.style.transform = "scaleX(1)";
+  }
+
+  // Reset state
+  isCallActive = false;
+  isSearching = false;
+  miniGameActive = false;
+  currentGame = null;
+
+  // Leave the chat if we have an active session
+  if (window.chatSocket && window.currentSessionId) {
+    window.chatSocket.emit("leave_chat", {
+      session_id: window.currentSessionId,
+    });
+    window.currentSessionId = null;
+    window.currentPartnerId = null;
+  }
+
+  // Update UI
+  updateUIState("ready");
+  updateConnectionStatus("Ready");
+  resetCallDuration();
+
+  // Hide game container
+  const gameContainer = document.getElementById("gameContainer");
+  if (gameContainer) {
+    gameContainer.style.display = "none";
+  }
+
+  // Show waiting overlay
+  const waitingOverlay = document.getElementById("waitingOverlay");
+  const remoteVideoOverlay = document.getElementById("remoteVideoOverlay");
+  if (waitingOverlay) waitingOverlay.style.display = "flex";
+  if (remoteVideoOverlay) remoteVideoOverlay.style.display = "none";
+
+  // Reset advanced features
+  removeBackgroundEffects();
+  changeFaceFilter("none");
+  changeVoiceEffect("normal");
+
+  // Hide global match modal
+  hideGlobalMatchModal();
+
+  console.log("Video chat stopped");
 }
 
 // Advanced Features Implementation
@@ -1398,336 +1637,6 @@ function toggleScreenshotProtection() {
   );
 }
 
-// Mini Games
-function startMiniGame() {
-  const modal = document.getElementById("miniGameModal");
-  if (modal) {
-    modal.style.display = "flex";
-  }
-}
-
-function hideMiniGameModal() {
-  const modal = document.getElementById("miniGameModal");
-  if (modal) {
-    modal.style.display = "none";
-  }
-}
-
-function startGame(gameType) {
-  miniGameActive = true;
-  currentGame = gameType;
-
-  hideMiniGameModal();
-
-  const gameContainer = document.getElementById("gameContainer");
-  const gameContent = document.getElementById("gameContent");
-  const gameTitle = document.getElementById("gameTitle");
-
-  if (gameContainer && gameContent && gameTitle) {
-    gameContainer.style.display = "block";
-
-    switch (gameType) {
-      case "tic-tac-toe":
-        gameTitle.textContent = "Tic Tac Toe";
-        initializeTicTacToe(gameContent);
-        break;
-      case "trivia":
-        gameTitle.textContent = "Trivia Quiz";
-        initializeTrivia(gameContent);
-        break;
-      case "drawing":
-        gameTitle.textContent = "Drawing Game";
-        initializeDrawing(gameContent);
-        break;
-      case "word":
-        gameTitle.textContent = "Word Chain";
-        initializeWordChain(gameContent);
-        break;
-    }
-
-    // Notify partner about game start
-    if (window.chatSocket && isCallActive) {
-      window.chatSocket.emit("game_started", {
-        game_type: gameType,
-        session_id: window.currentSessionId,
-      });
-    }
-  }
-}
-
-function endGame() {
-  miniGameActive = false;
-  currentGame = null;
-
-  const gameContainer = document.getElementById("gameContainer");
-  if (gameContainer) {
-    gameContainer.style.display = "none";
-  }
-
-  // Notify partner about game end
-  if (window.chatSocket && isCallActive) {
-    window.chatSocket.emit("game_ended", {
-      session_id: window.currentSessionId,
-    });
-  }
-}
-
-function initializeTicTacToe(container) {
-  let currentPlayer = "X";
-  let board = ["", "", "", "", "", "", "", "", ""];
-
-  container.innerHTML = `
-    <div class="tic-tac-toe">
-      ${Array(9)
-        .fill()
-        .map(
-          (_, i) =>
-            `<div class="tic-tac-toe-cell" onclick="makeMove(${i})" id="cell-${i}"></div>`
-        )
-        .join("")}
-    </div>
-    <div style="text-align: center; margin-top: 15px;">
-      <p>Current Player: <span id="current-player">${currentPlayer}</span></p>
-    </div>
-  `;
-
-  window.makeMove = function (index) {
-    if (board[index] === "" && !checkWinner()) {
-      board[index] = currentPlayer;
-      const cell = document.getElementById(`cell-${index}`);
-      cell.textContent = currentPlayer;
-      cell.style.color = currentPlayer === "X" ? "#8b5cf6" : "#3b82f6";
-
-      if (checkWinner()) {
-        setTimeout(() => {
-          showInfoModal("Game Over", `Player ${currentPlayer} wins!`);
-        }, 100);
-      } else if (board.every((cell) => cell !== "")) {
-        setTimeout(() => {
-          showInfoModal("Game Over", "It's a tie!");
-        }, 100);
-      } else {
-        currentPlayer = currentPlayer === "X" ? "O" : "X";
-        document.getElementById("current-player").textContent = currentPlayer;
-      }
-    }
-  };
-
-  function checkWinner() {
-    const winPatterns = [
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8], // rows
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8], // columns
-      [0, 4, 8],
-      [2, 4, 6], // diagonals
-    ];
-
-    return winPatterns.some((pattern) => {
-      const [a, b, c] = pattern;
-      return board[a] && board[a] === board[b] && board[a] === board[c];
-    });
-  }
-}
-
-function initializeTrivia(container) {
-  const questions = [
-    {
-      question: "What is the capital of France?",
-      options: ["London", "Berlin", "Paris", "Madrid"],
-      correct: 2,
-    },
-    {
-      question: "Which planet is known as the Red Planet?",
-      options: ["Venus", "Mars", "Jupiter", "Saturn"],
-      correct: 1,
-    },
-    {
-      question: "What is the largest mammal in the world?",
-      options: ["Elephant", "Blue Whale", "Giraffe", "Polar Bear"],
-      correct: 1,
-    },
-  ];
-
-  let currentQuestion = 0;
-  let score = 0;
-
-  function loadQuestion() {
-    const question = questions[currentQuestion];
-    container.innerHTML = `
-      <div class="trivia-question">
-        <h4>${question.question}</h4>
-        <p>Score: ${score}/${currentQuestion}</p>
-      </div>
-      <div class="trivia-options">
-        ${question.options
-          .map(
-            (option, index) =>
-              `<div class="trivia-option" onclick="selectAnswer(${index})">${option}</div>`
-          )
-          .join("")}
-      </div>
-    `;
-  }
-
-  window.selectAnswer = function (selectedIndex) {
-    const question = questions[currentQuestion];
-    const options = container.querySelectorAll(".trivia-option");
-
-    options.forEach((option, index) => {
-      if (index === question.correct) {
-        option.classList.add("correct");
-      } else if (index === selectedIndex) {
-        option.classList.add("incorrect");
-      }
-      option.style.pointerEvents = "none";
-    });
-
-    if (selectedIndex === question.correct) {
-      score++;
-    }
-
-    setTimeout(() => {
-      currentQuestion++;
-      if (currentQuestion < questions.length) {
-        loadQuestion();
-      } else {
-        container.innerHTML = `
-          <div style="text-align: center;">
-            <h4>Quiz Complete!</h4>
-            <p>Your final score: ${score}/${questions.length}</p>
-            <button class="btn-primary" onclick="initializeTrivia(document.getElementById('gameContent'))">
-              Play Again
-            </button>
-          </div>
-        `;
-      }
-    }, 2000);
-  };
-
-  loadQuestion();
-}
-
-function initializeDrawing(container) {
-  container.innerHTML = `
-    <div style="text-align: center;">
-      <canvas id="drawingCanvas" width="400" height="300" style="border: 2px solid #555; background: #1a1a1a; cursor: crosshair;"></canvas>
-      <div style="margin-top: 15px;">
-        <button class="btn-secondary" onclick="clearCanvas()">Clear</button>
-        <input type="color" id="drawingColor" value="#8b5cf6" onchange="changeColor(this.value)">
-        <input type="range" id="brushSize" min="1" max="20" value="5" onchange="changeBrushSize(this.value)">
-      </div>
-    </div>
-  `;
-
-  const canvas = document.getElementById("drawingCanvas");
-  const ctx = canvas.getContext("2d");
-  let isDrawing = false;
-  let lastX = 0;
-  let lastY = 0;
-  let currentColor = "#8b5cf6";
-  let brushSize = 5;
-
-  canvas.addEventListener("mousedown", startDrawing);
-  canvas.addEventListener("mousemove", draw);
-  canvas.addEventListener("mouseup", stopDrawing);
-  canvas.addEventListener("mouseout", stopDrawing);
-
-  function startDrawing(e) {
-    isDrawing = true;
-    [lastX, lastY] = [e.offsetX, e.offsetY];
-  }
-
-  function draw(e) {
-    if (!isDrawing) return;
-
-    ctx.strokeStyle = currentColor;
-    ctx.lineWidth = brushSize;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-
-    ctx.beginPath();
-    ctx.moveTo(lastX, lastY);
-    ctx.lineTo(e.offsetX, e.offsetY);
-    ctx.stroke();
-
-    [lastX, lastY] = [e.offsetX, e.offsetY];
-  }
-
-  function stopDrawing() {
-    isDrawing = false;
-  }
-
-  window.clearCanvas = function () {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  };
-
-  window.changeColor = function (color) {
-    currentColor = color;
-  };
-
-  window.changeBrushSize = function (size) {
-    brushSize = parseInt(size);
-  };
-}
-
-function initializeWordChain(container) {
-  container.innerHTML = `
-    <div style="text-align: center;">
-      <h4>Word Chain Game</h4>
-      <p>Start with any word, then each player says a word that starts with the last letter of the previous word.</p>
-      <div id="wordChainDisplay" style="background: #3c3c3c; padding: 15px; border-radius: 8px; margin: 15px 0; min-height: 100px;">
-        <p>Game will start soon...</p>
-      </div>
-      <div>
-        <input type="text" id="wordInput" placeholder="Enter your word" style="background: #3c3c3c; color: white; border: 1px solid #555; border-radius: 5px; padding: 8px; margin-right: 10px;">
-        <button class="btn-primary" onclick="submitWord()">Submit Word</button>
-      </div>
-    </div>
-  `;
-
-  let lastWord = "";
-  let wordChain = [];
-
-  window.submitWord = function () {
-    const input = document.getElementById("wordInput");
-    const word = input.value.trim().toLowerCase();
-
-    if (!word) {
-      showInfoModal("Invalid Word", "Please enter a word.");
-      return;
-    }
-
-    if (lastWord && word[0] !== lastWord[lastWord.length - 1]) {
-      showInfoModal(
-        "Invalid Word",
-        `Your word must start with the letter "${lastWord[
-          lastWord.length - 1
-        ].toUpperCase()}"`
-      );
-      return;
-    }
-
-    wordChain.push(word);
-    lastWord = word;
-
-    const display = document.getElementById("wordChainDisplay");
-    display.innerHTML = wordChain
-      .map(
-        (w, i) =>
-          `<span style="color: ${
-            i % 2 === 0 ? "#8b5cf6" : "#3b82f6"
-          }">${w}</span>`
-      )
-      .join(" → ");
-
-    input.value = "";
-    input.focus();
-  };
-}
-
 // UI Control Functions
 function toggleVideo() {
   if (localStream) {
@@ -1796,7 +1705,7 @@ function nextUser() {
   console.log("Next user requested");
   stopVideoChat();
   setTimeout(() => {
-    startVideoChat();
+    startGlobalVideoChat();
   }, 1000);
 }
 
@@ -1986,19 +1895,19 @@ function hideInfoModal() {
 
 function retryMediaAccess() {
   console.log("Retrying media access...");
-  startVideoChat();
+  startGlobalVideoChat();
 }
 
 function proceedWithMediaAccess() {
   hideDeviceCheckModal();
-  startVideoChat();
+  startGlobalVideoChat();
 }
 
 function retryDeviceDetection() {
   hideNoDevicesModal();
   checkDevices().then((hasDevices) => {
     if (hasDevices) {
-      startVideoChat();
+      startGlobalVideoChat();
     } else {
       showNoDevicesModal();
     }
@@ -2016,13 +1925,18 @@ async function emergencyFallback() {
   updateUIState("searching");
 
   if (window.chatSocket && window.chatSocket.connected) {
-    window.chatSocket.emit("join_video_chat", {
+    window.chatSocket.emit("join_global_video_chat", {
       type: "video",
-      interests: [],
+      interests: getUserInterests(),
       filters: {
         require_video: false,
         require_audio: false,
+        gender_preference: genderPreference,
+        search_range: searchRange,
       },
+      location: userLocation,
+      gender: userGender,
+      language: navigator.language || "en",
     });
   }
 
@@ -2074,7 +1988,7 @@ function testCameraOverlay() {
 }
 
 // Export functions for global access
-window.startVideoChat = startVideoChat;
+window.startVideoChat = startGlobalVideoChat;
 window.stopVideoChat = stopVideoChat;
 window.toggleVideo = toggleVideo;
 window.toggleAudio = toggleAudio;
@@ -2090,14 +2004,16 @@ window.retryMediaAccess = retryMediaAccess;
 window.fixReversedCamera = fixReversedCamera;
 window.testCameraOverlay = testCameraOverlay;
 
+// Export global matching functions
+window.updateGenderPreference = updateGenderPreference;
+window.updateSearchRange = updateSearchRange;
+window.startCallWithMatch = startCallWithMatch;
+window.declineMatch = declineMatch;
+
 // Export advanced features functions
 window.changeBackgroundEffect = changeBackgroundEffect;
 window.changeVoiceEffect = changeVoiceEffect;
 window.changeFaceFilter = changeFaceFilter;
-window.startMiniGame = startMiniGame;
-window.hideMiniGameModal = hideMiniGameModal;
-window.startGame = startGame;
-window.endGame = endGame;
 window.toggleScreenshotProtection = toggleScreenshotProtection;
 
-console.log("Enhanced video chat module loaded successfully");
+console.log("🌍 Enhanced global video chat module loaded successfully");
