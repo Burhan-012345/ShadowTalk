@@ -64,20 +64,112 @@ waiting_users = {
     'video': []       
 }
 
-def attempt_matchmaking(chat_type):
-    """Attempt to match users in the waiting queue"""
+def attempt_gender_based_matchmaking(chat_type):
+    """Enhanced gender-based matchmaking with global support"""
     if len(waiting_users[chat_type]) < 2:
         return
 
-    # Use video-specific matching for video chats
-    if chat_type == 'video':
-        attempt_video_matchmaking()
+    # Group users by gender with enhanced categorization
+    male_users = []
+    female_users = []
+    other_users = []
+    
+    for user_data in waiting_users[chat_type]:
+        user = User.query.get(user_data['user_id'])
+        if user and user.gender:
+            gender_lower = user.gender.lower().strip()
+            
+            # Enhanced gender categorization
+            if gender_lower in ['male', 'm', 'man', 'boy', 'gentleman']:
+                male_users.append(user_data)
+            elif gender_lower in ['female', 'f', 'woman', 'girl', 'lady', 'female']:
+                female_users.append(user_data)
+            else:
+                other_users.append(user_data)
+        else:
+            other_users.append(user_data)
+
+    print(f"Matchmaking: {len(male_users)} male, {len(female_users)} female, {len(other_users)} other users waiting")
+
+    # Priority 1: Male-Female matching
+    matches_found = 0
+    while male_users and female_users:
+        male_data = male_users.pop(0)
+        female_data = female_users.pop(0)
+        
+        # Remove from main waiting list
+        waiting_users[chat_type] = [u for u in waiting_users[chat_type] 
+                                  if u['user_id'] not in [male_data['user_id'], female_data['user_id']]]
+        
+        create_chat_session(male_data, female_data, chat_type)
+        matches_found += 1
+        print(f"✓ Gender-based match: Male {male_data['user_id']} + Female {female_data['user_id']}")
+
+    # Priority 2: If no gender matches, use interest-based matching for remaining users
+    if len(waiting_users[chat_type]) >= 2 and matches_found == 0:
+        print("No gender matches found, using interest-based matching")
+        attempt_interest_based_matchmaking(chat_type)
+
+def attempt_interest_based_matchmaking(chat_type):
+    """Match users based on common interests when gender matching isn't possible"""
+    if len(waiting_users[chat_type]) < 2:
         return
 
-    # Original text chat matching logic
-    user1_data = waiting_users[chat_type].pop(0)
-    user2_data = waiting_users[chat_type].pop(0)
+    # Create a copy of waiting users for matching
+    available_users = waiting_users[chat_type][:]
+    
+    # Try to find users with common interests
+    matched_pairs = []
+    
+    for i, user1_data in enumerate(available_users):
+        if user1_data.get('matched'):
+            continue
+            
+        user1_interests = set(user1_data.get('interests', []))
+        best_match_index = -1
+        best_match_score = 0
+        
+        # Find best match based on interests
+        for j, user2_data in enumerate(available_users[i+1:], i+1):
+            if user2_data.get('matched'):
+                continue
+                
+            user2_interests = set(user2_data.get('interests', []))
+            common_interests = user1_interests.intersection(user2_interests)
+            match_score = len(common_interests)
+            
+            # Bonus for different genders even in interest-based matching
+            user1 = User.query.get(user1_data['user_id'])
+            user2 = User.query.get(user2_data['user_id'])
+            
+            if user1 and user2 and user1.gender and user2.gender:
+                gender1 = user1.gender.lower()
+                gender2 = user2.gender.lower()
+                
+                # Add bonus for male-female pairs
+                if (gender1 in ['male', 'm', 'man'] and gender2 in ['female', 'f', 'woman']) or \
+                   (gender1 in ['female', 'f', 'woman'] and gender2 in ['male', 'm', 'man']):
+                    match_score += 3
+            
+            if match_score > best_match_score:
+                best_match_score = match_score
+                best_match_index = j
+        
+        if best_match_index != -1:
+            user2_data = available_users[best_match_index]
+            matched_pairs.append((user1_data, user2_data))
+            user1_data['matched'] = True
+            user2_data['matched'] = True
+    
+    # Create sessions for matched pairs
+    for user1_data, user2_data in matched_pairs:
+        waiting_users[chat_type] = [u for u in waiting_users[chat_type] 
+                                  if u['user_id'] not in [user1_data['user_id'], user2_data['user_id']]]
+        create_chat_session(user1_data, user2_data, chat_type)
+        print(f"✓ Interest-based match: {user1_data['user_id']} + {user2_data['user_id']}")
 
+def create_chat_session(user1_data, user2_data, chat_type):
+    """Create a chat session between two users with enhanced matching info"""
     user1_id = user1_data['user_id']
     user2_id = user2_data['user_id']
 
@@ -114,50 +206,114 @@ def attempt_matchmaking(chat_type):
     interests2 = set(user2_data.get('interests', []))
     common_interests = list(interests1.intersection(interests2))
 
-    # Notify both users
+    # Get location info if available
+    user1_location = user1_data.get('location', 'Unknown')
+    user2_location = user2_data.get('location', 'Unknown')
+
+    # Notify both users with enhanced match details
     match_data = {
         'session_id': chat_session.id,
         'partner_id': user2_id,
         'partner_name': user2.display_name if user2 else 'Anonymous',
+        'partner_gender': user2.gender if user2 else 'Not specified',
         'partner_interests': user2_data.get('interests', []),
+        'partner_location': user2_location,
         'common_interests': common_interests,
         'chat_type': chat_type,
+        'match_type': 'gender_based' if user1 and user2 and 
+                       ((user1.gender and user1.gender.lower() in ['male', 'm', 'man'] and 
+                         user2.gender and user2.gender.lower() in ['female', 'f', 'woman']) or
+                        (user1.gender and user1.gender.lower() in ['female', 'f', 'woman'] and 
+                         user2.gender and user2.gender.lower() in ['male', 'm', 'man'])) else 'interest_based',
         'timestamp': datetime.utcnow().isoformat()
     }
 
     emit('chat_match_found', match_data, room=user1_id)
 
+    # Prepare data for user2
     match_data['partner_id'] = user1_id
     match_data['partner_name'] = user1.display_name if user1 else 'Anonymous'
+    match_data['partner_gender'] = user1.gender if user1 else 'Not specified'
     match_data['partner_interests'] = user1_data.get('interests', [])
+    match_data['partner_location'] = user1_location
 
     emit('chat_match_found', match_data, room=user2_id)
 
-    print(f"Matched users {user1_id} and {user2_id} for {chat_type} chat. Session: {chat_session.id}")
+    # Log the match
+    user1_gender = user1.gender if user1 else 'Unknown'
+    user2_gender = user2.gender if user2 else 'Unknown'
+    print(f"✓ Matched users {user1_id} ({user1_gender}) from {user1_location} and {user2_id} ({user2_gender}) from {user2_location} for {chat_type} chat. Session: {chat_session.id}")
 
 def attempt_video_matchmaking():
-    """Attempt to match users in video chat queue with media readiness"""
+    """Attempt to match users in video chat queue with gender preferences"""
     if len(waiting_users['video']) < 2:
         return
 
-    # Find users who have media ready or at least one media type
-    ready_users = [u for u in waiting_users['video'] if u.get('media_ready', False)]
+    # Group users by gender and media readiness
+    male_users = []
+    female_users = []
+    other_users = []
     
-    if len(ready_users) < 2:
-        # Try to match any users if queue is long enough
-        if len(waiting_users['video']) >= 2:
-            ready_users = waiting_users['video'][:2]
+    for user_data in waiting_users['video']:
+        user = User.query.get(user_data['user_id'])
+        if user and user.gender:
+            gender_lower = user.gender.lower()
+            if gender_lower in ['male', 'm', 'man']:
+                male_users.append(user_data)
+            elif gender_lower in ['female', 'f', 'woman', 'female']:
+                female_users.append(user_data)
+            else:
+                other_users.append(user_data)
         else:
-            return
+            other_users.append(user_data)
 
-    # Simple FIFO matching for now - enhance with interest matching later
-    user1_data = ready_users[0]
-    user2_data = ready_users[1]
+    # Prioritize users with media ready
+    ready_males = [u for u in male_users if u.get('media_ready', False)]
+    ready_females = [u for u in female_users if u.get('media_ready', False)]
+    
+    # Try to match ready male with ready female first
+    while ready_males and ready_females:
+        male_data = ready_males.pop(0)
+        female_data = ready_females.pop(0)
+        
+        # Remove from original lists
+        male_users = [u for u in male_users if u['user_id'] != male_data['user_id']]
+        female_users = [u for u in female_users if u['user_id'] != female_data['user_id']]
+        
+        # Remove from waiting list
+        waiting_users['video'] = [u for u in waiting_users['video'] 
+                                if u['user_id'] not in [male_data['user_id'], female_data['user_id']]]
+        
+        create_video_chat_session(male_data, female_data)
+        return
 
-    # Remove from waiting list
-    waiting_users['video'] = [u for u in waiting_users['video'] 
-                             if u['user_id'] not in [user1_data['user_id'], user2_data['user_id']]]
+    # If no ready matches, try any male-female combination
+    while male_users and female_users:
+        male_data = male_users.pop(0)
+        female_data = female_users.pop(0)
+        
+        waiting_users['video'] = [u for u in waiting_users['video'] 
+                                if u['user_id'] not in [male_data['user_id'], female_data['user_id']]]
+        
+        create_video_chat_session(male_data, female_data)
+        return
 
+    # Fallback to original matching if no gender-based matches possible
+    if len(waiting_users['video']) >= 2:
+        ready_users = [u for u in waiting_users['video'] if u.get('media_ready', False)]
+        if len(ready_users) < 2:
+            ready_users = waiting_users['video'][:2]
+
+        user1_data = ready_users[0]
+        user2_data = ready_users[1]
+
+        waiting_users['video'] = [u for u in waiting_users['video'] 
+                                if u['user_id'] not in [user1_data['user_id'], user2_data['user_id']]]
+
+        create_video_chat_session(user1_data, user2_data)
+
+def create_video_chat_session(user1_data, user2_data):
+    """Create a video chat session between two users"""
     user1_id = user1_data['user_id']
     user2_id = user2_data['user_id']
 
@@ -201,6 +357,7 @@ def attempt_video_matchmaking():
         'session_id': chat_session.id,
         'partner_id': user2_id,
         'partner_name': user2.display_name if user2 else 'Anonymous',
+        'partner_gender': user2.gender if user2 else 'Not specified',
         'partner_interests': user2_data.get('interests', []),
         'common_interests': common_interests,
         'chat_type': 'video',
@@ -211,11 +368,12 @@ def attempt_video_matchmaking():
 
     match_data['partner_id'] = user1_id
     match_data['partner_name'] = user1.display_name if user1 else 'Anonymous'
+    match_data['partner_gender'] = user1.gender if user1 else 'Not specified'
     match_data['partner_interests'] = user1_data.get('interests', [])
 
     emit('video_chat_match_found', match_data, room=user2_id)
 
-    print(f"Matched users {user1_id} and {user2_id} for video chat. Session: {chat_session.id}")
+    print(f"Matched users {user1_id} ({user1.gender if user1 else 'Unknown'}) and {user2_id} ({user2.gender if user2 else 'Unknown'}) for video chat. Session: {chat_session.id}")
 
 def cleanup_inactive_sessions():
     """Periodically clean up inactive sessions"""
@@ -2007,10 +2165,9 @@ def handle_heartbeat(data):
     except Exception as e:
         print(f"Error in handle_heartbeat: {str(e)}")
 
-# Chat Session Management
 @socketio.on('start_chat_search')
 def handle_start_chat_search(data):
-    """Start searching for a chat partner"""
+    """Start searching for a chat partner with location and gender preferences"""
     if not current_user.is_authenticated:
         emit('error', {'message': 'Authentication required'})
         return
@@ -2018,35 +2175,71 @@ def handle_start_chat_search(data):
     chat_type = data.get('type', 'text')
     user_interests = data.get('interests', [])
     filters = data.get('filters', {})
+    
+    # Get user location from IP or client data
+    user_location = get_user_location(request)
+    user_gender = current_user.gender
+
+    print(f"User {current_user.id} ({user_gender}) from {user_location} starting {chat_type} chat search")
 
     # Remove user from any existing queues
     for ctype in ['text', 'video']:
         waiting_users[ctype] = [u for u in waiting_users[ctype] if u.get('user_id') != current_user.id]
 
-    # Add user to waiting list with metadata
+    # Add user to waiting list with enhanced metadata
     user_data = {
         'user_id': current_user.id,
         'interests': user_interests,
         'filters': filters,
+        'location': user_location,
+        'gender': user_gender,
         'joined_at': datetime.utcnow().isoformat(),
-        'chat_type': chat_type
+        'chat_type': chat_type,
+        'language': data.get('language', 'en')
     }
 
     waiting_users[chat_type].append(user_data)
 
-    # Send searching status
+    # Send searching status with enhanced info
     emit('chat_search_started', {
         'chat_type': chat_type,
         'position': len(waiting_users[chat_type]),
         'total_waiting': len(waiting_users[chat_type]),
         'estimated_wait': calculate_estimated_wait(chat_type),
+        'searching_globally': True,
+        'gender_preference': 'opposite',
         'timestamp': datetime.utcnow().isoformat()
     }, room=current_user.id)
 
-    # Try to match immediately
-    attempt_matchmaking(chat_type)
+    # Try to match immediately with gender-based approach
+    attempt_gender_based_matchmaking(chat_type)
 
-    print(f"User {current_user.id} started {chat_type} chat search. Position: {len(waiting_users[chat_type])}")
+    print(f"User {current_user.id} ({user_gender}) from {user_location} started {chat_type} chat search. Position: {len(waiting_users[chat_type])}")
+
+def get_user_location(request):
+    """Get user location from IP address or client data"""
+    try:
+        # Get IP-based location (simplified - in production use a geoIP service)
+        ip_address = request.remote_addr
+        
+        # Mock location data based on IP (in production, use geoIP database)
+        locations = {
+            '127.0.0.1': 'Localhost',
+            '192.168.': 'Private Network',
+            '10.': 'Private Network',
+        }
+        
+        for prefix, location in locations.items():
+            if ip_address.startswith(prefix):
+                return location
+        
+        # Return continent-based mock locations for demonstration
+        continents = ['North America', 'Europe', 'Asia', 'South America', 'Africa', 'Australia']
+        return f"{random.choice(continents)}"
+        
+    except Exception as e:
+        print(f"Error getting user location: {e}")
+        return 'Global'
 
 @socketio.on('cancel_chat_search')
 def handle_cancel_chat_search(data):
