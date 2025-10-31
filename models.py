@@ -303,3 +303,16 @@ def init_db():
         )
         db.session.add(admin_user)
         db.session.commit()
+
+class GlobalStats(db.Model):
+    __tablename__ = 'global_stats'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, default=datetime.utcnow().date, unique=True)
+    total_matches = db.Column(db.Integer, default=0)
+    male_female_matches = db.Column(db.Integer, default=0)
+    countries_connected = db.Column(db.Integer, default=0)
+    total_chat_minutes = db.Column(db.Integer, default=0)
+    
+    def __repr__(self):
+        return f'<GlobalStats {self.date}: {self.total_matches} matches>'
