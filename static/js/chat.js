@@ -31,8 +31,8 @@ const USER_SETTINGS = {
   readReceipts: true,
   typingIndicators: true,
   theme: "dark",
-  preferredLanguage: 'en',
-  genderPreference: 'opposite'
+  preferredLanguage: "en",
+  genderPreference: "opposite",
 };
 
 // Initialize Chat Application
@@ -175,38 +175,41 @@ function handleConnectionEstablished(data) {
 }
 
 // Global Chat Management Functions
-function startGlobalChat(chatType = "text", interests = [], language = 'en') {
+function startGlobalChat(chatType = "text", interests = [], language = "en") {
   if (!socket || isSearching) return;
 
-  const userInterests = interests.length > 0 ? interests : getDefaultInterests();
-  
+  const userInterests =
+    interests.length > 0 ? interests : getDefaultInterests();
+
   // Get user's location from browser if available
-  getUserLocation().then(location => {
-    socket.emit("start_chat_search", {
-      type: chatType,
-      interests: userInterests,
-      filters: getChatFilters(),
-      language: language,
-      location: location
-    });
+  getUserLocation()
+    .then((location) => {
+      socket.emit("start_chat_search", {
+        type: chatType,
+        interests: userInterests,
+        filters: getChatFilters(),
+        language: language,
+        location: location,
+      });
 
-    updateUIForGlobalSearch();
-    addSystemMessage("🌍 Searching for a chat partner worldwide...");
-    showGlobalSearchIndicator();
-  }).catch(error => {
-    console.log("📍 Location detection failed, using global search");
-    // Fallback without location
-    socket.emit("start_chat_search", {
-      type: chatType,
-      interests: userInterests,
-      filters: getChatFilters(),
-      language: language
-    });
+      updateUIForGlobalSearch();
+      addSystemMessage("🌍 Searching for a chat partner worldwide...");
+      showGlobalSearchIndicator();
+    })
+    .catch((error) => {
+      console.log("📍 Location detection failed, using global search");
+      // Fallback without location
+      socket.emit("start_chat_search", {
+        type: chatType,
+        interests: userInterests,
+        filters: getChatFilters(),
+        language: language,
+      });
 
-    updateUIForGlobalSearch();
-    addSystemMessage("🌍 Searching for a chat partner worldwide...");
-    showGlobalSearchIndicator();
-  });
+      updateUIForGlobalSearch();
+      addSystemMessage("🌍 Searching for a chat partner worldwide...");
+      showGlobalSearchIndicator();
+    });
 }
 
 function startChat(chatType = "text", interests = []) {
@@ -266,12 +269,12 @@ function handleChatSearchStarted(data) {
 
   updateUIForGlobalSearch();
   updateWaitingInfo(data);
-  
+
   let searchMessage = `🌍 Searching globally for partners...`;
   if (data.searching_globally) {
     searchMessage += ` Position ${data.position} in queue`;
   }
-  
+
   addSystemMessage(searchMessage);
 }
 
@@ -297,32 +300,36 @@ function handleChatMatchFound(data) {
     name: data.partner_name,
     interests: data.partner_interests,
     gender: data.partner_gender,
-    location: data.partner_location
+    location: data.partner_location,
   };
 
   updateUIForChatting();
   startChatTimer();
   hideGlobalSearchIndicator();
 
-  let welcomeMessage = `🎉 Connected with ${data.partner_name || 'a stranger'}!`;
-  
+  let welcomeMessage = `🎉 Connected with ${
+    data.partner_name || "a stranger"
+  }!`;
+
   // Add location info
-  if (data.partner_location && data.partner_location !== 'Unknown') {
+  if (data.partner_location && data.partner_location !== "Unknown") {
     welcomeMessage += ` from ${data.partner_location}`;
   }
-  
+
   // Add gender info
-  if (data.partner_gender && data.partner_gender !== 'Not specified') {
+  if (data.partner_gender && data.partner_gender !== "Not specified") {
     welcomeMessage += ` (${data.partner_gender})`;
   }
-  
+
   // Add common interests
   if (data.common_interests && data.common_interests.length > 0) {
-    welcomeMessage += ` | Common interests: ${data.common_interests.join(", ")}`;
+    welcomeMessage += ` | Common interests: ${data.common_interests.join(
+      ", "
+    )}`;
   }
-  
+
   // Add match type
-  if (data.match_type === 'gender_based') {
+  if (data.match_type === "gender_based") {
     welcomeMessage += ` | 🎯 Gender-based match`;
   } else {
     welcomeMessage += ` | 🤝 Interest-based match`;
@@ -344,11 +351,11 @@ function handleChatEnded(data) {
   let endMessage = "Chat session ended";
   if (data.partner_left) {
     endMessage = "Partner left the chat";
-  } else if (data.reason === 'user_reported') {
+  } else if (data.reason === "user_reported") {
     endMessage = "Chat ended due to user report";
-  } else if (data.reason === 'user_blocked') {
+  } else if (data.reason === "user_blocked") {
     endMessage = "User blocked";
-  } else if (data.reason === 'partner_banned') {
+  } else if (data.reason === "partner_banned") {
     endMessage = "Partner was banned";
   }
 
@@ -685,7 +692,10 @@ function updateConnectionStatus(status) {
     reconnecting: { text: "Reconnecting...", class: "reconnecting" },
     failed: { text: "Connection Failed", class: "failed" },
     searching: { text: "Searching Locally", class: "searching" },
-    searching_global: { text: "🌍 Searching Worldwide", class: "searching-global" },
+    searching_global: {
+      text: "🌍 Searching Worldwide",
+      class: "searching-global",
+    },
     partner_disconnected: { text: "Partner Disconnected", class: "warning" },
   };
 
@@ -741,11 +751,15 @@ function updateWaitingInfo(data) {
 
   if (data.in_queue) {
     waitingInfo.innerHTML = `
-            <div class="waiting-position">Position: ${data.position}/${data.total_waiting}</div>
+            <div class="waiting-position">Position: ${data.position}/${
+      data.total_waiting
+    }</div>
             <div class="estimated-wait">Est. wait: ${data.estimated_wait}s</div>
             <div class="waiting-progress">
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${(data.position / data.total_waiting) * 100}%"></div>
+                    <div class="progress-fill" style="width: ${
+                      (data.position / data.total_waiting) * 100
+                    }%"></div>
                 </div>
             </div>
         `;
@@ -782,12 +796,12 @@ function showGlobalSearchIndicator() {
 function hideGlobalSearchIndicator() {
   const searchInfo = document.getElementById("searchInfo");
   if (searchInfo) {
-    searchInfo.innerHTML = '';
+    searchInfo.innerHTML = "";
   }
 }
 
 function showGlobalSearchStats() {
-  const statsElement = document.getElementById('globalStats');
+  const statsElement = document.getElementById("globalStats");
   if (statsElement) {
     statsElement.innerHTML = `
             <div class="global-stats">
@@ -809,16 +823,16 @@ function showGlobalSearchStats() {
 }
 
 function showConnectionQuality(partnerLocation) {
-  const qualityIndicator = document.querySelector('.connection-quality');
+  const qualityIndicator = document.querySelector(".connection-quality");
   if (qualityIndicator) {
     qualityIndicator.innerHTML = `
             <div class="quality-info">
                 <i class="fas fa-signal"></i>
                 <span>Global Connection</span>
-                <small>Partner: ${partnerLocation || 'Unknown location'}</small>
+                <small>Partner: ${partnerLocation || "Unknown location"}</small>
             </div>
         `;
-    qualityIndicator.style.display = 'block';
+    qualityIndicator.style.display = "block";
   }
 }
 
@@ -831,7 +845,7 @@ function updateOnlineCount(count) {
 
 function updateGlobalStats(data) {
   // Update any global statistics in the UI
-  const globalStats = document.getElementById('globalStats');
+  const globalStats = document.getElementById("globalStats");
   if (globalStats && data.global_stats) {
     // Update with real global stats if available
   }
@@ -1153,29 +1167,33 @@ function playNotificationSound(type = "message") {
   if (soundId) {
     // In a real implementation, you'd play actual audio files
     console.log("🔊 Playing sound:", soundId);
-    
+
     // Simple browser notification sound
     try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
-      oscillator.type = 'sine';
-      
-      if (type === 'message') {
+
+      oscillator.type = "sine";
+
+      if (type === "message") {
         oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      } else if (type === 'connected') {
+      } else if (type === "connected") {
         oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
-      } else if (type === 'error') {
+      } else if (type === "error") {
         oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
       }
-      
+
       gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-      
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.01,
+        audioContext.currentTime + 0.2
+      );
+
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.2);
     } catch (e) {
@@ -1223,28 +1241,30 @@ function getUserLocation() {
 
     // Get approximate location from browser
     navigator.geolocation.getCurrentPosition(
-      position => {
+      (position) => {
         const { latitude, longitude } = position.coords;
-        
+
         // Try to get location name from coordinates (simplified)
         getLocationNameFromCoords(latitude, longitude)
-          .then(locationName => {
-            resolve(locationName || `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
+          .then((locationName) => {
+            resolve(
+              locationName || `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`
+            );
           })
           .catch(() => {
             resolve(`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
           });
       },
-      error => {
+      (error) => {
         console.log("📍 Geolocation error:", error);
         // Fallback to IP-based location or timezone
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         resolve(timezone || "Global");
       },
-      { 
-        timeout: 5000, 
+      {
+        timeout: 5000,
         enableHighAccuracy: false,
-        maximumAge: 300000 // 5 minutes
+        maximumAge: 300000, // 5 minutes
       }
     );
   });
@@ -1256,10 +1276,15 @@ function getLocationNameFromCoords(lat, lng) {
   return new Promise((resolve) => {
     // Mock implementation - in production, use a real geocoding service
     const locations = [
-      "North America", "Europe", "Asia", "South America", 
-      "Africa", "Australia", "Middle East"
+      "North America",
+      "Europe",
+      "Asia",
+      "South America",
+      "Africa",
+      "Australia",
+      "Middle East",
     ];
-    
+
     // Simple region detection based on coordinates
     let region = "Global";
     if (lat > 0 && lng > -30 && lng < 40) region = "Europe";
@@ -1267,9 +1292,10 @@ function getLocationNameFromCoords(lat, lng) {
     else if (lat > 0 && lng < -30) region = "North America";
     else if (lat < 0 && lng > -80 && lng < -35) region = "South America";
     else if (lat < 0 && lng > 110 && lng < 155) region = "Australia";
-    else if (lat > -10 && lat < 40 && lng > 20 && lng < 60) region = "Middle East";
+    else if (lat > -10 && lat < 40 && lng > 20 && lng < 60)
+      region = "Middle East";
     else if (lat < 0 && lat > -35 && lng > 10 && lng < 50) region = "Africa";
-    
+
     resolve(region);
   });
 }
@@ -1596,20 +1622,22 @@ function setupUI() {
 
 function initializeUserProfile() {
   // Initialize user profile information
-  const userGender = document.getElementById('userGender');
-  const userLocation = document.getElementById('userLocation');
-  
+  const userGender = document.getElementById("userGender");
+  const userLocation = document.getElementById("userLocation");
+
   if (userGender) {
     // This would typically come from your backend
-    userGender.textContent = 'Loading...';
+    userGender.textContent = "Loading...";
   }
-  
+
   if (userLocation) {
-    getUserLocation().then(location => {
-      userLocation.textContent = location;
-    }).catch(() => {
-      userLocation.textContent = 'Global';
-    });
+    getUserLocation()
+      .then((location) => {
+        userLocation.textContent = location;
+      })
+      .catch(() => {
+        userLocation.textContent = "Global";
+      });
   }
 }
 
@@ -1652,7 +1680,7 @@ function getChatFilters() {
     language: USER_SETTINGS.preferredLanguage,
     age_range: [18, 99],
     same_interests: true,
-    gender_preference: USER_SETTINGS.genderPreference
+    gender_preference: USER_SETTINGS.genderPreference,
   };
 }
 
@@ -1691,6 +1719,6 @@ if (typeof module !== "undefined" && module.exports) {
     startGlobalChat,
     sendMessage,
     endChat,
-    getUserLocation
+    getUserLocation,
   };
 }
